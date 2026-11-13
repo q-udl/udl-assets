@@ -12,7 +12,7 @@ void main() {
   testWidgets('Menampilkan halaman ringkasan aplikasi', (tester) async {
     await tester.pumpWidget(const AssetApp());
     await tester.pumpAndSettle();
-    expect(find.text('Ringkasan'), findsWidgets);
-    expect(find.text('Total Aset'), findsOneWidget);
+    expect(find.text('Ringkasan Aset'), findsOneWidget);
+    expect(find.text('Total aset aktif'), findsOneWidget);
   });
 }
