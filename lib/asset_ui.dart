@@ -166,7 +166,7 @@ class _AssetScreenState extends State<AssetScreen> {
     );
   }
 
-  Widget _sideItem(int index) {
+  Widget _sideItem(int index, {bool inDrawer = false}) {
     final active = page == index && selected == null;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
@@ -175,7 +175,10 @@ class _AssetScreenState extends State<AssetScreen> {
         borderRadius: BorderRadius.circular(11),
         child: InkWell(
           borderRadius: BorderRadius.circular(11),
-          onTap: () => navigate(index),
+          onTap: () {
+            navigate(index);
+            if (inDrawer) Navigator.of(context).pop();
+          },
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
@@ -214,14 +217,16 @@ class _AssetScreenState extends State<AssetScreen> {
               fontSize: 10, letterSpacing: 1.7, color: Color(0xFF9AA8B9), fontWeight: FontWeight.w800)),
           ),
           Padding(padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Column(children: [_sideItem(0), _sideItem(1), _sideItem(2)])),
+            child: Column(children: [_sideItem(0, inDrawer: inDrawer),
+              _sideItem(1, inDrawer: inDrawer), _sideItem(2, inDrawer: inDrawer)])), 
           const SizedBox(height: 18),
           const Padding(
             padding: EdgeInsets.only(left: 22, right: 16, bottom: 12),
             child: Text('SISTEM', style: TextStyle(
               fontSize: 10, letterSpacing: 1.7, color: Color(0xFF9AA8B9), fontWeight: FontWeight.w800)),
           ),
-          Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: _sideItem(3)),
+          Padding(padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: _sideItem(3, inDrawer: inDrawer)),
           const Spacer(),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -296,7 +301,7 @@ class _AssetScreenState extends State<AssetScreen> {
         Text(description, style: const TextStyle(fontSize: 13, color: muted)),
         const SizedBox(height: 12),
         if (selected != null)
-          outlineButton('Kembali ke katalog', Icons.arrow_back_rounded, () => setState(() => selected = null)),
+          outlineButton('Kembali', Icons.arrow_back_rounded, () => setState(() => selected = null)),
         if (selected == null && page == 1)
           primaryButton('Tambah Aset', Icons.add_rounded, register),
       ] else
