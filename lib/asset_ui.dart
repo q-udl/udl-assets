@@ -7,6 +7,8 @@ class _AssetScreenState extends State<AssetScreen> {
   String statusFilter = 'Semua status';
   String categoryFilter = 'Semua kategori';
   AssetRecord? selected;
+  String? viewedPhotoId;
+  void repaint() => setState(() {});
 
   AssetStore get store => widget.store;
 
@@ -19,12 +21,13 @@ class _AssetScreenState extends State<AssetScreen> {
   static const amber = Color(0xFFB97813);
   static const danger = Color(0xFFC04D53);
 
-  final labels = const ['Ringkasan', 'Katalog Aset', 'Riwayat', 'Pengaturan'];
+  final labels = const ['Ringkasan', 'Daftar Aset', 'Master Klasifikasi', 'Riwayat', 'Pengaturan'];
   final icons = const [
     Icons.space_dashboard_outlined,
     Icons.inventory_2_outlined,
+    Icons.account_tree_outlined,
     Icons.history_rounded,
-    Icons.tune_rounded
+    Icons.tune_rounded,
   ];
 
   void notify(String message) {
@@ -78,6 +81,7 @@ class _AssetScreenState extends State<AssetScreen> {
     setState(() {
       page = index;
       selected = null;
+      viewedPhotoId = null;
     });
   }
 
@@ -218,7 +222,7 @@ class _AssetScreenState extends State<AssetScreen> {
           ),
           Padding(padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Column(children: [_sideItem(0, inDrawer: inDrawer),
-              _sideItem(1, inDrawer: inDrawer), _sideItem(2, inDrawer: inDrawer)])), 
+              _sideItem(1, inDrawer: inDrawer), _sideItem(3, inDrawer: inDrawer)])), 
           const SizedBox(height: 18),
           const Padding(
             padding: EdgeInsets.only(left: 22, right: 16, bottom: 12),
@@ -226,7 +230,10 @@ class _AssetScreenState extends State<AssetScreen> {
               fontSize: 10, letterSpacing: 1.7, color: Color(0xFF9AA8B9), fontWeight: FontWeight.w800)),
           ),
           Padding(padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: _sideItem(3, inDrawer: inDrawer)),
+            child: Column(children: [
+              _sideItem(2, inDrawer: inDrawer),
+              _sideItem(4, inDrawer: inDrawer),
+            ])), 
           const Spacer(),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -244,7 +251,7 @@ class _AssetScreenState extends State<AssetScreen> {
                 const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text('Pratinjau Lokal', style: TextStyle(fontSize: 12, color: ink, fontWeight: FontWeight.w700)),
                   SizedBox(height: 3),
-                  Text('UDL Assets · v0.2.0', style: TextStyle(fontSize: 11, color: muted)),
+                  Text('UDL Assets · v0.3.0', style: TextStyle(fontSize: 11, color: muted)),
                 ])),
               ]),
             ),
@@ -279,7 +286,8 @@ class _AssetScreenState extends State<AssetScreen> {
     final description = selected != null ? 'Informasi, posisi, dan jejak aktivitas aset' :
       page == 0 ? 'Pantau kondisi dan distribusi aset perusahaan dari satu tempat.' :
       page == 1 ? 'Temukan, registrasikan, dan kelola seluruh inventaris perusahaan.' :
-      page == 2 ? 'Lacak aktivitas dan perubahan sepanjang siklus hidup aset.' :
+      page == 2 ? 'Kelola kategori, subkategori, dan jenis aset operasional.' :
+      page == 3 ? 'Lacak aktivitas dan perubahan sepanjang siklus hidup aset.' :
       'Kelola data simulasi dan standar identitas aset.';
     final isMobile = MediaQuery.sizeOf(context).width < 650;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -449,7 +457,7 @@ class _AssetScreenState extends State<AssetScreen> {
   Widget activityCard() {
     return surface(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       sectionHeader('Aktivitas terbaru', subtitle: 'Jejak perubahan data aset',
-        trailing: TextButton(onPressed: () => navigate(2), child: const Text('Lihat semua'))),
+        trailing: TextButton(onPressed: () => navigate(3), child: const Text('Lihat semua'))),
       const SizedBox(height: 10),
       for (final e in store.events.take(5)) activityLine(e),
       if (store.events.isEmpty)
@@ -1242,7 +1250,8 @@ class _AssetScreenState extends State<AssetScreen> {
                   if (selected != null) detail(selected!)
                   else if (page == 0) dashboard()
                   else if (page == 1) catalog()
-                  else if (page == 2) history()
+                  else if (page == 2) taxonomyPage()
+                  else if (page == 3) history()
                   else settings(),
                 ]),
               ),
