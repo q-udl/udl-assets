@@ -286,7 +286,9 @@ class AssetStore extends ChangeNotifier {
     catch (_) {
       photos.removeWhere((p) => p.id == photo.id);
       if (events.isNotEmpty && events.first.assetId == a.id &&
-          events.first.type == 'Dokumentasi Foto') events.removeAt(0);
+          events.first.type == 'Dokumentasi Foto') {
+        events.removeAt(0);
+      }
       rethrow;
     }
   }
@@ -306,7 +308,9 @@ class AssetStore extends ChangeNotifier {
       return 'image/png';
     }
     if (bytes.length > 12 && String.fromCharCodes(bytes.sublist(0, 4)) == 'RIFF' &&
-        String.fromCharCodes(bytes.sublist(8, 12)) == 'WEBP') return 'image/webp';
+        String.fromCharCodes(bytes.sublist(8, 12)) == 'WEBP') {
+      return 'image/webp';
+    }
     return null;
   }
 }
