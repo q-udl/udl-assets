@@ -749,7 +749,11 @@ class _AssetScreenState extends State<AssetScreen> {
     final location = TextEditingController();
     final holder = TextEditingController();
     final cost = TextEditingController(text: '0');
-    var category = 'IT';
+    final initial = store.categories.firstWhere((cat) =>
+      cat.subcategories.any((sub) => sub.types.isNotEmpty));
+    var category = initial.name;
+    var subcategory = initial.subcategories.first.name;
+    var assetType = initial.subcategories.first.types.first;
     final formKey = GlobalKey<FormState>();
     final ok = await showDialog<bool>(
       context: context,
@@ -805,13 +809,58 @@ class _AssetScreenState extends State<AssetScreen> {
                     const SizedBox(height: 13),
                     twoFields(
                       DropdownButtonFormField<String>(
+                        key: ValueKey('reg-category-' + category),
                         initialValue: category, isExpanded: true,
-                        decoration: const InputDecoration(labelText: 'Kategori', filled: true,
+                        decoration: const InputDecoration(labelText: 'Kategori *', filled: true,
                           fillColor: Color(0xFFF9FBFD)),
-                        items: ['IT', 'Elektronik', 'Furnitur', 'Kendaraan', 'Mesin', 'Bangunan', 'Lainnya']
-                          .map((x) => DropdownMenuItem(value: x, child: Text(x))).toList(),
-                        onChanged: (x) => update(() => category = x ?? category)),
+                        items: store.categories.where((cat) =>
+                          cat.subcategories.any((sub) => sub.types.isNotEmpty))
+                          .map((cat) => DropdownMenuItem(value: cat.name,
+                            child: Text(cat.name, overflow: TextOverflow.ellipsis))).toList(),
+                        onChanged: (value) {
+                          if (value == null) return;
+                          update(() {
+                            category = value;
+                            final sub = store.categoryByName(value)!.subcategories
+                              .firstWhere((sub) => sub.types.isNotEmpty);
+                            subcategory = sub.name;
+                            assetType = sub.types.first;
+                          });
+                        }),
                       dialogField(brand, 'Merek', hint: 'Contoh: Lenovo'),
+                      narrow,
+                    ),
+                    const SizedBox(height: 13),
+                    twoFields(
+                      DropdownButtonFormField<String>(
+                        key: ValueKey('reg-sub-' + category + subcategory),
+                        initialValue: subcategory, isExpanded: true,
+                        decoration: const InputDecoration(labelText: 'Subkategori *', filled: true,
+                          fillColor: Color(0xFFF9FBFD)),
+                        items: store.categoryByName(category)!.subcategories
+                          .where((sub) => sub.types.isNotEmpty)
+                          .map((sub) => DropdownMenuItem(value: sub.name,
+                            child: Text(sub.name, overflow: TextOverflow.ellipsis))).toList(),
+                        onChanged: (value) {
+                          if (value == null) return;
+                          update(() {
+                            subcategory = value;
+                            assetType = store.subcategoryByName(category, value)!.types.first;
+                          });
+                        },
+                      ),
+                      DropdownButtonFormField<String>(
+                        key: ValueKey('reg-type-' + category + subcategory),
+                        initialValue: assetType, isExpanded: true,
+                        decoration: const InputDecoration(labelText: 'Jenis Aset *', filled: true,
+                          fillColor: Color(0xFFF9FBFD)),
+                        items: store.subcategoryByName(category, subcategory)!.types
+                          .map((type) => DropdownMenuItem(value: type,
+                            child: Text(type, overflow: TextOverflow.ellipsis))).toList(),
+                        onChanged: (value) {
+                          if (value != null) update(() => assetType = value);
+                        },
+                      ),
                       narrow,
                     ),
                     const SizedBox(height: 13),
@@ -835,6 +884,14 @@ class _AssetScreenState extends State<AssetScreen> {
                       dialogField(holder, 'Penanggung jawab', hint: 'Opsional'),
                       narrow,
                     ),
+                    const SizedBox(height: 17),
+                    const Row(children: [
+                      Icon(Icons.photo_camera_back_outlined, size: 18, color: muted),
+                      SizedBox(width: 10),
+                      Expanded(child: Text('Foto aktual aset dapat diunggah setelah registrasi, '
+                        'langsung dari halaman detail aset.',
+                        style: TextStyle(fontSize: 12, color: muted))),
+                    ]),
                     const SizedBox(height: 22),
                     const Divider(color: border, height: 1),
                     const SizedBox(height: 18),
@@ -856,14 +913,17 @@ class _AssetScreenState extends State<AssetScreen> {
     if (ok == true) {
       try {
         await store.add(name.text, category, brand.text, serial.text,
-          location.text, holder.text, int.parse(cost.text));
+          location.text, holder.text, int.parse(cost.text),
+          subcategory: subcategory, assetType: assetType);
         setState(() {
           page = 1;
+          selected = store.assets.first;
+          viewedPhotoId = null;
           query = '';
           statusFilter = 'Semua status';
           categoryFilter = 'Semua kategori';
         });
-        notify('Aset berhasil diregistrasikan');
+        notify('Aset diregistrasikan. Tambahkan foto aktual pada panel dokumentasi.');
       } catch (e) {
         notify('Gagal menyimpan aset: ' + e.toString());
       }
