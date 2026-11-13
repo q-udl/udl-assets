@@ -22,3 +22,11 @@ jobs:
         run: flutter test
       - name: Build Flutter Web
         run: flutter build web --release
+
+      - name: Preserve local web preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: udl-assets-web-preview
+          path: build/web/
+          if-no-files-found: error
+          retention-days: 5
