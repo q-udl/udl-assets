@@ -40,7 +40,7 @@ class AssetStore extends ChangeNotifier {
   int nextNumber = 1;
   bool loaded = false;
   static const key = 'udl_asset_local_mvp_v1';
-  AssetStore() { initialize(); }
+  AssetStore();
   Future<void> initialize() async {
     try {
       final value = (await SharedPreferences.getInstance()).getString(key);
@@ -125,6 +125,7 @@ class AssetApp extends StatefulWidget {
 }
 class _AssetAppState extends State<AssetApp> {
   final store = AssetStore();
+  @override void initState() { super.initState(); store.initialize(); }
   @override Widget build(BuildContext context) => MaterialApp(
     title: 'Manajemen Aset UD. LUTHFI', debugShowCheckedModeBanner: false,
     theme: ThemeData(useMaterial3: true, scaffoldBackgroundColor: bg,
@@ -163,14 +164,14 @@ class _AssetScreenState extends State<AssetScreen> {
       AlertDialog(title: const Text('Registrasi Aset'), content: SizedBox(width: 460,
         child: Form(key: formKey, child: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
           const Text('Kode permanen diterbitkan secara otomatis.'), const SizedBox(height: 16),
-          field(name, 'Nama aset *', required: true),
+          field(name, 'Nama aset *', mandatory: true),
           const SizedBox(height: 10),
           DropdownButtonFormField<String>(initialValue: category, decoration: const InputDecoration(labelText: 'Kategori'),
             items: ['IT', 'Elektronik', 'Furnitur', 'Kendaraan', 'Mesin', 'Bangunan', 'Lainnya'].map((x) =>
               DropdownMenuItem(value: x, child: Text(x))).toList(), onChanged: (x) => update(() => category = x ?? category)),
           const SizedBox(height: 10), field(brand, 'Merek'), const SizedBox(height: 10),
           field(serial, 'Nomor seri'), const SizedBox(height: 10),
-          field(location, 'Lokasi *', required: true), const SizedBox(height: 10),
+          field(location, 'Lokasi *', mandatory: true), const SizedBox(height: 10),
           field(holder, 'Penanggung jawab'), const SizedBox(height: 10),
           TextFormField(controller: cost, keyboardType: TextInputType.number,
             decoration: const InputDecoration(labelText: 'Harga perolehan (Rp)'),
@@ -189,9 +190,9 @@ class _AssetScreenState extends State<AssetScreen> {
     }
     for (final c in [name, brand, serial, location, holder, cost]) { c.dispose(); }
   }
-  Widget field(TextEditingController c, String label, {bool required = false}) => TextFormField(
+  Widget field(TextEditingController c, String label, {bool mandatory = false}) => TextFormField(
     controller: c, decoration: InputDecoration(labelText: label),
-    validator: required ? (v) => v == null || v.trim().isEmpty ? 'Wajib diisi' : null : null);
+    validator: mandatory ? (v) => v == null || v.trim().isEmpty ? 'Wajib diisi' : null : null);
   Future<void> mutate(AssetRecord a) async {
     final location = TextEditingController(text: a.location), holder = TextEditingController(text: a.holder);
     final reason = TextEditingController();
@@ -199,7 +200,7 @@ class _AssetScreenState extends State<AssetScreen> {
     final ok = await showDialog<bool>(context: context, builder: (ctx) => StatefulBuilder(builder: (ctx, update) =>
       AlertDialog(title: Text('Mutasi · ' + a.code), content: SizedBox(width: 460,
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          field(location, 'Lokasi *', required: true), const SizedBox(height: 10),
+          field(location, 'Lokasi *', mandatory: true), const SizedBox(height: 10),
           field(holder, 'Penanggung jawab'), const SizedBox(height: 10),
           DropdownButtonFormField<String>(initialValue: status, decoration: const InputDecoration(labelText: 'Status'),
             items: ['Tersedia', 'Digunakan', 'Dalam Perbaikan', 'Hilang', 'Dihapuskan'].map((x) =>
