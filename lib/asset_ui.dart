@@ -551,7 +551,8 @@ class _AssetScreenState extends State<AssetScreen> {
   List<AssetRecord> filteredAssets() => store.assets.where((a) {
     final q = query.trim().toLowerCase();
     final searchable = [
-      a.name, a.code, a.location, a.holder, a.serial, a.category, a.brand,
+      a.name, a.code, a.location, a.holder, a.serial, a.category,
+      a.subcategory, a.assetType, a.brand,
     ].join(' ').toLowerCase();
     return searchable.contains(q) &&
         (statusFilter == 'Semua status' || a.status == statusFilter) &&
@@ -559,7 +560,10 @@ class _AssetScreenState extends State<AssetScreen> {
   }).toList();
 
   Widget catalogTools() {
-    final categories = store.assets.map((a) => a.category).toSet().toList()..sort();
+    final categories = {
+      ...store.categories.map((c) => c.name),
+      ...store.assets.map((a) => a.category),
+    }.toList()..sort();
     return surface(padding: const EdgeInsets.all(15),
       child: LayoutBuilder(builder: (context, box) {
         if (box.maxWidth >= 720) {
@@ -614,15 +618,14 @@ class _AssetScreenState extends State<AssetScreen> {
           child: Padding(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
             child: Row(children: [
               Expanded(flex: 4, child: Row(children: [
-                Container(width: 42, height: 42,
-                  decoration: BoxDecoration(color: lightBlue, borderRadius: BorderRadius.circular(11)),
-                  child: const Icon(Icons.inventory_2_outlined, size: 21, color: blue)),
+                assetThumbnail(a, size: 42),
                 const SizedBox(width: 12),
                 Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(a.name, maxLines: 1, overflow: TextOverflow.ellipsis,
                     style: const TextStyle(color: ink, fontSize: 13, fontWeight: FontWeight.w800)),
                   const SizedBox(height: 4),
-                  Text(a.brand.isEmpty ? 'Tanpa merek' : a.brand,
+                  Text(a.assetType.isEmpty ? a.brand : a.assetType + ' · ' + a.brand,
+                    maxLines: 1, overflow: TextOverflow.ellipsis,
                     style: const TextStyle(fontSize: 11.5, color: muted)),
                 ])),
               ])),
@@ -662,9 +665,7 @@ class _AssetScreenState extends State<AssetScreen> {
             border: Border.all(color: border)),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
-              Container(width: 38, height: 38,
-                decoration: BoxDecoration(color: lightBlue, borderRadius: BorderRadius.circular(10)),
-                child: const Icon(Icons.inventory_2_outlined, color: blue, size: 20)),
+              assetThumbnail(a, size: 38),
               const Spacer(),
               badge(a.status, compact: true),
             ]),
@@ -672,7 +673,7 @@ class _AssetScreenState extends State<AssetScreen> {
             Text(a.name, maxLines: 2, overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: ink)),
             const SizedBox(height: 5),
-            Text(a.code + ' · ' + a.category,
+            Text(a.code + ' · ' + (a.assetType.isEmpty ? a.category : a.assetType),
               style: const TextStyle(fontSize: 11.5, color: blue, fontWeight: FontWeight.w600)),
             const Divider(height: 22, color: border),
             Row(children: [
@@ -1048,9 +1049,14 @@ class _AssetScreenState extends State<AssetScreen> {
       sectionHeader('Identitas aset'),
       const SizedBox(height: 9),
       detailValue('Kategori', a.category),
+      detailValue('Subkategori', a.subcategory),
+      detailValue('Jenis aset', a.assetType),
       detailValue('Merek', a.brand),
       detailValue('Nomor seri', a.serial),
       detailValue('Nilai perolehan', rupiah(a.cost)),
+      const SizedBox(height: 9),
+      outlineButton('Ubah Klasifikasi', Icons.account_tree_outlined,
+        () => reclassifyAsset(a)),
       const Divider(height: 28, color: border),
       sectionHeader('Penempatan dan kondisi'),
       const SizedBox(height: 9),
@@ -1108,13 +1114,15 @@ class _AssetScreenState extends State<AssetScreen> {
       final wide = constraints.maxWidth >= 820;
       if (!wide) {
         return Column(children: [
-          identityCard(a), const SizedBox(height: 16), qrCard(a),
+          photoGallery(a), const SizedBox(height: 16), identityCard(a),
+          const SizedBox(height: 16), qrCard(a),
           const SizedBox(height: 16), assetTimeline(a)
         ]);
       }
       return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Expanded(child: Column(children: [
-          identityCard(a), const SizedBox(height: 16), assetTimeline(a)
+          photoGallery(a), const SizedBox(height: 16), identityCard(a),
+          const SizedBox(height: 16), assetTimeline(a)
         ])),
         const SizedBox(width: 16),
         SizedBox(width: 300, child: qrCard(a)),
@@ -1222,6 +1230,7 @@ class _AssetScreenState extends State<AssetScreen> {
         ]),
         const Divider(color: border, height: 35),
         detailValue('Total data aset', store.assets.length.toString()),
+        detailValue('Dokumentasi foto', store.photos.length.toString()),
         detailValue('Riwayat peristiwa', store.events.length.toString()),
         detailValue('Nomor berikutnya', 'UDL-AST-' + store.nextNumber.toString().padLeft(6, '0')),
       ]));
