@@ -7,6 +7,8 @@ class _AssetScreenState extends State<AssetScreen> {
   String statusFilter = 'Semua status';
   String categoryFilter = 'Semua kategori';
   AssetRecord? selected;
+  String? viewedPhotoId;
+  void repaint() => setState(() {});
 
   AssetStore get store => widget.store;
 
@@ -19,12 +21,13 @@ class _AssetScreenState extends State<AssetScreen> {
   static const amber = Color(0xFFB97813);
   static const danger = Color(0xFFC04D53);
 
-  final labels = const ['Ringkasan', 'Katalog Aset', 'Riwayat', 'Pengaturan'];
+  final labels = const ['Ringkasan', 'Daftar Aset', 'Master Klasifikasi', 'Riwayat', 'Pengaturan'];
   final icons = const [
     Icons.space_dashboard_outlined,
     Icons.inventory_2_outlined,
+    Icons.account_tree_outlined,
     Icons.history_rounded,
-    Icons.tune_rounded
+    Icons.tune_rounded,
   ];
 
   void notify(String message) {
@@ -78,6 +81,7 @@ class _AssetScreenState extends State<AssetScreen> {
     setState(() {
       page = index;
       selected = null;
+      viewedPhotoId = null;
     });
   }
 
@@ -132,7 +136,10 @@ class _AssetScreenState extends State<AssetScreen> {
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         Container(width: 6, height: 6, decoration: BoxDecoration(color: tint, shape: BoxShape.circle)),
         const SizedBox(width: 6),
-        Text(value, style: TextStyle(color: tint, fontSize: compact ? 11 : 12, fontWeight: FontWeight.w700)),
+        Flexible(child: Text(value, maxLines: 1, softWrap: false,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(color: tint, fontSize: compact ? 11 : 12,
+            fontWeight: FontWeight.w700))),
       ]),
     );
   }
@@ -218,7 +225,7 @@ class _AssetScreenState extends State<AssetScreen> {
           ),
           Padding(padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Column(children: [_sideItem(0, inDrawer: inDrawer),
-              _sideItem(1, inDrawer: inDrawer), _sideItem(2, inDrawer: inDrawer)])), 
+              _sideItem(1, inDrawer: inDrawer), _sideItem(3, inDrawer: inDrawer)])), 
           const SizedBox(height: 18),
           const Padding(
             padding: EdgeInsets.only(left: 22, right: 16, bottom: 12),
@@ -226,7 +233,10 @@ class _AssetScreenState extends State<AssetScreen> {
               fontSize: 10, letterSpacing: 1.7, color: Color(0xFF9AA8B9), fontWeight: FontWeight.w800)),
           ),
           Padding(padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: _sideItem(3, inDrawer: inDrawer)),
+            child: Column(children: [
+              _sideItem(2, inDrawer: inDrawer),
+              _sideItem(4, inDrawer: inDrawer),
+            ])), 
           const Spacer(),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -244,7 +254,7 @@ class _AssetScreenState extends State<AssetScreen> {
                 const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text('Pratinjau Lokal', style: TextStyle(fontSize: 12, color: ink, fontWeight: FontWeight.w700)),
                   SizedBox(height: 3),
-                  Text('UDL Assets · v0.2.0', style: TextStyle(fontSize: 11, color: muted)),
+                  Text('UDL Assets · v0.3.0', style: TextStyle(fontSize: 11, color: muted)),
                 ])),
               ]),
             ),
@@ -279,7 +289,8 @@ class _AssetScreenState extends State<AssetScreen> {
     final description = selected != null ? 'Informasi, posisi, dan jejak aktivitas aset' :
       page == 0 ? 'Pantau kondisi dan distribusi aset perusahaan dari satu tempat.' :
       page == 1 ? 'Temukan, registrasikan, dan kelola seluruh inventaris perusahaan.' :
-      page == 2 ? 'Lacak aktivitas dan perubahan sepanjang siklus hidup aset.' :
+      page == 2 ? 'Kelola kategori, subkategori, dan jenis aset operasional.' :
+      page == 3 ? 'Lacak aktivitas dan perubahan sepanjang siklus hidup aset.' :
       'Kelola data simulasi dan standar identitas aset.';
     final isMobile = MediaQuery.sizeOf(context).width < 650;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -449,7 +460,7 @@ class _AssetScreenState extends State<AssetScreen> {
   Widget activityCard() {
     return surface(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       sectionHeader('Aktivitas terbaru', subtitle: 'Jejak perubahan data aset',
-        trailing: TextButton(onPressed: () => navigate(2), child: const Text('Lihat semua'))),
+        trailing: TextButton(onPressed: () => navigate(3), child: const Text('Lihat semua'))),
       const SizedBox(height: 10),
       for (final e in store.events.take(5)) activityLine(e),
       if (store.events.isEmpty)
@@ -543,7 +554,8 @@ class _AssetScreenState extends State<AssetScreen> {
   List<AssetRecord> filteredAssets() => store.assets.where((a) {
     final q = query.trim().toLowerCase();
     final searchable = [
-      a.name, a.code, a.location, a.holder, a.serial, a.category, a.brand,
+      a.name, a.code, a.location, a.holder, a.serial, a.category,
+      a.subcategory, a.assetType, a.brand,
     ].join(' ').toLowerCase();
     return searchable.contains(q) &&
         (statusFilter == 'Semua status' || a.status == statusFilter) &&
@@ -551,7 +563,10 @@ class _AssetScreenState extends State<AssetScreen> {
   }).toList();
 
   Widget catalogTools() {
-    final categories = store.assets.map((a) => a.category).toSet().toList()..sort();
+    final categories = {
+      ...store.categories.map((c) => c.name),
+      ...store.assets.map((a) => a.category),
+    }.toList()..sort();
     return surface(padding: const EdgeInsets.all(15),
       child: LayoutBuilder(builder: (context, box) {
         if (box.maxWidth >= 720) {
@@ -606,15 +621,14 @@ class _AssetScreenState extends State<AssetScreen> {
           child: Padding(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
             child: Row(children: [
               Expanded(flex: 4, child: Row(children: [
-                Container(width: 42, height: 42,
-                  decoration: BoxDecoration(color: lightBlue, borderRadius: BorderRadius.circular(11)),
-                  child: const Icon(Icons.inventory_2_outlined, size: 21, color: blue)),
+                assetThumbnail(a, size: 42),
                 const SizedBox(width: 12),
                 Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(a.name, maxLines: 1, overflow: TextOverflow.ellipsis,
                     style: const TextStyle(color: ink, fontSize: 13, fontWeight: FontWeight.w800)),
                   const SizedBox(height: 4),
-                  Text(a.brand.isEmpty ? 'Tanpa merek' : a.brand,
+                  Text(a.assetType.isEmpty ? a.brand : a.assetType + ' · ' + a.brand,
+                    maxLines: 1, overflow: TextOverflow.ellipsis,
                     style: const TextStyle(fontSize: 11.5, color: muted)),
                 ])),
               ])),
@@ -654,9 +668,7 @@ class _AssetScreenState extends State<AssetScreen> {
             border: Border.all(color: border)),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
-              Container(width: 38, height: 38,
-                decoration: BoxDecoration(color: lightBlue, borderRadius: BorderRadius.circular(10)),
-                child: const Icon(Icons.inventory_2_outlined, color: blue, size: 20)),
+              assetThumbnail(a, size: 38),
               const Spacer(),
               badge(a.status, compact: true),
             ]),
@@ -664,7 +676,7 @@ class _AssetScreenState extends State<AssetScreen> {
             Text(a.name, maxLines: 2, overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: ink)),
             const SizedBox(height: 5),
-            Text(a.code + ' · ' + a.category,
+            Text(a.code + ' · ' + (a.assetType.isEmpty ? a.category : a.assetType),
               style: const TextStyle(fontSize: 11.5, color: blue, fontWeight: FontWeight.w600)),
             const Divider(height: 22, color: border),
             Row(children: [
@@ -741,7 +753,11 @@ class _AssetScreenState extends State<AssetScreen> {
     final location = TextEditingController();
     final holder = TextEditingController();
     final cost = TextEditingController(text: '0');
-    var category = 'IT';
+    final initial = store.categories.firstWhere((cat) =>
+      cat.subcategories.any((sub) => sub.types.isNotEmpty));
+    var category = initial.name;
+    var subcategory = initial.subcategories.first.name;
+    var assetType = initial.subcategories.first.types.first;
     final formKey = GlobalKey<FormState>();
     final ok = await showDialog<bool>(
       context: context,
@@ -797,13 +813,58 @@ class _AssetScreenState extends State<AssetScreen> {
                     const SizedBox(height: 13),
                     twoFields(
                       DropdownButtonFormField<String>(
+                        key: ValueKey('reg-category-' + category),
                         initialValue: category, isExpanded: true,
-                        decoration: const InputDecoration(labelText: 'Kategori', filled: true,
+                        decoration: const InputDecoration(labelText: 'Kategori *', filled: true,
                           fillColor: Color(0xFFF9FBFD)),
-                        items: ['IT', 'Elektronik', 'Furnitur', 'Kendaraan', 'Mesin', 'Bangunan', 'Lainnya']
-                          .map((x) => DropdownMenuItem(value: x, child: Text(x))).toList(),
-                        onChanged: (x) => update(() => category = x ?? category)),
+                        items: store.categories.where((cat) =>
+                          cat.subcategories.any((sub) => sub.types.isNotEmpty))
+                          .map((cat) => DropdownMenuItem(value: cat.name,
+                            child: Text(cat.name, overflow: TextOverflow.ellipsis))).toList(),
+                        onChanged: (value) {
+                          if (value == null) return;
+                          update(() {
+                            category = value;
+                            final sub = store.categoryByName(value)!.subcategories
+                              .firstWhere((sub) => sub.types.isNotEmpty);
+                            subcategory = sub.name;
+                            assetType = sub.types.first;
+                          });
+                        }),
                       dialogField(brand, 'Merek', hint: 'Contoh: Lenovo'),
+                      narrow,
+                    ),
+                    const SizedBox(height: 13),
+                    twoFields(
+                      DropdownButtonFormField<String>(
+                        key: ValueKey('reg-sub-' + category + subcategory),
+                        initialValue: subcategory, isExpanded: true,
+                        decoration: const InputDecoration(labelText: 'Subkategori *', filled: true,
+                          fillColor: Color(0xFFF9FBFD)),
+                        items: store.categoryByName(category)!.subcategories
+                          .where((sub) => sub.types.isNotEmpty)
+                          .map((sub) => DropdownMenuItem(value: sub.name,
+                            child: Text(sub.name, overflow: TextOverflow.ellipsis))).toList(),
+                        onChanged: (value) {
+                          if (value == null) return;
+                          update(() {
+                            subcategory = value;
+                            assetType = store.subcategoryByName(category, value)!.types.first;
+                          });
+                        },
+                      ),
+                      DropdownButtonFormField<String>(
+                        key: ValueKey('reg-type-' + category + subcategory),
+                        initialValue: assetType, isExpanded: true,
+                        decoration: const InputDecoration(labelText: 'Jenis Aset *', filled: true,
+                          fillColor: Color(0xFFF9FBFD)),
+                        items: store.subcategoryByName(category, subcategory)!.types
+                          .map((type) => DropdownMenuItem(value: type,
+                            child: Text(type, overflow: TextOverflow.ellipsis))).toList(),
+                        onChanged: (value) {
+                          if (value != null) update(() => assetType = value);
+                        },
+                      ),
                       narrow,
                     ),
                     const SizedBox(height: 13),
@@ -827,6 +888,14 @@ class _AssetScreenState extends State<AssetScreen> {
                       dialogField(holder, 'Penanggung jawab', hint: 'Opsional'),
                       narrow,
                     ),
+                    const SizedBox(height: 17),
+                    const Row(children: [
+                      Icon(Icons.photo_camera_back_outlined, size: 18, color: muted),
+                      SizedBox(width: 10),
+                      Expanded(child: Text('Foto aktual aset dapat diunggah setelah registrasi, '
+                        'langsung dari halaman detail aset.',
+                        style: TextStyle(fontSize: 12, color: muted))),
+                    ]),
                     const SizedBox(height: 22),
                     const Divider(color: border, height: 1),
                     const SizedBox(height: 18),
@@ -848,14 +917,17 @@ class _AssetScreenState extends State<AssetScreen> {
     if (ok == true) {
       try {
         await store.add(name.text, category, brand.text, serial.text,
-          location.text, holder.text, int.parse(cost.text));
+          location.text, holder.text, int.parse(cost.text),
+          subcategory: subcategory, assetType: assetType);
         setState(() {
           page = 1;
+          selected = store.assets.first;
+          viewedPhotoId = null;
           query = '';
           statusFilter = 'Semua status';
           categoryFilter = 'Semua kategori';
         });
-        notify('Aset berhasil diregistrasikan');
+        notify('Aset diregistrasikan. Tambahkan foto aktual pada panel dokumentasi.');
       } catch (e) {
         notify('Gagal menyimpan aset: ' + e.toString());
       }
@@ -980,9 +1052,14 @@ class _AssetScreenState extends State<AssetScreen> {
       sectionHeader('Identitas aset'),
       const SizedBox(height: 9),
       detailValue('Kategori', a.category),
+      detailValue('Subkategori', a.subcategory),
+      detailValue('Jenis aset', a.assetType),
       detailValue('Merek', a.brand),
       detailValue('Nomor seri', a.serial),
       detailValue('Nilai perolehan', rupiah(a.cost)),
+      const SizedBox(height: 9),
+      outlineButton('Ubah Klasifikasi', Icons.account_tree_outlined,
+        () => reclassifyAsset(a)),
       const Divider(height: 28, color: border),
       sectionHeader('Penempatan dan kondisi'),
       const SizedBox(height: 9),
@@ -1040,13 +1117,15 @@ class _AssetScreenState extends State<AssetScreen> {
       final wide = constraints.maxWidth >= 820;
       if (!wide) {
         return Column(children: [
-          identityCard(a), const SizedBox(height: 16), qrCard(a),
+          photoGallery(a), const SizedBox(height: 16), identityCard(a),
+          const SizedBox(height: 16), qrCard(a),
           const SizedBox(height: 16), assetTimeline(a)
         ]);
       }
       return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Expanded(child: Column(children: [
-          identityCard(a), const SizedBox(height: 16), assetTimeline(a)
+          photoGallery(a), const SizedBox(height: 16), identityCard(a),
+          const SizedBox(height: 16), assetTimeline(a)
         ])),
         const SizedBox(width: 16),
         SizedBox(width: 300, child: qrCard(a)),
@@ -1154,6 +1233,7 @@ class _AssetScreenState extends State<AssetScreen> {
         ]),
         const Divider(color: border, height: 35),
         detailValue('Total data aset', store.assets.length.toString()),
+        detailValue('Dokumentasi foto', store.photos.length.toString()),
         detailValue('Riwayat peristiwa', store.events.length.toString()),
         detailValue('Nomor berikutnya', 'UDL-AST-' + store.nextNumber.toString().padLeft(6, '0')),
       ]));
@@ -1238,11 +1318,28 @@ class _AssetScreenState extends State<AssetScreen> {
                 constraints: const BoxConstraints(maxWidth: 1520),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                   titleArea(),
+                  if (store.loadError != null) ...[
+                    const SizedBox(height: 14),
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF5E8),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(children: [
+                        const Icon(Icons.warning_amber_outlined, color: amber),
+                        const SizedBox(width: 10),
+                        Expanded(child: Text(store.loadError!,
+                          style: const TextStyle(fontSize: 12, color: ink))),
+                      ]),
+                    ),
+                  ],
                   const SizedBox(height: 23),
                   if (selected != null) detail(selected!)
                   else if (page == 0) dashboard()
                   else if (page == 1) catalog()
-                  else if (page == 2) history()
+                  else if (page == 2) taxonomyPage()
+                  else if (page == 3) history()
                   else settings(),
                 ]),
               ),

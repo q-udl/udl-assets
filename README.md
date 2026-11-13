@@ -29,7 +29,7 @@ flutter run -d chrome --web-hostname localhost --web-port 8080
 
 Gunakan alamat dan port yang sama agar data simulasi yang tersimpan di browser tetap terbaca. Jangan klik **Reset Data Demo** jika masih ingin menyimpan perubahan. Salin backup JSON melalui Pengaturan sebelum mengganti browser.
 
-## Tampilan v0.2.0 (13 November 2026)
+## Tampilan v0.2.0 (baseline)
 
 - Workspace responsif rata atas dan memanfaatkan lebar area kerja, dengan header navy dan navigasi putih.
 - KPI adaptif dengan nilai perolehan ringkas (misalnya Rp206,1 jt), grafik distribusi status, aktivitas dan kartu perhatian.
@@ -57,6 +57,22 @@ Lihat kode sumber dalam `lib/`. Tidak ada deployment UAT/production yang dikonfi
 ## Pemeriksaan kualitas
 Jalankan `flutter analyze`, `flutter test`, dan `flutter build web --release`.
 Workflow GitHub Actions di `.github/workflows/flutter-ci.yml` menjalankan ketiganya pada setiap push ke `main` dan pull request. **Pengujian belum diklaim PASS sebelum workflow selesai.**
+
+
+## Pratinjau v0.3 — Klasifikasi & Foto Aset
+
+- Taksonomi default **9 kategori** khusus aset fisik selain tanah dan bangunan.
+- **Kategori → Subkategori → Jenis Aset**, dengan opsi penambahan master lokal.
+- Form registrasi memakai pilihan bertingkat; kode permanen `UDL-AST-000001` tidak berubah.
+- Daftar aset berbentuk tabel desktop dengan **thumbnail foto aktual per unit**, bukan foto generik produk.
+- Halaman detail menyediakan **galeri foto aset**, foto utama, dan dokumentasi: foto utama, kondisi, label/nomor seri, kerusakan/perbaikan.
+- Saat foto ditambahkan atau dijadikan utama, jejak aktivitas aset dicatat.
+- Data v0.2 otomatis dibaca menggunakan key browser yang sama. Kategori lama dipetakan bila jelas; kategori lama `Tanah/Bangunan` tidak otomatis dihapus, melainkan ditandai untuk peninjauan.
+- Master dan foto ikut masuk dalam backup JSON.
+
+**Batasan foto prototipe lokal:** unggahan JPEG/PNG/WebP melalui file picker, gambar dikecilkan oleh image picker bila didukung browser, paling besar 500 KB per foto, delapan foto per aset, dan total data foto terenkode maksimal sekitar 2,9 MB. Browser bisa memiliki kuota lebih ketat. Ini hanya untuk demonstrasi; ketika tersambung ke backend, foto harus menggunakan object storage dan otorisasi akses. Jangan unggah aset/dokumen operasional sensitif ke prototipe.
+
+**Catatan lingkup:** UDL Assets mengecualikan **tanah, bangunan, dan renovasi struktur bangunan**. AC, CCTV, peralatan IT, dan aset bergerak lain tetap dapat dicatat menurut kategori masing-masing. Keputusan kapitalisasi dan kelas aset akuntansi FA dikelola terpisah.
 
 ## Batasan MVP
 Form belum mencakup dokumen serah terima, foto, persetujuan, stock opname, jadwal pemeliharaan, integrasi keuangan, atau backend multiuser. Fitur tersebut masuk tahap review lanjutan. Penghapusan berupa perubahan status sehingga kode dan riwayat tidak hilang. Contoh QR hanya memuat kode aset, bukan tautan detail yang diautentikasi.
