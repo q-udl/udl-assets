@@ -136,7 +136,10 @@ class _AssetScreenState extends State<AssetScreen> {
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         Container(width: 6, height: 6, decoration: BoxDecoration(color: tint, shape: BoxShape.circle)),
         const SizedBox(width: 6),
-        Text(value, style: TextStyle(color: tint, fontSize: compact ? 11 : 12, fontWeight: FontWeight.w700)),
+        Flexible(child: Text(value, maxLines: 1, softWrap: false,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(color: tint, fontSize: compact ? 11 : 12,
+            fontWeight: FontWeight.w700))),
       ]),
     );
   }
