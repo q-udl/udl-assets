@@ -16,6 +16,28 @@ flutter run -d chrome --web-hostname localhost --web-port 8080
 
 Buka http://localhost:8080. Jika Chrome tidak terdeteksi, jalankan `flutter devices` dan pilih web device yang tersedia.
 
+## Memperbarui pratinjau di Windows
+
+Jika aplikasi masih berjalan di PowerShell, tekan `q` untuk menghentikannya, lalu:
+
+```powershell
+cd C:\Project\udl-assets
+git pull origin main
+flutter pub get
+flutter run -d chrome --web-hostname localhost --web-port 8080
+```
+
+Gunakan alamat dan port yang sama agar data simulasi yang tersimpan di browser tetap terbaca. Jangan klik **Reset Data Demo** jika masih ingin menyimpan perubahan. Salin backup JSON melalui Pengaturan sebelum mengganti browser.
+
+## Tampilan v0.2.0 (13 November 2026)
+
+- Workspace responsif rata atas dan memanfaatkan lebar area kerja, dengan header navy dan navigasi putih.
+- KPI adaptif dengan nilai perolehan ringkas (misalnya Rp206,1 jt), grafik distribusi status, aktivitas dan kartu perhatian.
+- Katalog berbentuk tabel di desktop serta kartu responsif di layar kecil, dengan pencarian dan filter terpadu.
+- Form registrasi dan mutasi lebih lebar, dua kolom pada desktop, kelompok informasi, dan validasi.
+- Detail aset, QR kode, log aktivitas, dan halaman pengaturan dirapikan.
+- **Tidak ada migrasi data**: penyimpanan `SharedPreferences` dan struktur JSON dasar tetap dipakai.
+
 ## Cakupan prototipe
 - Ringkasan, katalog/master aset, pencarian dan filter
 - Registrasi aset dengan kode unik permanen `UDL-AST-000001`
