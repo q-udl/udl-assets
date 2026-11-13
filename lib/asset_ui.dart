@@ -485,9 +485,11 @@ class _AssetScreenState extends State<AssetScreen> {
       const SizedBox(height: 18),
       LayoutBuilder(builder: (context, box) {
         final wide = box.maxWidth >= 900;
-        if (!wide) return Column(children: [
-          attentionCard(), const SizedBox(height: 16), activityCard(),
-        ]);
+        if (!wide) {
+          return Column(children: [
+            attentionCard(), const SizedBox(height: 16), activityCard(),
+          ]);
+        }
         return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Expanded(flex: 4, child: attentionCard()),
           const SizedBox(width: 16),
@@ -626,7 +628,7 @@ class _AssetScreenState extends State<AssetScreen> {
               const SizedBox(width: 20, child: Icon(Icons.chevron_right_rounded, size: 18, color: muted)),
             ])),
           ),
-        )),
+        ),
       ],
       if (items.isEmpty) const Padding(padding: EdgeInsets.all(35),
         child: Column(children: [
@@ -1031,10 +1033,12 @@ class _AssetScreenState extends State<AssetScreen> {
   Widget detail(AssetRecord a) {
     return LayoutBuilder(builder: (context, constraints) {
       final wide = constraints.maxWidth >= 820;
-      if (!wide) return Column(children: [
-        identityCard(a), const SizedBox(height: 16), qrCard(a),
-        const SizedBox(height: 16), assetTimeline(a)
-      ]);
+      if (!wide) {
+        return Column(children: [
+          identityCard(a), const SizedBox(height: 16), qrCard(a),
+          const SizedBox(height: 16), assetTimeline(a)
+        ]);
+      }
       return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Expanded(child: Column(children: [
           identityCard(a), const SizedBox(height: 16), assetTimeline(a)
@@ -1103,7 +1107,7 @@ class _AssetScreenState extends State<AssetScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: Colors.white,
         title: const Text('Kembalikan Data Simulasi?'),
-        content: const Text('Seluruh perubahan lokal akan diganti dengan lima data contoh. ' +
+        content: const Text('Seluruh perubahan lokal akan diganti dengan lima data contoh. '
           'Salin backup JSON terlebih dahulu bila diperlukan.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
@@ -1130,7 +1134,7 @@ class _AssetScreenState extends State<AssetScreen> {
           child: const Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Icon(Icons.info_outline_rounded, size: 20, color: amber),
             SizedBox(width: 10),
-            Expanded(child: Text('Ini prototipe lokal tanpa autentikasi atau server. ' +
+            Expanded(child: Text('Ini prototipe lokal tanpa autentikasi atau server. '
               'Data hanya tersimpan di browser ini. Jangan gunakan data operasional nyata.',
               style: TextStyle(fontSize: 12.5, color: ink, height: 1.5))),
           ])),
