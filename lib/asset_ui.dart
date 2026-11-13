@@ -1315,6 +1315,22 @@ class _AssetScreenState extends State<AssetScreen> {
                 constraints: const BoxConstraints(maxWidth: 1520),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                   titleArea(),
+                  if (store.loadError != null) ...[
+                    const SizedBox(height: 14),
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF5E8),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(children: [
+                        const Icon(Icons.warning_amber_outlined, color: amber),
+                        const SizedBox(width: 10),
+                        Expanded(child: Text(store.loadError!,
+                          style: const TextStyle(fontSize: 12, color: ink))),
+                      ]),
+                    ),
+                  ],
                   const SizedBox(height: 23),
                   if (selected != null) detail(selected!)
                   else if (page == 0) dashboard()
