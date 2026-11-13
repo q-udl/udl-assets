@@ -1,4 +1,13 @@
 include: package:flutter_lints/flutter.yaml
+
 analyzer:
   errors:
     invalid_use_of_visible_for_testing_member: ignore
+    # Flutter 3.50 marks the bundled Material entrypoint deprecated;
+    # keep compatibility with Flutter stable 3.x for this local MVP.
+    deprecated_member_use: ignore
+
+linter:
+  rules:
+    # Style-only warnings; refactor once the UI flows are approved.
+    prefer_interpolation_to_compose_strings: false
