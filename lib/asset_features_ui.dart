@@ -120,33 +120,14 @@ extension _AssetFeaturePanels on _AssetScreenState {
   }
 
   Future<void> uploadAssetPhoto(AssetRecord asset) async {
-    final kind = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        title: const Text('Jenis Dokumentasi Foto'),
-        content: const Text('Pilih keperluan foto sebelum mengambil gambar. '
-          'Bukti foto disimpan bersama riwayat aset.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
-        ],
-        // Display purpose options in the content area through a single-column list.
-        actionsAlignment: MainAxisAlignment.end,
-        icon: const Icon(Icons.photo_library_outlined),
-      ),
-    );
-    // The dialog above is an informational step; a dedicated choice below
-    // avoids relying on platform-specific pickers for classification.
-    if (!mounted) return;
-    var selectedKind = kind;
-    selectedKind ??= await showModalBottomSheet<String>(
+    final selectedKind = await showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
       builder: (ctx) => SafeArea(child: ListView(
         shrinkWrap: true,
         children: [
           const Padding(padding: EdgeInsets.fromLTRB(20, 6, 16, 12),
-            child: Text('Pilih jenis foto', style: TextStyle(
+            child: Text('Jenis dokumentasi foto', style: TextStyle(
               fontSize: 16, fontWeight: FontWeight.w800))),
           for (final item in AssetStore.photoKinds)
             ListTile(
@@ -313,10 +294,11 @@ extension _AssetFeaturePanels on _AssetScreenState {
   Future<void> reclassifyAsset(AssetRecord asset) async {
     var category = store.categoryByName(asset.category) == null
       ? store.categories.first.name : asset.category;
-    AssetSubcategory initialSub( String cat) {
-      final available = store.categoryByName(cat)!.subcategories;
+    AssetSubcategory initialSub(String cat) {
+      final available = store.categoryByName(cat)!.subcategories.where(
+        (s) => s.types.isNotEmpty).toList();
       if (available.isEmpty) {
-        throw const FormatException('Kategori belum memiliki subkategori.');
+        throw const FormatException('Kategori belum memiliki jenis aset.');
       }
       return available.first;
     }
