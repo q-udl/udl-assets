@@ -4,6 +4,7 @@ class AssetRecord {
   String id, code, name, category, subcategory, assetType, brand, serial, location, holder, condition, status;
   String model = '', acquisitionDate = '';
   String categoryId = '', subcategoryId = '', typeId = '';
+  String assignedEmployeeId = '';
   int? acquisitionCost;
   int cost;
   AssetRecord(this.id, this.code, this.name, this.category, this.brand, this.serial,
@@ -16,6 +17,7 @@ class AssetRecord {
     'condition': condition, 'status': status, 'cost': cost,
     'model': model, 'acquisitionDate': acquisitionDate, 'acquisitionCost': acquisitionCost,
     'categoryId': categoryId, 'subcategoryId': subcategoryId, 'typeId': typeId,
+    'assignedEmployeeId': assignedEmployeeId,
   };
   factory AssetRecord.fromJson(Map<String, dynamic> m) {
     final old = m['category']?.toString() ?? '';
@@ -37,6 +39,7 @@ class AssetRecord {
     a.categoryId = m['categoryId']?.toString() ?? '';
     a.subcategoryId = m['subcategoryId']?.toString() ?? '';
     a.typeId = m['typeId']?.toString() ?? '';
+    a.assignedEmployeeId = m['assignedEmployeeId']?.toString() ?? '';
     return a;
   }
 }
@@ -110,6 +113,12 @@ class AssetStore extends ChangeNotifier {
   List<AssetCategory> categories = defaultTaxonomy();
   List<AssetPhoto> photos = [];
   List<AssetTransfer> transfers = [];
+  List<AssetEmployee> employees = [];
+  List<AssetAssignment> assignments = [];
+  List<AssetReturnReceipt> returnReceipts = [];
+  int nextEmployeeNumber = 1;
+  int nextAssignmentNumber = 1;
+  int nextReturnNumber = 1;
   List<String> locations = ['Kantor Pusat', 'Gudang Pusat', 'Outlet Jepara'];
   int nextNumber = 1;
   bool loaded = false;
@@ -170,7 +179,23 @@ class AssetStore extends ChangeNotifier {
     events = [for (final a in assets)
       EventRecord(a.id, 'Registrasi', 'Registrasi data simulasi',
         DateTime.now().toIso8601String())];
-    photos = []; transfers = []; nextNumber = 6; loadError = null; notifyListeners();
+    photos = []; transfers = []; nextNumber = 6;
+    final now = DateTime.now().toIso8601String();
+    employees = [
+      AssetEmployee(id: uuid.v4(), code: 'SIM-001',
+        name: 'Karyawan Demo A', unit: 'Outlet',
+        department: 'Penjualan', jobTitle: 'Supervisor Outlet',
+        workLocation: 'Outlet Jepara',
+        createdAt: now, updatedAt: now),
+      AssetEmployee(id: uuid.v4(), code: 'SIM-002',
+        name: 'Karyawan Demo B', unit: 'Distribusi',
+        department: 'Operasional', jobTitle: 'Staf Gudang',
+        workLocation: 'Gudang Pusat',
+        createdAt: now, updatedAt: now),
+    ];
+    assignments = []; returnReceipts = [];
+    nextEmployeeNumber = 1; nextAssignmentNumber = 1; nextReturnNumber = 1;
+    loadError = null; notifyListeners();
   }
   AssetCategory? categoryByName(String name) {
     for (final c in categories) { if (c.name == name) return c; }
@@ -206,6 +231,17 @@ class AssetStore extends ChangeNotifier {
       ? (value['categories'] as List<dynamic>).map((v) =>
           AssetCategory.fromJson(Map<String, dynamic>.from(v as Map))).toList()
       : defaultTaxonomy();
+    final restoredEmployees = (value['employees'] as List<dynamic>? ?? [])
+      .map((v) => AssetEmployee.fromJson(
+        Map<String, dynamic>.from(v as Map))).toList();
+    final restoredAssignments = (value['assignments'] as List<dynamic>? ?? [])
+      .map((v) => AssetAssignment.fromJson(
+        Map<String, dynamic>.from(v as Map))).toList();
+    final restoredReturns = (value['returnReceipts'] as List<dynamic>? ?? [])
+      .map((v) => AssetReturnReceipt.fromJson(
+        Map<String, dynamic>.from(v as Map))).toList();
+    verifyAssignmentData(restoredAssets, restoredEmployees,
+      restoredAssignments, restoredReturns);
     final codes = restoredAssets.map((v) => v.code).toList();
     final ids = restoredAssets.map((v) => v.id).toSet();
     if (next.toInt() < 1 || codes.toSet().length != codes.length ||
@@ -227,6 +263,18 @@ class AssetStore extends ChangeNotifier {
     }
     assets = restoredAssets; events = restoredEvents;
     photos = restoredPhotos; categories = restoredCategories;
+    employees = restoredEmployees;
+    assignments = restoredAssignments;
+    returnReceipts = restoredReturns;
+    nextEmployeeNumber = _safeNextCounter(value['nextEmployeeNumber'],
+      employees.where((e) => e.code.startsWith('KRY-'))
+        .map((e) => int.tryParse(e.code.split('-').last) ?? 0));
+    nextAssignmentNumber = _safeNextCounter(value['nextAssignmentNumber'],
+      assignments.map((e) => int.tryParse(
+        e.draftReference.split('-').last) ?? 0));
+    nextReturnNumber = _safeNextCounter(value['nextReturnNumber'],
+      returnReceipts.map((e) => int.tryParse(
+        e.draftReference.split('-').last) ?? 0));
     transfers = (value['transfers'] as List<dynamic>? ?? [])
       .map((v) => AssetTransfer.fromJson(Map<String, dynamic>.from(v as Map))).toList();
     locations = (value['locations'] as List<dynamic>? ?? [])
@@ -246,8 +294,21 @@ class AssetStore extends ChangeNotifier {
     nextNumber = next.toInt() > biggest ? next.toInt() : biggest + 1;
     loadError = null; notifyListeners();
   }
+  int _safeNextCounter(dynamic raw, Iterable<int> previous) {
+    final highest = previous.fold<int>(
+      0, (current, number) => number > current ? number : current);
+    final proposed = raw is num ? raw.toInt() : 1;
+    return proposed > highest ? proposed : highest + 1;
+  }
+
   String backup() => const JsonEncoder.withIndent('  ').convert({
-    'version': 3, 'nextNumber': nextNumber,
+    'version': 4, 'nextNumber': nextNumber,
+    'nextEmployeeNumber': nextEmployeeNumber,
+    'nextAssignmentNumber': nextAssignmentNumber,
+    'nextReturnNumber': nextReturnNumber,
+    'employees': employees.map((e) => e.toJson()).toList(),
+    'assignments': assignments.map((e) => e.toJson()).toList(),
+    'returnReceipts': returnReceipts.map((e) => e.toJson()).toList(),
     'locations': locations, 'transfers': transfers.map((v) => v.toJson()).toList(),
     'assets': assets.map((v) => v.toJson()).toList(),
     'events': events.map((v) => v.toJson()).toList(),
@@ -296,6 +357,10 @@ class AssetStore extends ChangeNotifier {
   Future<void> change(AssetRecord a, String location, String holder, String status,
       String condition, String reason) async {
     if (a.status == 'Dihapuskan') throw const FormatException('Aset sudah dihapuskan.');
+    if (a.assignedEmployeeId.isNotEmpty) {
+      throw const FormatException(
+        'Aset masih ditugaskan kepada karyawan; selesaikan pengembalian lebih dulu.');
+    }
     if (location.trim().isEmpty || reason.trim().isEmpty) {
       throw const FormatException('Lokasi dan alasan wajib diisi.');
     }
