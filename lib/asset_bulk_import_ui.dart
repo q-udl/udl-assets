@@ -109,6 +109,13 @@ class _BulkImportDialogState extends State<BulkImportDialog> {
     }
   }
 
+  Future<void> requestClose() async {
+    if (busy) return;
+    final allowed = await assetAllowDiscard(
+      context, isDirty: preview != null);
+    if (allowed && mounted) Navigator.of(context).pop();
+  }
+
   Future<void> confirm() async {
     final current = preview;
     if (current == null || current.validCount == 0 || busy) return;
@@ -148,34 +155,52 @@ class _BulkImportDialogState extends State<BulkImportDialog> {
     final secondary = widget.kind == BulkImportKind.assets
       ? row.value('Kategori') + ' · ' + row.value('Lokasi Utama')
       : row.value('Kode Karyawan') + ' · ' + row.value('Unit');
+    final status = Text(row.valid ? 'Valid' : 'Perlu perbaikan',
+      textAlign: TextAlign.right,
+      style: TextStyle(
+        color: row.valid ? const Color(0xFF147B63) : danger,
+        fontWeight: FontWeight.w700, fontSize: 11));
+    final details = Column(
+      crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(description, maxLines: 2, overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontWeight: FontWeight.w700, fontSize: 12.5)),
+        if (secondary.trim().isNotEmpty)
+          Text(secondary, style: const TextStyle(
+            fontSize: 11, color: muted),
+            maxLines: 2, overflow: TextOverflow.ellipsis),
+        if (!row.valid) Padding(
+          padding: const EdgeInsets.only(top: 5),
+          child: Text(row.errors.join('; '),
+            style: const TextStyle(color: danger, fontSize: 11.5))),
+      ]);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 7),
-      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        SizedBox(width: 67, child: Text(
-          'Baris ' + row.excelRow.toString(),
-          style: const TextStyle(fontSize: 11.5, color: muted))),
-        Expanded(child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(description, maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontWeight: FontWeight.w700,
-                fontSize: 12.5)),
-            if (secondary.trim().isNotEmpty) Text(secondary,
-              style: const TextStyle(fontSize: 11, color: muted),
-              maxLines: 2, overflow: TextOverflow.ellipsis),
-            if (!row.valid) Padding(
-              padding: const EdgeInsets.only(top: 5),
-              child: Text(row.errors.join('; '),
-                style: const TextStyle(color: danger, fontSize: 11.5))),
-          ])),
-        const SizedBox(width: 12),
-        SizedBox(width: 105, child: Text(
-          row.valid ? 'Valid' : 'Perlu perbaikan',
-          textAlign: TextAlign.right,
-          style: TextStyle(color: row.valid
-            ? const Color(0xFF147B63) : danger,
-            fontWeight: FontWeight.w700, fontSize: 11))),
-      ]),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 9),
+      child: LayoutBuilder(builder: (context, constraints) {
+        if (constraints.maxWidth < 420) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(children: [
+                Expanded(child: Text('Baris ' + row.excelRow.toString(),
+                  style: const TextStyle(fontSize: 11.5, color: muted))),
+                status,
+              ]),
+              const SizedBox(height: 5),
+              details,
+            ]);
+        }
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(width: 67,
+              child: Text('Baris ' + row.excelRow.toString(),
+                style: const TextStyle(fontSize: 11.5, color: muted))),
+            Expanded(child: details),
+            const SizedBox(width: 12),
+            SizedBox(width: 105, child: status),
+          ]);
+      }),
     );
   }
 
