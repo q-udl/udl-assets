@@ -4,6 +4,7 @@ extension _AssetV4Detail on _AssetScreenState {
   Widget v4Detail(AssetRecord a) {
     final photos=store.photosFor(a.id);
     final primary=store.primaryPhotoFor(a.id);
+    final phone=MediaQuery.sizeOf(context).width<650;
     final pending=store.transfers.where((t)=>t.assetId==a.id &&
       t.state=='Menunggu Penerimaan').toList();
     return Column(crossAxisAlignment:CrossAxisAlignment.stretch,children:[
@@ -19,13 +20,48 @@ extension _AssetV4Detail on _AssetScreenState {
         ]),
         const SizedBox(height:10),
         Wrap(spacing:8,runSpacing:8,children:[
-          if(a.lifecycle=='Aktif' && a.status!='Dihapuskan')...[
+          if(a.lifecycle=='Aktif' && a.status!='Dihapuskan')
             primaryButton('Mutasi Aset',Icons.swap_horiz_rounded,()=>v4Transfer(a)),
-            outlineButton('Ubah Informasi',Icons.edit_outlined,()=>v4EditIdentity(a)),
-            outlineButton('Ubah Kondisi',Icons.build_outlined,()=>v4Condition(a)),
-            outlineButton('Ubah Status',Icons.flag_outlined,()=>v4Status(a)),
+          if (phone)
+            PopupMenuButton<String>(
+              key:const ValueKey('rv26-asset-actions'),
+              tooltip:'Tindakan Aset',
+              onSelected:(choice) {
+                if(choice=='identity') v4EditIdentity(a);
+                if(choice=='condition') v4Condition(a);
+                if(choice=='status') v4Status(a);
+                if(choice=='qr') v4QrDialog(a);
+              },
+              itemBuilder:(ctx)=>[
+                if(a.lifecycle=='Aktif' && a.status!='Dihapuskan') ...[
+                  const PopupMenuItem(value:'identity',child:Text('Ubah Informasi')),
+                  const PopupMenuItem(value:'condition',child:Text('Ubah Kondisi')),
+                  const PopupMenuItem(value:'status',child:Text('Ubah Status')),
+                ],
+                const PopupMenuItem(value:'qr',child:Text('Lihat QR')),
+              ],
+              child:Container(
+                height:38,
+                padding:const EdgeInsets.symmetric(horizontal:12),
+                decoration:BoxDecoration(
+                  color:Colors.white,borderRadius:BorderRadius.circular(9),
+                  border:Border.all(color:border)),
+                child:const Row(mainAxisSize:MainAxisSize.min,children:[
+                  Icon(Icons.more_horiz,color:blue,size:18),
+                  SizedBox(width:7),
+                  Text('Tindakan Lainnya',style:TextStyle(
+                    fontSize:12,color:blue,fontWeight:FontWeight.w600)),
+                ]),
+              ),
+            )
+          else ...[
+            if(a.lifecycle=='Aktif' && a.status!='Dihapuskan') ...[
+              outlineButton('Ubah Informasi',Icons.edit_outlined,()=>v4EditIdentity(a)),
+              outlineButton('Ubah Kondisi',Icons.build_outlined,()=>v4Condition(a)),
+              outlineButton('Ubah Status',Icons.flag_outlined,()=>v4Status(a)),
+            ],
+            outlineButton('Lihat QR',Icons.qr_code_2,()=>v4QrDialog(a)),
           ],
-          outlineButton('Lihat QR',Icons.qr_code_2,()=>v4QrDialog(a)),
         ]),
         if(pending.isNotEmpty)...[
           const Divider(height:28),
@@ -59,9 +95,10 @@ extension _AssetV4Detail on _AssetScreenState {
         const SizedBox(height:8),
         for(final e in store.events.where((e)=>e.assetId==a.id))
           ListTile(leading:Icon(v4EventIcon(e.type)),
-            title:Text(e.type),subtitle:Text(e.detail,maxLines:1,
-              overflow:TextOverflow.ellipsis),
-            trailing:Text(dateText(e.timestamp),
+            title:Text(e.type),subtitle:Text(phone
+              ? e.detail + ' · ' + dateText(e.timestamp) : e.detail,
+              maxLines:2,overflow:TextOverflow.ellipsis),
+            trailing:phone ? null : Text(dateText(e.timestamp),
               style:const TextStyle(fontSize:11,color:muted)),
             onTap:()=>v4EventDetail(e)),
       ])),
