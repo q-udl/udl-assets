@@ -130,6 +130,15 @@ void main() {
     expect(find.byKey(const ValueKey('rv28-import-dialog')), findsOneWidget);
     expect(find.text('Unduh Template'), findsOneWidget);
     expect(find.text('Upload Template'), findsOneWidget);
+    expect(find.byKey(const ValueKey('rv28-import-mobile-tools')),
+      findsOneWidget);
+    for (final key in <String>[
+      'rv22-download-template', 'rv22-upload-template',
+    ]) {
+      final rect = tester.getRect(find.byKey(ValueKey(key)));
+      expect(rect.width, greaterThan(300));
+      expect(rect.height, greaterThanOrEqualTo(44));
+    }
     expect(find.byKey(const ValueKey('rv28-import-confirm')), findsOneWidget);
     expect(tester.takeException(), isNull);
     await tester.tap(find.text('Batal').last);
