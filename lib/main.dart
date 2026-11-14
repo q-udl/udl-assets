@@ -1,4 +1,7 @@
 import 'dart:convert';
+import 'dart:typed_data';
+import 'package:excel/excel.dart' as xls;
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -28,6 +31,8 @@ part 'asset_location_ui.dart';
 part 'asset_lifecycle_operations.dart';
 part 'asset_lifecycle_ui.dart';
 part 'asset_navigation.dart';
+part 'asset_bulk_import.dart';
+part 'asset_bulk_import_ui.dart';
 part 'asset_v4_catalog.dart';
 part 'asset_v4_master.dart';
 part 'asset_v4_history.dart';
