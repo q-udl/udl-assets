@@ -43,11 +43,13 @@ class _V5ReturnFormState extends State<V5ReturnForm> {
     super.dispose();
   }
 
-  Future<void> uploadReturnPhoto(AssignedAssetLine line) async {
+  Future<void> uploadReturnPhoto(AssignedAssetLine line,
+      {BuildContext? anchorContext}) async {
     final asset = widget.store.assignmentAsset(line.assetId);
     if (asset == null) return;
     try {
-      final chosen = await AssetPhotoPicker.choose(context);
+      final chosen = await AssetPhotoPicker.choose(context,
+        anchorContext: anchorContext);
       if (chosen == null || !mounted) return;
       await widget.store.addPhoto(
         asset, chosen.bytes, chosen.fileName, 'Dokumentasi Kondisi',
@@ -199,11 +201,12 @@ class _V5ReturnFormState extends State<V5ReturnForm> {
                         onChanged: (value) { widget.onDirty?.call(); notesByLine[line.id] = value; },
                       ),
                       const SizedBox(height: 8),
-                      OutlinedButton.icon(
-                        onPressed: () => uploadReturnPhoto(line),
-                        icon: const Icon(Icons.add_a_photo_outlined, size: 17),
-                        label: const Text('Tambah Foto Kondisi Kembali'),
-                      ),
+                      Builder(builder:(photoAnchor)=>OutlinedButton.icon(
+                         onPressed: () => uploadReturnPhoto(line,
+                           anchorContext:photoAnchor),
+                         icon: const Icon(Icons.add_a_photo_outlined, size: 17),
+                         label: const Text('Tambah Foto Kondisi Kembali'),
+                       )),
                       const SizedBox(height: 6),
                       if (['Rusak','Kurang Baik'].contains(condition[line.id]))
                         const Padding(
