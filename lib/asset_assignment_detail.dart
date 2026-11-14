@@ -16,7 +16,7 @@ extension _AssignedAssetsDetail on _AssetScreenState {
             Text(batch.draftReference, style: const TextStyle(
               fontSize: 20, fontWeight: FontWeight.w800, color: ink)),
             const SizedBox(height: 4),
-            const Text('Referensi draf lokal · Bukan nomor BA resmi',
+            const Text('Referensi dokumen penugasan',
               style: TextStyle(fontSize: 11.5, color: muted)),
           ])),
           Text(batch.status, style: TextStyle(
@@ -53,7 +53,7 @@ extension _AssignedAssetsDetail on _AssetScreenState {
         ]),
         const SizedBox(height: 12),
         const Text(
-          'Penyerahan di aplikasi ini adalah pencatatan simulasi '
+          'Penyerahan di aplikasi ini adalah pencatatan '
           'oleh operator, bukan tanda tangan atau persetujuan karyawan '
           'yang terverifikasi.',
           style: TextStyle(fontSize: 12, color: muted)),
