@@ -130,12 +130,17 @@ void main() {
   test('RV030-12: registered physical items retain distinct asset identities',
       () async {
     final fixture = await createCustody();
-    final existing = fixture.store.assets
-      .where((a) => a.id != fixture.asset.id &&
-        fixture.store.canAssignAsset(a)).first;
-    final codes = [fixture.asset.code, existing.code];
-    expect(codes.toSet(), hasLength(2));
-    expect(fixture.asset.id, isNot(existing.id));
+    final registered = await fixture.store.registerUnits(
+      quantity: 2, name: 'Kursi Kantor',
+      category: 'Furnitur', subcategory: 'Kursi',
+      assetType: 'Kursi Kerja', brand: 'Lokal', model: '',
+      serial: '', location: 'Gudang Pusat', holder: '',
+      status: 'Tersedia', condition: 'Baik',
+      cost: null, acquisitionDate: '');
+    final codes = [fixture.asset.code, ...registered.map((a) => a.code)];
+    expect(codes.toSet(), hasLength(3));
+    expect(registered[0].id, isNot(registered[1].id));
+    expect(fixture.asset.id, isNot(registered[0].id));
     expect(fixture.batch.lines.single.assetId, fixture.asset.id);
     expect(fixture.batch.lines.single.accessories, isEmpty);
   });
