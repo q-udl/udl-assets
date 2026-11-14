@@ -22,6 +22,13 @@ void main() => runApp(const AssetApp());
 
 const navy = Color(0xFF142D4E);
 const bg = Color(0xFFF4F7FB);
+const ink = Color(0xFF172C47);
+const muted = Color(0xFF718199);
+const border = Color(0xFFE3EAF2);
+const blue = Color(0xFF2766A2);
+const danger = Color(0xFFC04D53);
+const amber = Color(0xFFB97813);
+
 const uuid = Uuid();
 
 class AssetApp extends StatefulWidget {
