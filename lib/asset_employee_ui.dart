@@ -4,7 +4,7 @@ extension _AssetEmployeeScreens on _AssetScreenState {
   Widget v5Employees() {
     final queryText = v5EmployeeSearch.trim().toLowerCase();
     final list = store.employees.where((e) {
-      return [e.code, e.name, e.unit, e.department,
+      return [e.name, e.unit, e.department,
         e.jobTitle, e.workLocation].join(' ').toLowerCase()
           .contains(queryText) &&
         (v5EmployeeFilter == 'Semua' ||
@@ -22,7 +22,7 @@ extension _AssetEmployeeScreens on _AssetScreenState {
               controller: _employeeSearchController,
               decoration: const InputDecoration(
                 prefixIcon: Icon(Icons.search),
-                hintText: 'Cari nama, kode, unit, jabatan...'),
+                hintText: 'Cari nama, unit, departemen, jabatan...'),
               onChanged: (value) => v4Change(
                 () => v5EmployeeSearch = value));
             final status = filterDropdown(v5EmployeeFilter,
@@ -52,7 +52,7 @@ extension _AssetEmployeeScreens on _AssetScreenState {
                     : 'Karyawan tidak ditemukan',
                   style: const TextStyle(fontWeight: FontWeight.w700)),
                 const SizedBox(height: 6),
-                const Text('Tambahkan karyawan simulasi atau ubah filter.',
+                const Text('Tambahkan karyawan atau ubah filter.',
                   style: TextStyle(fontSize: 12, color: muted)),
               ]),
             )
@@ -63,8 +63,7 @@ extension _AssetEmployeeScreens on _AssetScreenState {
                   leading: const CircleAvatar(
                     child: Icon(Icons.person_outline)),
                   title: Text(e.name),
-                  subtitle: Text(e.code + ' · ' + e.jobTitle +
-                    ' · ' + e.unit),
+                  subtitle: Text(e.jobTitle + ' · ' + e.unit),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => v4Change(() {
                     selectedEmployee = e;
@@ -77,9 +76,9 @@ extension _AssetEmployeeScreens on _AssetScreenState {
               key: const ValueKey('employee-master-table'),
               defaultVerticalAlignment: TableCellVerticalAlignment.middle,
               columnWidths: const {
-                0: FlexColumnWidth(2.7), 1: FlexColumnWidth(1.45),
-                2: FlexColumnWidth(1.8), 3: FlexColumnWidth(1.65),
-                4: FlexColumnWidth(1.25), 5: FlexColumnWidth(0.5),
+                0: FlexColumnWidth(2.7), 1: FlexColumnWidth(1.8),
+                 2: FlexColumnWidth(1.65), 3: FlexColumnWidth(1.25),
+                 4: FlexColumnWidth(0.5),
               },
               children: [
                 TableRow(decoration: const BoxDecoration(
@@ -87,7 +86,7 @@ extension _AssetEmployeeScreens on _AssetScreenState {
                   border: Border(bottom: BorderSide(color: border))),
                   children: [
                     for (final text in [
-                      'KARYAWAN','KODE','UNIT / DEPARTEMEN','JABATAN',
+                      'KARYAWAN','UNIT / DEPARTEMEN','JABATAN',
                       'STATUS','',
                     ]) _v5EmployeeCell(Text(text, style: const TextStyle(
                       fontSize: 10.5, fontWeight: FontWeight.w800,
@@ -103,9 +102,6 @@ extension _AssetEmployeeScreens on _AssetScreenState {
                       _v5EmployeeCell(Text(employee.name,
                         maxLines: 2, overflow: TextOverflow.ellipsis,
                         style: const TextStyle(fontWeight: FontWeight.w700)),
-                        employee: employee),
-                      _v5EmployeeCell(Text(employee.code,
-                        style: const TextStyle(color: blue)),
                         employee: employee),
                       _v5EmployeeCell(Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -179,8 +175,8 @@ extension _AssetEmployeeScreens on _AssetScreenState {
               children: [
                 Text(employee.name, style: const TextStyle(
                   color: ink, fontSize: 21, fontWeight: FontWeight.w800)),
-                Text(employee.code, style: const TextStyle(
-                  color: blue, fontSize: 12)),
+                Text(employee.jobTitle + ' · ' + employee.unit,
+                  style: const TextStyle(color: muted, fontSize: 12)),
               ],
             )),
             Text(employee.active ? 'Aktif' : 'Tidak Aktif',
