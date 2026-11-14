@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -146,6 +147,66 @@ void main() {
     expect(find.byKey(const ValueKey('rv28-import-dialog')), findsNothing);
   });
 
+
+
+  for (final size in <Size>[
+    const Size(320, 568),
+    const Size(375, 812),
+    const Size(390, 844),
+    const Size(430, 932),
+  ]) {
+    testWidgets('RV28 photo preview responsive at ' +
+        size.width.toInt().toString() + 'px', (tester) async {
+      await setSize(tester, size);
+      final photo = base64Decode(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8'
+        '/x8AAwMCAO2/TnYAAAAASUVORK5CYII=');
+      AssetPhotoPicker.debugCameraProbe = () async => false;
+      AssetPhotoPicker.debugReadPhoto = (source) async {
+        expect(source, AssetPhotoSource.file);
+        return SelectedAssetPhoto(photo, 'uji-foto.png', photo.length);
+      };
+      addTearDown(() {
+        AssetPhotoPicker.debugCameraProbe = null;
+        AssetPhotoPicker.debugReadPhoto = null;
+      });
+      await tester.pumpWidget(MaterialApp(home: Scaffold(
+        body: Builder(builder: (ctx) => TextButton(
+          onPressed: () { AssetPhotoPicker.choose(ctx); },
+          child: const Text('Buka Sumber Foto'))))));
+      await tester.tap(find.text('Buka Sumber Foto'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('rv25-file')));
+      await tester.pumpAndSettle();
+      expect(find.text('Pratinjau Foto'), findsOneWidget);
+      for (final id in ['rv25-use-photo', 'rv25-pick-again']) {
+        final rect = tester.getRect(find.byKey(ValueKey(id)));
+        expect(rect.width, greaterThan(size.width * .70));
+        expect(rect.height, greaterThanOrEqualTo(44));
+      }
+      expect(tester.takeException(), isNull);
+      await tester.ensureVisible(find.byKey(const ValueKey('rv25-use-photo')));
+      await tester.tap(find.byKey(const ValueKey('rv25-use-photo')));
+      await tester.pumpAndSettle();
+      expect(find.text('Pratinjau Foto'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  testWidgets('RV28 narrow 320px import keeps mobile actions visible',
+      (tester) async {
+    await setSize(tester, const Size(320, 568));
+    await tester.pumpWidget(const AssetApp());
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Impor Data Aset').first);
+    await tester.tap(find.text('Impor Data Aset').first);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('rv28-import-dialog')), findsOneWidget);
+    expect(find.byKey(const ValueKey('rv28-import-mobile-tools')),
+      findsOneWidget);
+    expect(find.byKey(const ValueKey('rv28-import-confirm')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('RV28 keyboard inset keeps employee modal actions reachable',
       (tester) async {
