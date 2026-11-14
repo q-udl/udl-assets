@@ -145,7 +145,7 @@ extension _AssetV4History on _AssetScreenState {
           ],
           const SizedBox(height: 14),
           const Text(
-            'Pelaku belum terverifikasi (prototipe tanpa autentikasi).',
+            'Identitas pelaku belum dapat diverifikasi karena autentikasi belum tersedia.',
             style: TextStyle(fontSize: 12, color: muted)),
         ],
       ),
