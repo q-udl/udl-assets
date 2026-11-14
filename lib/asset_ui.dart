@@ -1,14 +1,121 @@
 part of 'main.dart';
 
 // UDL Assets local preview — UI layer. Data model and persistence remain in main.dart.
-class _AssetScreenState extends State<AssetScreen> {
-  int page = 0;
+class _AssetScreenState extends State<AssetScreen> with WidgetsBindingObserver {
+  final GlobalKey<ScaffoldState> _shellKey = GlobalKey<ScaffoldState>();
+  final GlobalKey<_V4RegistrationPageState> _registrationKey =
+    GlobalKey<_V4RegistrationPageState>();
+  final GlobalKey<_V5AssignmentFormState> _assignmentKey =
+    GlobalKey<_V5AssignmentFormState>();
+  final GlobalKey<_V5ReturnFormState> _returnKey =
+    GlobalKey<_V5ReturnFormState>();
+  final TextEditingController _assetSearchController = TextEditingController();
+  final TextEditingController _historySearchController = TextEditingController();
+  final TextEditingController _taxonomySearchController = TextEditingController();
+  final TextEditingController _locationSearchController = TextEditingController();
+  final TextEditingController _employeeSearchController = TextEditingController();
+  final TextEditingController _assignmentSearchController = TextEditingController();
+  final ScrollController _contentScroll = ScrollController();
+  final List<Map<String, dynamic>> _navigationHistory = [];
+  bool _restoringHistory = false, _formDirty = false;
+  bool _sidebarCollapsed = false;
+  bool _scanQrAvailable = false;
+
+  Future<void> _checkQrCamera() async {
+    final available = await camera_probe.detectAvailableWebcam();
+    if (mounted && _scanQrAvailable != (available == true)) {
+      setState(() => _scanQrAvailable = available == true);
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _checkQrCamera();
+  }
+  String? _hoveredTableRow;
+
+  void _setTableHover(String? value) {
+    if (_hoveredTableRow == value) return;
+    setState(() => _hoveredTableRow = value);
+  }
+
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _restoreSidebarPreference();
+    _checkQrCamera();
+  }
+
+  Future<void> _restoreSidebarPreference() async {
+    final preferences = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _sidebarCollapsed =
+          preferences.getBool('udl_assets_sidebar_collapsed') ?? false;
+      });
+    }
+  }
+
+  void _toggleSidebar() {
+    setState(() => _sidebarCollapsed = !_sidebarCollapsed);
+    SharedPreferences.getInstance().then((preferences) =>
+      preferences.setBool('udl_assets_sidebar_collapsed', _sidebarCollapsed));
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _contentScroll.dispose();
+    _assetSearchController.dispose();
+    _historySearchController.dispose();
+    _taxonomySearchController.dispose();
+    _locationSearchController.dispose();
+    _employeeSearchController.dispose();
+    _assignmentSearchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void setState(VoidCallback action) {
+    final oldRoute = _viewRouteKey();
+    final oldState = _captureView();
+    super.setState(action);
+    if (!_restoringHistory && oldRoute != _viewRouteKey()) {
+      _navigationHistory.add(oldState);
+      if (_navigationHistory.length > 80) _navigationHistory.removeAt(0);
+      _formDirty = false;
+      _scrollAfterRoute(0);
+    }
+  }
+
+  int page = 1;
   String query = '';
+  String v4LocationFilter = 'Semua lokasi';
+  String v4LocationAreaFilter = '', v4LocationSpotFilter = '';
+  String v6SiteId = '', v6AreaId = '', v6LocationSearch = '';
+  String v4ConditionFilter = 'Semua kondisi';
+  bool v4NoPic = false, v4NoPhoto = false, v4Attention = false,
+    v4NeedsClassification = false, v4SortAscending = true;
+  String v4Sort = 'Kode';
+  int v4PerPage = 20, v4CatalogPage = 0;
+  String v4CategoryCode = '03', v4SubcategoryId = '', v4TaxonomySearch = '';
+  String v4HistoryQuery = '', v4HistoryType = 'Semua aktivitas',
+    v4HistoryPeriod = 'Semua periode';
+  int v4HistoryPerPage = 20, v4HistoryPage = 0;
   String statusFilter = 'Semua status';
   String categoryFilter = 'Semua kategori';
   AssetRecord? selected;
+  AssetEmployee? selectedEmployee;
+  AssetAssignment? selectedAssignment;
+  String v5EmployeeSearch = '', v5EmployeeFilter = 'Semua';
+  int v5EmployeePage = 0, v5EmployeePerPage = 20;
+  String v5AssignmentSearch = '', v5AssignmentFilter = 'Semua';
+  int v5AssignmentPage = 0, v5AssignmentPerPage = 20;
   String? viewedPhotoId;
   void repaint() => setState(() {});
+  void v4Change(VoidCallback callback) => setState(callback);
 
   AssetStore get store => widget.store;
 
@@ -21,13 +128,22 @@ class _AssetScreenState extends State<AssetScreen> {
   static const amber = Color(0xFFB97813);
   static const danger = Color(0xFFC04D53);
 
-  final labels = const ['Ringkasan', 'Daftar Aset', 'Master Klasifikasi', 'Riwayat', 'Pengaturan'];
+  final labels = const ['Ringkasan', 'Daftar Aset', 'Master Klasifikasi',
+    'Riwayat', 'Pengaturan', 'Master Lokasi', 'Registrasi Aset',
+    'Assigned Assets', 'Master Karyawan', 'Tugaskan Aset',
+    'Pengembalian Aset'];
   final icons = const [
     Icons.space_dashboard_outlined,
     Icons.inventory_2_outlined,
     Icons.account_tree_outlined,
     Icons.history_rounded,
     Icons.tune_rounded,
+    Icons.place_outlined,
+    Icons.add_box_outlined,
+    Icons.assignment_ind_outlined,
+    Icons.people_alt_outlined,
+    Icons.add_task_outlined,
+    Icons.assignment_return_outlined,
   ];
 
   void notify(String message) {
@@ -77,12 +193,68 @@ class _AssetScreenState extends State<AssetScreen> {
       a.status == 'Dalam Perbaikan' || a.status == 'Hilang' ||
       a.condition == 'Rusak' || a.condition == 'Kurang Baik';
 
-  void navigate(int index) {
+  void _clearAssetFilterValues() {
+    query = '';
+    _assetSearchController.clear();
+    statusFilter = 'Semua status';
+    categoryFilter = 'Semua kategori';
+    v4LocationFilter = 'Semua lokasi';
+    v4LocationAreaFilter = ''; v4LocationSpotFilter = '';
+    v4ConditionFilter = 'Semua kondisi';
+    v4NoPic = false;
+    v4NoPhoto = false;
+    v4Attention = false;
+    v4NeedsClassification = false;
+    v4CatalogPage = 0;
+  }
+
+  void resetAssetFilters() {
+    setState(_clearAssetFilterValues);
+  }
+
+  bool get hasAssetFilters =>
+    query.trim().isNotEmpty ||
+    statusFilter != 'Semua status' ||
+    categoryFilter != 'Semua kategori' ||
+    v4LocationFilter != 'Semua lokasi' ||
+    v4LocationAreaFilter.isNotEmpty || v4LocationSpotFilter.isNotEmpty ||
+    v4ConditionFilter != 'Semua kondisi' ||
+    v4NoPic || v4NoPhoto || v4Attention || v4NeedsClassification;
+
+  void openAssetListFromMaster({
+    String? category,
+    String? location,
+    String? areaId,
+    String? spotId,
+    String? type,
+  }) {
     setState(() {
+      _clearAssetFilterValues();
+      page = 1;
+      selected = null;
+      categoryFilter = category ?? 'Semua kategori';
+      v4LocationFilter = location ?? 'Semua lokasi';
+      v4LocationAreaFilter = areaId ?? '';
+      v4LocationSpotFilter = spotId ?? '';
+      query = type ?? '';
+      _assetSearchController.text = query;
+    });
+  }
+
+  void navigate(int index) async {
+    if (!await _mayLeaveUnsavedForm() || !mounted) return;
+    setState(() {
+      if (index == 1 && page != 1) _clearAssetFilterValues();
       page = index;
       selected = null;
+      selectedEmployee = null;
+      selectedAssignment = null;
       viewedPhotoId = null;
     });
+  }
+
+  void backFromCurrent() {
+    backFromHistory();
   }
 
   Widget surface({required Widget child, EdgeInsetsGeometry padding = const EdgeInsets.all(20)}) {
@@ -94,7 +266,7 @@ class _AssetScreenState extends State<AssetScreen> {
         border: Border.all(color: border),
         borderRadius: BorderRadius.circular(16),
       ),
-      child: child,
+      child: Material(color: Colors.transparent, child: child),
     );
   }
 
@@ -111,25 +283,34 @@ class _AssetScreenState extends State<AssetScreen> {
     ]);
   }
 
-  Widget badge(String value, {bool compact = false}) {
-    final Color tint;
+  Widget badge(String value, {bool compact = false, Color? toneColor}) {
+    Color tint;
     switch (value) {
       case 'Digunakan':
+      case 'Aktif':
+      case 'Selesai':
         tint = green;
         break;
       case 'Tersedia':
         tint = blue;
         break;
       case 'Dalam Perbaikan':
+      case 'Menunggu Penerimaan': // Transfer workflow remains unchanged.
+      case 'Menunggu Serah Terima':
         tint = amber;
         break;
       case 'Hilang':
+      case 'Tidak Aktif':
+      case 'Dilepas':
       case 'Dihapuskan':
+      case 'Ditolak': // Transfer workflow remains unchanged.
+      case 'Dibatalkan':
         tint = danger;
         break;
       default:
         tint = muted;
     }
+    tint = toneColor ?? tint;
     return Container(
       padding: EdgeInsets.symmetric(horizontal: compact ? 9 : 11, vertical: compact ? 5 : 7),
       decoration: BoxDecoration(color: tint.withValues(alpha: 0.09), borderRadius: BorderRadius.circular(24)),
@@ -144,39 +325,76 @@ class _AssetScreenState extends State<AssetScreen> {
     );
   }
 
-  Widget primaryButton(String label, IconData icon, VoidCallback action) {
-    return FilledButton.icon(
-      style: FilledButton.styleFrom(
-        backgroundColor: blue,
-        foregroundColor: Colors.white,
-        minimumSize: const Size(0, 43),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
+  Widget primaryButton(String label, IconData icon, VoidCallback action,
+      {AssetActionTone tone = AssetActionTone.primary}) =>
+    FilledButton.icon(
+      style: assetFilledStyle(tone),
       onPressed: action,
       icon: Icon(icon, size: 18),
-      label: Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
+      label: Text(label,
+        style: const TextStyle(fontWeight: FontWeight.w700)),
     );
-  }
 
-  Widget outlineButton(String label, IconData icon, VoidCallback action) {
-    return OutlinedButton.icon(
-      style: OutlinedButton.styleFrom(
-        foregroundColor: blue,
-        minimumSize: const Size(0, 41),
-        side: const BorderSide(color: border),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
+  Widget outlineButton(String label, IconData icon, VoidCallback action,
+      {AssetActionTone tone = AssetActionTone.informational}) =>
+    OutlinedButton.icon(
+      style: assetOutlinedStyle(tone),
       onPressed: action,
       icon: Icon(icon, size: 18),
       label: Text(label),
     );
+
+  Widget _appIdentity({required bool condensed}) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(condensed ? 15 : 14, 14,
+        condensed ? 15 : 12, 10),
+      child: Row(
+        mainAxisAlignment: condensed
+          ? MainAxisAlignment.center : MainAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: Image.asset(
+              'assets/branding/udl_assets_icon.png',
+              key: const ValueKey('udl-assets-logo'),
+              width: 38,
+              height: 38,
+              fit: BoxFit.cover,
+              filterQuality: FilterQuality.medium,
+              semanticLabel: 'Logo UDL Assets',
+            ),
+          ),
+          if (!condensed) ...[
+            const SizedBox(width: 8),
+            Expanded(child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                Text('Manajemen Aset', maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontWeight: FontWeight.w900,
+                    fontSize: 14, color: ink)),
+                SizedBox(height: 3),
+                Text('UD. LUTHFI', style: TextStyle(
+                  fontSize: 12, color: muted)),
+              ],
+            )),
+          ],
+        ],
+      ),
+    );
   }
 
-  Widget _sideItem(int index, {bool inDrawer = false}) {
-    final active = page == index && selected == null;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
+  Widget _sideItem(int index, {
+    bool inDrawer = false,
+    bool? condensedOverride,
+  }) {
+    final active = page == index;
+    final condensed = condensedOverride ?? (_sidebarCollapsed && !inDrawer);
+    final denseDesktop = !inDrawer;
+    final item = Padding(
+      padding: EdgeInsets.symmetric(
+        vertical: denseDesktop ? 2 : 3,
+        horizontal: condensed ? 9 : (denseDesktop ? 10 : 12)),
       child: Material(
         color: active ? lightBlue : Colors.transparent,
         borderRadius: BorderRadius.circular(11),
@@ -187,114 +405,195 @@ class _AssetScreenState extends State<AssetScreen> {
             if (inDrawer) Navigator.of(context).pop();
           },
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            key: ValueKey('udl-sidebar-menu-$index'),
+            height: denseDesktop ? 38 : 43,
+            padding: EdgeInsets.symmetric(
+              horizontal: condensed ? 0 : (denseDesktop ? 11 : 13)),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(11),
-              border: active ? Border.all(color: const Color(0xFFDCEAF9)) : null,
+              border: active ? Border.all(
+                color: const Color(0xFFDCEAF9)) : null,
             ),
-            child: Row(children: [
-              Icon(icons[index], size: 19, color: active ? blue : const Color(0xFF697B91)),
-              const SizedBox(width: 13),
-              Expanded(child: Text(labels[index], style: TextStyle(
-                fontSize: 13.5, fontWeight: active ? FontWeight.w800 : FontWeight.w600,
-                color: active ? blue : const Color(0xFF54667A)))),
-              if (index == 1) Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                decoration: BoxDecoration(color: active ? Colors.white : const Color(0xFFF0F3F8),
-                  borderRadius: BorderRadius.circular(6)),
-                child: Text(store.assets.length.toString(), style: const TextStyle(fontSize: 11, color: muted)),
-              ),
-            ]),
+            child: Row(
+              mainAxisAlignment: condensed
+                ? MainAxisAlignment.center : MainAxisAlignment.start,
+              children: [
+                Icon(icons[index], size: denseDesktop ? 18 : 19,
+                  color: active ? blue : const Color(0xFF697B91)),
+                if (!condensed) ...[
+                  SizedBox(width: denseDesktop ? 10 : 12),
+                  Expanded(child: Text(labels[index],
+                    maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 13.5,
+                      fontWeight: active
+                        ? FontWeight.w800 : FontWeight.w600,
+                      color: active ? blue : const Color(0xFF54667A)))),
+                  if (index == 1) Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 7, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: blue,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(store.assets.length.toString(),
+                      style: const TextStyle(fontSize: 11,
+                        color: Colors.white, fontWeight: FontWeight.w800)),
+                  ),
+                ],
+              ],
+            ),
           ),
+        ),
+      ),
+    );
+    return condensed
+      ? Tooltip(message: labels[index], preferBelow: false, child: item)
+      : item;
+  }
+
+  Widget _sidebarSectionLabel(String label, {
+    bool condensed = false, bool inDrawer = false,
+  }) {
+    if (condensed) {
+      return const Divider(
+        height: 18, indent: 17, endIndent: 17, color: border);
+    }
+    return Padding(
+      padding: inDrawer
+        ? const EdgeInsets.fromLTRB(23, 17, 12, 8)
+        : const EdgeInsets.fromLTRB(20, 11, 12, 5),
+      child: Text(label, style: const TextStyle(
+        color: Color(0xFF9AA8B9), fontSize: 10,
+        letterSpacing: 1.5, fontWeight: FontWeight.w800)),
+    );
+  }
+
+  Widget _accountFooter({required bool condensed}) {
+    return Container(
+      margin: EdgeInsets.fromLTRB(condensed ? 9 : 10, 7,
+        condensed ? 9 : 10, 11),
+      padding: EdgeInsets.all(condensed ? 8 : 9),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF6F9FD),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: border),
+      ),
+      child: Tooltip(
+        message: 'Sesi tanpa autentikasi · penyimpanan browser',
+        child: Row(
+          mainAxisAlignment: condensed
+            ? MainAxisAlignment.center : MainAxisAlignment.start,
+          children: [
+            const Icon(Icons.account_circle_outlined,
+              color: blue, size: 25),
+            if (!condensed) ...[
+              const SizedBox(width: 9),
+              Expanded(child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Text('Mode Lokal', maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontWeight: FontWeight.w700,
+                      fontSize: 12, color: ink)),
+                  SizedBox(height: 3),
+                  Text('UDL Assets · v0.8.0',
+                    style: TextStyle(fontSize: 11, color: muted)),
+                ],
+              )),
+            ],
+          ],
         ),
       ),
     );
   }
 
   Widget sidebar({bool inDrawer = false}) {
-    return Container(
-      color: Colors.white,
+    return LayoutBuilder(builder: (context, available) {
+      // During width animation, keep icon-only content until there is
+      // enough physical room for the expanded labels.
+      final condensed = !inDrawer && available.maxWidth < 184;
+      return Container(
+      key: const ValueKey('udl-sidebar-panel'),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(right: BorderSide(color: border)),
+      ),
       child: SafeArea(
-        top: false,
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const SizedBox(height: 24),
-          const Padding(
-            padding: EdgeInsets.only(left: 22, right: 16, bottom: 12),
-            child: Text('MENU UTAMA', style: TextStyle(
-              fontSize: 10, letterSpacing: 1.7, color: Color(0xFF9AA8B9), fontWeight: FontWeight.w800)),
-          ),
-          Padding(padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Column(children: [_sideItem(0, inDrawer: inDrawer),
-              _sideItem(1, inDrawer: inDrawer), _sideItem(3, inDrawer: inDrawer)])), 
-          const SizedBox(height: 18),
-          const Padding(
-            padding: EdgeInsets.only(left: 22, right: 16, bottom: 12),
-            child: Text('SISTEM', style: TextStyle(
-              fontSize: 10, letterSpacing: 1.7, color: Color(0xFF9AA8B9), fontWeight: FontWeight.w800)),
-          ),
-          Padding(padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Column(children: [
-              _sideItem(2, inDrawer: inDrawer),
-              _sideItem(4, inDrawer: inDrawer),
-            ])), 
-          const Spacer(),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-            child: Container(
-              padding: const EdgeInsets.all(13),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF6F9FD),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: border),
-              ),
-              child: Row(children: [
-                Container(width: 8, height: 8,
-                  decoration: const BoxDecoration(color: green, shape: BoxShape.circle)),
-                const SizedBox(width: 10),
-                const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('Pratinjau Lokal', style: TextStyle(fontSize: 12, color: ink, fontWeight: FontWeight.w700)),
-                  SizedBox(height: 3),
-                  Text('UDL Assets · v0.3.0', style: TextStyle(fontSize: 11, color: muted)),
-                ])),
-              ]),
-            ),
-          ),
-        ]),
+        top: true, bottom: true,
+        child: Column(
+          children: [
+            _appIdentity(condensed: condensed),
+            const Divider(height: 1, color: border),
+            Expanded(child: ListView(
+              padding: EdgeInsets.only(top: inDrawer ? 8 : 4),
+              children: [
+                _sidebarSectionLabel('MENU UTAMA',
+                  condensed: condensed, inDrawer: inDrawer),
+                _sideItem(1, inDrawer: inDrawer, condensedOverride: condensed),
+                _sideItem(7, inDrawer: inDrawer, condensedOverride: condensed),
+                _sideItem(3, inDrawer: inDrawer, condensedOverride: condensed),
+                SizedBox(height: inDrawer ? 7 : 3),
+                _sidebarSectionLabel('MASTER DATA',
+                  condensed: condensed, inDrawer: inDrawer),
+                _sideItem(2, inDrawer: inDrawer, condensedOverride: condensed),
+                _sideItem(5, inDrawer: inDrawer, condensedOverride: condensed),
+                _sideItem(8, inDrawer: inDrawer, condensedOverride: condensed),
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: condensed ? 15 : (inDrawer ? 18 : 14),
+                    vertical: inDrawer ? 10 : 7),
+                  child: const Divider(height: 1, color: border),
+                ),
+                _sideItem(4, inDrawer: inDrawer, condensedOverride: condensed),
+              ],
+            )),
+            _accountFooter(condensed: condensed),
+          ],
+        ),
       ),
-    );
-  }
-
-  Widget appHeader() {
-    return Row(children: [
-      Container(
-        width: 34, height: 34,
-        decoration: BoxDecoration(color: const Color(0xFF2A547F), borderRadius: BorderRadius.circular(9)),
-        child: const Center(child: Text('L', style: TextStyle(
-          color: Colors.white, fontSize: 19, fontWeight: FontWeight.w900))),
-      ),
-      const SizedBox(width: 12),
-      const Flexible(child: Text('UD. LUTHFI', overflow: TextOverflow.ellipsis,
-        style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800))),
-      const SizedBox(width: 12),
-      Container(width: 1, height: 22, color: Colors.white24),
-      const SizedBox(width: 12),
-      const Flexible(child: Text('Manajemen Aset', overflow: TextOverflow.ellipsis,
-        style: TextStyle(color: Color(0xFFD8E4F1), fontSize: 14, fontWeight: FontWeight.w600))),
-    ]);
+      );
+    });
   }
 
   Widget titleArea() {
     final title = selected != null ? 'Detail Aset' :
+      selectedEmployee != null ? 'Detail Karyawan' :
+      (selectedAssignment != null && page == 7) ? 'Detail Penugasan' :
       page == 0 ? 'Ringkasan Aset' : labels[page];
     final description = selected != null ? 'Informasi, posisi, dan jejak aktivitas aset' :
+      selectedEmployee != null ? 'Aset yang dikuasai dan riwayat penugasan karyawan.' :
+      (selectedAssignment != null && page == 7) ? 'Serah terima, pengembalian, dan dokumen terkait.' :
+      page == 7 ? 'Pengendalian penugasan aset kepada karyawan.' :
+      page == 8 ? 'Data referensi karyawan untuk penugasan aset.' :
+      page == 9 ? 'Pilih karyawan dan beberapa aset untuk diserahkan.' :
+      page == 10 ? 'Pemeriksaan dan pengembalian aset secara sebagian atau seluruhnya.' :
       page == 0 ? 'Pantau kondisi dan distribusi aset perusahaan dari satu tempat.' :
       page == 1 ? 'Temukan, registrasikan, dan kelola seluruh inventaris perusahaan.' :
       page == 2 ? 'Kelola kategori, subkategori, dan jenis aset operasional.' :
       page == 3 ? 'Lacak aktivitas dan perubahan sepanjang siklus hidup aset.' :
-      'Kelola data simulasi dan standar identitas aset.';
-    final isMobile = MediaQuery.sizeOf(context).width < 650;
+      page == 5 ? 'Kelola lokasi penempatan aset.' :
+      page == 6 ? 'Registrasikan aset satuan atau beberapa unit sekaligus.' :
+      'Kelola data dan standar identitas aset.';
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isMobile = screenWidth < 650;
+    // QR scanning is an asset lookup action, never a global page action.
+    final showAssetScanner = assetQrScanVisible(
+      cameraAvailable: _scanQrAvailable,
+      page: page,
+      showingAssetDetail: selected != null,
+    );
+    final stackedActions = isMobile ||
+      (page == 1 && selected == null && screenWidth < 1120);
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(children: [
+        if (MediaQuery.sizeOf(context).width < 920) ...[
+          IconButton(
+            tooltip: 'Buka Menu',
+            icon: const Icon(Icons.menu_rounded, color: ink),
+            onPressed: () => _shellKey.currentState?.openDrawer(),
+          ),
+          const SizedBox(width: 4),
+        ],
         const Icon(Icons.home_outlined, size: 14, color: muted),
         const SizedBox(width: 7),
         const Text('ASET PERUSAHAAN', style: TextStyle(fontSize: 10.5,
@@ -306,17 +605,43 @@ class _AssetScreenState extends State<AssetScreen> {
             fontWeight: FontWeight.w800, letterSpacing: 1.0))),
       ]),
       const SizedBox(height: 15),
-      if (isMobile) ...[
+      if (stackedActions) ...[
+        if (_navigationHistory.isNotEmpty) ...[
+          outlineButton('Kembali', Icons.arrow_back_rounded, backFromCurrent),
+          const SizedBox(height: 10),
+        ],
         Text(title, style: const TextStyle(fontSize: 25, fontWeight: FontWeight.w800, color: ink)),
         const SizedBox(height: 5),
         Text(description, style: const TextStyle(fontSize: 13, color: muted)),
         const SizedBox(height: 12),
-        if (selected != null)
-          outlineButton('Kembali', Icons.arrow_back_rounded, () => setState(() => selected = null)),
         if (selected == null && page == 1)
-          primaryButton('Tambah Aset', Icons.add_rounded, register),
+          Wrap(spacing: 9, runSpacing: 9, children: [
+            if (showAssetScanner)
+              outlineButton('Scan QR Code', Icons.qr_code_scanner_outlined,
+                v4ScanQrCode),
+            outlineButton('Impor Data Aset', Icons.upload_file_outlined,
+              () => v22OpenImport(BulkImportKind.assets)),
+            primaryButton('Tambah Aset', Icons.add_rounded,
+              () => setState(() => page = 6)),
+          ]),
+        if (selectedEmployee == null && page == 8)
+          Wrap(spacing: 9, runSpacing: 9, children: [
+            outlineButton('Impor Data Karyawan', Icons.upload_file_outlined,
+              () => v22OpenImport(BulkImportKind.employees)),
+            primaryButton('Tambah Karyawan',
+              Icons.person_add_alt_1_outlined, () => v5EditEmployee()),
+          ]),
+          if (selected == null && selectedAssignment == null && page == 7)
+            primaryButton('Tugaskan Aset', Icons.add_rounded,
+              () => setState(() => page = 9)),
       ] else
         Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+          if (_navigationHistory.isNotEmpty) ...[
+            IconButton(tooltip: 'Kembali',
+              onPressed: backFromCurrent,
+              icon: const Icon(Icons.arrow_back_rounded, color: blue)),
+            const SizedBox(width: 9),
+          ],
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(title, style: const TextStyle(fontSize: 27, fontWeight: FontWeight.w800,
               letterSpacing: -0.5, color: ink)),
@@ -324,19 +649,38 @@ class _AssetScreenState extends State<AssetScreen> {
             Text(description, style: const TextStyle(fontSize: 13, color: muted)),
           ])),
           const SizedBox(width: 14),
-          if (selected != null)
-            outlineButton('Kembali', Icons.arrow_back_rounded, () => setState(() => selected = null)),
-          if (selected == null && page == 1)
-            primaryButton('Tambah Aset', Icons.add_rounded, register),
+          if (selected == null && page == 1) ...[
+            if (showAssetScanner) ...[
+              outlineButton('Scan QR Code', Icons.qr_code_scanner_outlined,
+                v4ScanQrCode),
+              const SizedBox(width: 9),
+            ],
+            outlineButton('Impor Data Aset', Icons.upload_file_outlined,
+              () => v22OpenImport(BulkImportKind.assets)),
+            const SizedBox(width: 9),
+            primaryButton('Tambah Aset', Icons.add_rounded,
+              () => setState(() => page = 6)),
+          ],
+          if (selectedEmployee == null && page == 8) ...[
+            outlineButton('Impor Data Karyawan', Icons.upload_file_outlined,
+              () => v22OpenImport(BulkImportKind.employees)),
+            const SizedBox(width: 9),
+            primaryButton('Tambah Karyawan',
+              Icons.person_add_alt_1_outlined, () => v5EditEmployee()),
+          ],
+          if (selected == null && selectedAssignment == null && page == 7)
+            primaryButton('Tugaskan Aset', Icons.add_rounded,
+              () => setState(() => page = 9)),
         ]),
     ]);
   }
 
   Widget metricCard(String label, String value, String note, IconData icon,
-      Color accent, double width) {
+      Color accent, double width, {VoidCallback? onTap}) {
     return SizedBox(
       width: width,
-      child: surface(padding: const EdgeInsets.all(20), child: Column(
+      child: surface(padding: const EdgeInsets.all(20),
+        child: InkWell(onTap: onTap, child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(children: [
@@ -356,26 +700,44 @@ class _AssetScreenState extends State<AssetScreen> {
           const SizedBox(height: 6),
           Text(note, style: const TextStyle(fontSize: 11.5, color: muted)),
         ],
-      )),
+      ))),
     );
   }
 
   Widget metrics() {
-    final active = store.assets.where((a) => a.status != 'Dihapuskan').toList();
+    final active = store.assets.where((a) =>
+      a.lifecycle == 'Aktif' && a.status != 'Dihapuskan').toList();
     final inUse = active.where((a) => a.status == 'Digunakan').length;
     final concern = active.where(needsAttention).length;
-    final cost = active.fold<int>(0, (sum, a) => sum + a.cost);
+    final knownValues = active.where((a) => a.acquisitionCost != null).toList();
+    final cost = knownValues.fold<int>(0, (sum, a) => sum + a.acquisitionCost!);
     return LayoutBuilder(builder: (context, box) {
       final n = box.maxWidth >= 1060 ? 4 : box.maxWidth >= 510 ? 2 : 1;
       final width = (box.maxWidth - (n - 1) * 14) / n;
       return Wrap(spacing: 14, runSpacing: 14, children: [
         metricCard('Total aset aktif', active.length.toString(), 'Tercatat di seluruh lokasi',
-          Icons.inventory_2_outlined, blue, width),
+          Icons.inventory_2_outlined, blue, width,
+          onTap: () => v4Change(() {
+            selected = null; page = 1; statusFilter = 'Semua status';
+            v4Attention = false; v4CatalogPage = 0;
+          })),
         metricCard('Sedang digunakan', inUse.toString(), 'Aset dalam penguasaan unit',
-          Icons.assignment_ind_outlined, green, width),
+          Icons.assignment_ind_outlined, green, width,
+          onTap: () => v4Change(() {
+            selected = null; page = 1; statusFilter = 'Digunakan';
+            v4Attention = false; v4CatalogPage = 0;
+          })),
         metricCard('Perlu perhatian', concern.toString(), 'Hilang, rusak, atau diperbaiki',
-          Icons.report_problem_outlined, amber, width),
-        metricCard('Nilai perolehan', compactMoney(cost), rupiah(cost) + ' · sebelum penyusutan',
+          Icons.report_problem_outlined, amber, width,
+          onTap: () => v4Change(() {
+            selected = null; page = 1; statusFilter = 'Semua status';
+            v4Attention = true; v4CatalogPage = 0;
+          })),
+        metricCard('Nilai perolehan diketahui',
+          knownValues.isEmpty ? '—' : compactMoney(cost),
+          knownValues.isEmpty ? 'Nilai perolehan belum tercatat' :
+          rupiah(cost) + ' · ' + knownValues.length.toString() +
+          ' dari ' + active.length.toString() + ' aset',
           Icons.account_balance_wallet_outlined, const Color(0xFF6F66B5), width),
       ]);
     });
@@ -517,6 +879,7 @@ class _AssetScreenState extends State<AssetScreen> {
 
   Widget searchBox() {
     return SizedBox(height: 44, child: TextField(
+      controller: _assetSearchController,
       decoration: InputDecoration(
         hintText: 'Cari nama, kode, lokasi, nomor seri...',
         hintStyle: const TextStyle(fontSize: 12.5, color: muted),
@@ -667,11 +1030,15 @@ class _AssetScreenState extends State<AssetScreen> {
           decoration: BoxDecoration(borderRadius: BorderRadius.circular(14),
             border: Border.all(color: border)),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
-              assetThumbnail(a, size: 38),
-              const Spacer(),
-              badge(a.status, compact: true),
-            ]),
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8, runSpacing: 8,
+              children: [
+                assetThumbnail(a, size: 38),
+                badge(a.status, compact: true),
+              ],
+            ),
             const SizedBox(height: 12),
             Text(a.name, maxLines: 2, overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: ink)),
@@ -799,7 +1166,7 @@ class _AssetScreenState extends State<AssetScreen> {
                         const Icon(Icons.qr_code_2_rounded, size: 18, color: blue),
                         const SizedBox(width: 10),
                         Expanded(child: Text('Kode berikutnya: UDL-AST-' +
-                          store.nextNumber.toString().padLeft(6, '0'),
+                          store.nextNumber.toString().padLeft(8, '0'),
                           style: const TextStyle(color: blue, fontWeight: FontWeight.w800, fontSize: 12))),
                         const Text('OTOMATIS', style: TextStyle(color: blue,
                           fontSize: 9.5, fontWeight: FontWeight.w900, letterSpacing: 1)),
@@ -1084,13 +1451,14 @@ class _AssetScreenState extends State<AssetScreen> {
         padding: const EdgeInsets.all(13),
         decoration: BoxDecoration(border: Border.all(color: border),
           borderRadius: BorderRadius.circular(13)),
-        child: QrImageView(data: a.code, size: 176, padding: EdgeInsets.zero),
+        child: QrImageView(data: 'UDLQR1:' + a.qrToken,
+          size: 176, padding: EdgeInsets.zero),
       )),
       const SizedBox(height: 13),
       SelectableText(a.code, style: const TextStyle(fontSize: 14,
         color: ink, fontWeight: FontWeight.w800)),
       const SizedBox(height: 6),
-      const Text('QR demo berisi kode aset. Belum terhubung ke sistem produksi.',
+      const Text('QR berisi token acak. Verifikasi server belum tersedia.',
         textAlign: TextAlign.center, style: TextStyle(fontSize: 11.5, color: muted)),
       const SizedBox(height: 13),
       outlineButton('Salin kode', Icons.copy_rounded, () async {
@@ -1152,20 +1520,32 @@ class _AssetScreenState extends State<AssetScreen> {
 
   Future<void> restoreDialog() async {
     final input = TextEditingController();
-    final proceed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        title: const Text('Pulihkan Data dari JSON'),
-        content: SizedBox(width: 570,
-          child: TextField(controller: input, minLines: 6, maxLines: 12,
-            decoration: const InputDecoration(hintText: 'Tempel salinan backup JSON di sini',
-              filled: true, fillColor: Color(0xFFF9FBFD)))),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Pulihkan')),
+    bool hasChanges() => input.text.trim().isNotEmpty;
+    final proceed = await v4ShowModal<bool>(
+      title: 'Pulihkan Data dari JSON',
+      subtitle: 'Periksa isi backup sebelum mengganti data lokal',
+      maxWidth: 620,
+      isDirty: hasChanges,
+      body: (ctx, update) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text('Tempel backup JSON yang telah Anda simpan.',
+            style: TextStyle(color: muted, fontSize: 12)),
+          const SizedBox(height: 12),
+          TextField(
+            key: const ValueKey('rv28-restore-input'),
+            controller: input, minLines: 5, maxLines: 10,
+            decoration: v4ModalDecoration('Salinan backup JSON')),
         ],
       ),
+      actions: (ctx, update) => [
+        OutlinedButton(
+          onPressed: () => assetRequestModalClose(ctx, isDirty: hasChanges),
+          child: const Text('Batal')),
+        FilledButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          child: const Text('Lanjutkan')),
+      ],
     );
     if (proceed == true) {
       try {
@@ -1187,22 +1567,19 @@ class _AssetScreenState extends State<AssetScreen> {
   }
 
   Future<void> resetDemo() async {
-    final agree = await showDialog<bool>(context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        title: const Text('Kembalikan Data Simulasi?'),
-        content: const Text('Seluruh perubahan lokal akan diganti dengan lima data contoh. '
-          'Salin backup JSON terlebih dahulu bila diperlukan.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Reset Demo')),
-        ],
-      ));
+    final agree = await assetConfirmDialog(
+      context,
+      title: 'Pulihkan Data Awal?',
+      message: 'Semua perubahan lokal akan diganti dengan lima data '
+        'contoh. Unduh backup JSON sebelum melanjutkan.',
+      confirmLabel: 'Pulihkan Data Awal',
+      cancelLabel: 'Batalkan Reset',
+      destructive: true);
     if (agree == true) {
       store.seed();
       await store.persist();
       setState(() { selected = null; query = ''; statusFilter = 'Semua status'; categoryFilter = 'Semua kategori'; });
-      notify('Data simulasi dikembalikan');
+      notify('Data awal dipulihkan');
     }
   }
 
@@ -1218,7 +1595,7 @@ class _AssetScreenState extends State<AssetScreen> {
           child: const Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Icon(Icons.info_outline_rounded, size: 20, color: amber),
             SizedBox(width: 10),
-            Expanded(child: Text('Ini prototipe lokal tanpa autentikasi atau server. '
+            Expanded(child: Text('Versi lokal ini belum memiliki autentikasi atau server. '
               'Data hanya tersimpan di browser ini. Jangan gunakan data operasional nyata.',
               style: TextStyle(fontSize: 12.5, color: ink, height: 1.5))),
           ])),
@@ -1229,7 +1606,8 @@ class _AssetScreenState extends State<AssetScreen> {
             notify('Backup JSON berhasil disalin');
           }),
           outlineButton('Impor JSON', Icons.upload_file_outlined, restoreDialog),
-          outlineButton('Reset Data Demo', Icons.restart_alt_rounded, resetDemo),
+          outlineButton('Pulihkan Data Awal', Icons.restart_alt_rounded, resetDemo,
+            tone: AssetActionTone.warning),
         ]),
         const Divider(color: border, height: 35),
         detailValue('Total data aset', store.assets.length.toString()),
@@ -1278,75 +1656,172 @@ class _AssetScreenState extends State<AssetScreen> {
   @override
   Widget build(BuildContext context) {
     final compact = MediaQuery.sizeOf(context).width < 920;
-    return Scaffold(
+    final sidebarWidth = _sidebarCollapsed ? 72.0 : 196.0;
+    return PopScope(
+      canPop: _navigationHistory.isEmpty,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop && _navigationHistory.isNotEmpty) {
+          backFromHistory();
+        }
+      },
+      child: Scaffold(
+      key: _shellKey,
       backgroundColor: bg,
-      appBar: AppBar(
-        backgroundColor: navy, foregroundColor: Colors.white, toolbarHeight: 62,
-        titleSpacing: compact ? 4 : 24,
-        title: appHeader(),
-        actions: [
-          if (!compact) ...[
-            Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: const Color(0xFF274D75), borderRadius: BorderRadius.circular(20)),
-              child: const Row(children: [
-                Icon(Icons.laptop_chromebook_outlined, size: 15, color: Colors.white),
-                SizedBox(width: 7),
-                Text('LOCAL PREVIEW', style: TextStyle(color: Colors.white,
-                  fontSize: 10.5, letterSpacing: 0.8, fontWeight: FontWeight.w800)),
-              ])),
-            const SizedBox(width: 18),
-            const CircleAvatar(radius: 17, backgroundColor: Color(0xFF41668C),
-              child: Icon(Icons.person_outline_rounded, color: Colors.white, size: 19)),
-            const SizedBox(width: 24),
-          ],
-        ],
-      ),
-      drawer: compact ? Drawer(backgroundColor: Colors.white, child: sidebar(inDrawer: true)) : null,
-      body: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        if (!compact)
-          SizedBox(width: 238, child: DecoratedBox(
-            decoration: const BoxDecoration(border: Border(right: BorderSide(color: border))),
-            child: sidebar())),
-        Expanded(child: LayoutBuilder(builder: (context, constraints) {
-          final contentPadding = constraints.maxWidth < 720 ? 16.0 : 28.0;
-          return SingleChildScrollView(
-            padding: EdgeInsets.fromLTRB(contentPadding, 24, contentPadding, 45),
-            child: Align(
-              alignment: Alignment.topLeft,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1520),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                  titleArea(),
-                  if (store.loadError != null) ...[
-                    const SizedBox(height: 14),
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFF5E8),
-                        borderRadius: BorderRadius.circular(10),
+      drawer: compact
+        ? Drawer(
+            width: 270,
+            backgroundColor: Colors.white,
+            child: sidebar(inDrawer: true))
+        : null,
+      body: LayoutBuilder(builder: (context, viewport) {
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (!compact)
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeInOut,
+                    width: sidebarWidth,
+                    child: sidebar(),
+                  ),
+                Expanded(child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final contentPadding =
+                      constraints.maxWidth < 720 ? 16.0 : 28.0;
+                    // Full-width data views, bounded content on other pages.
+                    final dataView = selected == null &&
+                      (page == 1 || page == 3 || page == 7 || page == 8);
+                    return SingleChildScrollView(
+                      controller: _contentScroll,
+                      padding: EdgeInsets.fromLTRB(
+                        contentPadding, 24, contentPadding, 45),
+                      child: Align(
+                        alignment: Alignment.topLeft,
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: dataView
+                              ? constraints.maxWidth : 1520),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              titleArea(),
+                              if (store.loadError != null) ...[
+                                const SizedBox(height: 14),
+                                Container(
+                                  padding: const EdgeInsets.all(14),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFFF5E8),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Row(children: [
+                                    const Icon(Icons.warning_amber_outlined,
+                                      color: amber),
+                                    const SizedBox(width: 10),
+                                    Expanded(child: Text(store.loadError!,
+                                      style: const TextStyle(
+                                        fontSize: 12, color: ink))),
+                                  ]),
+                                ),
+                              ],
+                              const SizedBox(height: 23),
+                              if (selected != null) v4Detail(selected!)
+                              else if (selectedEmployee != null && page == 8)
+                                v5EmployeeDetail(selectedEmployee!)
+                              else if (selectedAssignment != null && page == 7)
+                                v5AssignmentDetail(selectedAssignment!)
+                              else if (page == 0) dashboard()
+                              else if (page == 1) v4Catalog()
+                              else if (page == 2) v4Taxonomy()
+                              else if (page == 3) v4History()
+                              else if (page == 5) v4Locations()
+                              else if (page == 7) v5AssignedAssets()
+                              else if (page == 8) v5Employees()
+                              else if (page == 9) V5AssignmentForm(
+                                key: _assignmentKey,
+                                store: store,
+                                onDirty: markFormChanged,
+                                onCreated: (batch) {
+                                  replaceRouteAfterSave(() {
+                                    page = 7;
+                                    selectedAssignment = batch;
+                                  });
+                                  notify('Penugasan dibuat. '
+                                    'Menunggu konfirmasi serah terima.');
+                                },
+                                onOpenEmployees: () => navigate(8),
+                              )
+                              else if (page == 10 && selectedAssignment != null)
+                                V5ReturnForm(
+                                  key: _returnKey,
+                                  store: store,
+                                  assignment: selectedAssignment!,
+                                  onDirty: markFormChanged,
+                                  onCompleted: (receipt) {
+                                    replaceRouteAfterSave(() => page = 7);
+                                    notify('Pengembalian disimpan: ' +
+                                      receipt.draftReference);
+                                  },
+                                )
+                              else if (page == 6) V4RegistrationPage(
+                                key: _registrationKey,
+                                store: store,
+                                onDirty: markFormChanged,
+                                onCompleted: (created) {
+                                  replaceRouteAfterSave(() {
+                                    page = 1;
+                                    selected = created.first;
+                                    viewedPhotoId = null;
+                                  });
+                                  notify(created.length.toString() +
+                                    ' unit berhasil diregistrasikan. '
+                                    'Lengkapi foto tiap unit.');
+                                },
+                              )
+                              else settings(),
+                            ],
+                          ),
+                        ),
                       ),
-                      child: Row(children: [
-                        const Icon(Icons.warning_amber_outlined, color: amber),
-                        const SizedBox(width: 10),
-                        Expanded(child: Text(store.loadError!,
-                          style: const TextStyle(fontSize: 12, color: ink))),
-                      ]),
-                    ),
-                  ],
-                  const SizedBox(height: 23),
-                  if (selected != null) detail(selected!)
-                  else if (page == 0) dashboard()
-                  else if (page == 1) catalog()
-                  else if (page == 2) taxonomyPage()
-                  else if (page == 3) history()
-                  else settings(),
-                ]),
-              ),
+                    );
+                  },
+                )),
+              ],
             ),
-          );
-        })),
-      ]),
+            if (!compact)
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeInOut,
+                left: sidebarWidth - 16,
+                top: viewport.maxHeight / 2 - 16,
+                child: Tooltip(
+                  message: _sidebarCollapsed
+                    ? 'Perluas Sidebar' : 'Minimalkan Sidebar',
+                  child: Material(
+                    elevation: 3,
+                    color: Colors.white,
+                    shape: const CircleBorder(
+                      side: BorderSide(color: border)),
+                    child: InkWell(
+                      customBorder: const CircleBorder(),
+                      onTap: _toggleSidebar,
+                      child: SizedBox(
+                        width: 32, height: 32,
+                        child: Icon(_sidebarCollapsed
+                          ? Icons.chevron_right_rounded
+                          : Icons.chevron_left_rounded,
+                          size: 20, color: blue),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      }),
+      ),
     );
   }
 }

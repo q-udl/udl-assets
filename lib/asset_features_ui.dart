@@ -140,13 +140,10 @@ extension _AssetFeaturePanels on _AssetScreenState {
     );
     if (selectedKind == null || !mounted) return;
     try {
-      final selected = await ImagePicker().pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 960, maxHeight: 960, imageQuality: 65,
-      );
-      if (selected == null) return;
-      await store.addPhoto(asset, await selected.readAsBytes(),
-        selected.name, selectedKind);
+      final selected = await AssetPhotoPicker.choose(context);
+      if (selected == null || !mounted) return;
+      await store.addPhoto(asset, selected.bytes,
+        selected.fileName, selectedKind);
       viewedPhotoId = store.photosFor(asset.id).last.id;
       repaint();
       notify('Foto aktual aset berhasil dicatat');
@@ -187,6 +184,7 @@ extension _AssetFeaturePanels on _AssetScreenState {
     controller.dispose();
   }
 
+  // ignore: unused_element
   Widget taxonomyPage() {
     final totalSub = store.categories.fold<int>(
       0, (sum, c) => sum + c.subcategories.length);
@@ -309,78 +307,87 @@ extension _AssetFeaturePanels on _AssetScreenState {
     if (!availableTypes.contains(type)) type = availableTypes.isEmpty ? '' : availableTypes.first;
     final reason = TextEditingController();
     final key = GlobalKey<FormState>();
-    final ok = await showDialog<bool>(context: context,
-      builder: (ctx) => StatefulBuilder(builder: (ctx, update) =>
-        AlertDialog(
-          backgroundColor: Colors.white,
-          title: const Text('Reklasifikasi Aset'),
-          content: SizedBox(width: 490, child: Form(key: key,
-            child: SingleChildScrollView(child: Column(
-              mainAxisSize: MainAxisSize.min, children: [
-                Text(asset.code + ' · ' + asset.name,
-                  style: const TextStyle(fontSize: 12, color: Color(0xFF718199))),
-                const SizedBox(height: 15),
-                DropdownButtonFormField<String>(
-                  isExpanded: true,
-                  initialValue: category,
-                  items: store.categories.where((c) => c.subcategories.any(
-                    (s) => s.types.isNotEmpty)).map((c) =>
-                      DropdownMenuItem(value: c.name, child: Text(c.name,
-                        overflow: TextOverflow.ellipsis))).toList(),
-                  decoration: const InputDecoration(labelText: 'Kategori'),
-                  onChanged: (value) {
-                    if (value == null) return;
-                    update(() {
-                      category = value;
-                      sub = initialSub(category).name;
-                      type = store.subcategoryByName(category, sub)!.types.first;
-                    });
-                  },
-                ),
-                const SizedBox(height: 11),
-                DropdownButtonFormField<String>(
-                  key: ValueKey(category + sub),
-                  isExpanded: true,
-                  initialValue: sub,
-                  items: store.categoryByName(category)!.subcategories.where(
-                    (s) => s.types.isNotEmpty).map((s) =>
-                      DropdownMenuItem(value: s.name, child: Text(s.name))).toList(),
-                  decoration: const InputDecoration(labelText: 'Subkategori'),
-                  onChanged: (value) {
-                    if (value == null) return;
-                    update(() {
-                      sub = value;
-                      type = store.subcategoryByName(category, sub)!.types.first;
-                    });
-                  },
-                ),
-                const SizedBox(height: 11),
-                DropdownButtonFormField<String>(
-                  key: ValueKey(category + sub + type),
-                  isExpanded: true,
-                  initialValue: type,
-                  items: (store.subcategoryByName(category, sub)?.types ?? [])
-                    .map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
-                  decoration: const InputDecoration(labelText: 'Jenis Aset'),
-                  onChanged: (value) { if (value != null) update(() => type = value); },
-                ),
-                const SizedBox(height: 11),
-                TextFormField(
-                  controller: reason,
-                  decoration: const InputDecoration(labelText: 'Alasan perubahan *'),
-                  validator: (value) => value == null || value.trim().isEmpty
-                    ? 'Alasan wajib diisi' : null,
-                ),
-              ]),
-            ))),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Batal')),
-            FilledButton(onPressed: () {
-              if (key.currentState!.validate()) Navigator.pop(ctx, true);
-            }, child: const Text('Simpan')),
+    final initialCategory = category;
+    final initialSubcategoryName = sub;
+    final initialType = type;
+    bool hasChanges() => category != initialCategory ||
+      sub != initialSubcategoryName || type != initialType ||
+      reason.text.isNotEmpty;
+    final ok = await v4ShowModal<bool>(
+      title: 'Reklasifikasi Aset',
+      subtitle: asset.code + ' · ' + asset.name,
+      maxWidth: 580,
+      isDirty: hasChanges,
+      body: (ctx, update) => Form(
+        key: key,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            DropdownButtonFormField<String>(
+              isExpanded: true, initialValue: category,
+              decoration: v4ModalDecoration('Kategori'),
+              items: store.categories.where((c) => c.subcategories.any(
+                (s) => s.types.isNotEmpty)).map((c) =>
+                  DropdownMenuItem(value: c.name, child: Text(c.name,
+                    overflow: TextOverflow.ellipsis))).toList(),
+              onChanged: (value) {
+                if (value == null) return;
+                update(() {
+                  category = value;
+                  sub = initialSub(category).name;
+                  type = store.subcategoryByName(category, sub)!.types.first;
+                });
+              },
+            ),
+            const SizedBox(height: 13),
+            DropdownButtonFormField<String>(
+              key: ValueKey(category + sub),
+              isExpanded: true, initialValue: sub,
+              decoration: v4ModalDecoration('Subkategori'),
+              items: store.categoryByName(category)!.subcategories.where(
+                (s) => s.types.isNotEmpty).map((s) =>
+                  DropdownMenuItem(value: s.name,
+                    child: Text(s.name, overflow: TextOverflow.ellipsis)))
+                .toList(),
+              onChanged: (value) {
+                if (value == null) return;
+                update(() {
+                  sub = value;
+                  type = store.subcategoryByName(category, sub)!.types.first;
+                });
+              },
+            ),
+            const SizedBox(height: 13),
+            DropdownButtonFormField<String>(
+              key: ValueKey(category + sub + type),
+              isExpanded: true, initialValue: type,
+              decoration: v4ModalDecoration('Jenis aset'),
+              items: (store.subcategoryByName(category, sub)?.types ?? [])
+                .map((t) => DropdownMenuItem(
+                  value: t, child: Text(t))).toList(),
+              onChanged: (value) {
+                if (value != null) update(() => type = value);
+              },
+            ),
+            const SizedBox(height: 13),
+            TextFormField(
+              controller: reason,
+              decoration: v4ModalDecoration('Alasan perubahan *'),
+              validator: (value) => value == null || value.trim().isEmpty
+                ? 'Alasan wajib diisi' : null),
           ],
-        )),
+        ),
+      ),
+      actions: (ctx, update) => [
+        OutlinedButton(
+          onPressed: () => assetRequestModalClose(ctx, isDirty: hasChanges),
+          child: const Text('Batal')),
+        FilledButton(
+          onPressed: () {
+            if (key.currentState!.validate()) Navigator.pop(ctx, true);
+          },
+          child: const Text('Simpan')),
+      ],
     );
     if (ok == true) {
       try {

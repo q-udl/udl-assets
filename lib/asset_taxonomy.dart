@@ -2,15 +2,19 @@ part of 'main.dart';
 
 /// Operasional, bukan bagan akun FA. Tanah, bangunan dan renovasi struktur
 /// sengaja dikecualikan dari UDL Assets.
+// Stable classification IDs; legacy v0.3 data gets deterministic defaults.
+String taxonomySlug(String value) =>
+  value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '-');
+
 class AssetCategory {
   final String code;
   String name;
+  bool active;
   final List<AssetSubcategory> subcategories;
-  AssetCategory(this.code, this.name, this.subcategories);
+  AssetCategory(this.code, this.name, this.subcategories, {this.active = true});
 
   Map<String, dynamic> toJson() => {
-    'code': code,
-    'name': name,
+    'code': code, 'name': name, 'active': active,
     'subcategories': subcategories.map((s) => s.toJson()).toList(),
   };
 
@@ -19,19 +23,38 @@ class AssetCategory {
     json['name'] as String,
     (json['subcategories'] as List<dynamic>).map((v) =>
       AssetSubcategory.fromJson(Map<String, dynamic>.from(v as Map))).toList(),
+    active: json['active'] != false,
   );
 }
 
 class AssetSubcategory {
   String name;
+  final String id;
+  bool active;
   final List<String> types;
-  AssetSubcategory(this.name, this.types);
+  final Map<String, String> typeIds;
+  final Set<String> inactiveTypes;
+  AssetSubcategory(this.name, this.types, {String? id, this.active = true,
+      Map<String, String>? typeIds, Set<String>? inactiveTypes})
+      : id = id ?? 'sub-' + taxonomySlug(name),
+        typeIds = typeIds ?? {for (final t in types) t: 'type-' + taxonomySlug(t)},
+        inactiveTypes = inactiveTypes ?? <String>{};
 
-  Map<String, dynamic> toJson() => {'name': name, 'types': types};
+  String typeId(String name) => typeIds[name] ?? 'type-' + taxonomySlug(name);
+  bool typeIsActive(String name) => !inactiveTypes.contains(name);
+
+  Map<String, dynamic> toJson() => {
+    'id': id, 'name': name, 'active': active, 'types': types,
+    'typeIds': typeIds, 'inactiveTypes': inactiveTypes.toList(),
+  };
 
   factory AssetSubcategory.fromJson(Map<String, dynamic> json) =>
     AssetSubcategory(json['name'] as String,
-      List<String>.from(json['types'] as List<dynamic>));
+      List<String>.from(json['types'] as List<dynamic>),
+      id: json['id']?.toString(), active: json['active'] != false,
+      typeIds: json['typeIds'] is Map ? Map<String, String>.from(json['typeIds'] as Map) : null,
+      inactiveTypes: (json['inactiveTypes'] as List<dynamic>? ?? [])
+        .map((x) => x.toString()).toSet());
 }
 
 class AssetClassification {

@@ -18,7 +18,7 @@ void main() {
     final store = AssetStore();
     await store.initialize();
     await store.add('Monitor 24 inci', 'IT', 'Dell', 'SERIAL-UNIK', 'Kantor Pusat', '', 2400000);
-    expect(store.assets.first.code, 'UDL-AST-000006');
+    expect(store.assets.first.code, 'UDL-AST-00000006');
     expect(store.nextNumber, 7);
     expect(store.events.first.type, 'Registrasi');
   });
