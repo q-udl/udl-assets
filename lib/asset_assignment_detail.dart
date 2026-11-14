@@ -19,21 +19,11 @@ extension _AssignedAssetsDetail on _AssetScreenState {
             const Text('Referensi dokumen penugasan',
               style: TextStyle(fontSize: 11.5, color: muted)),
           ])),
-          Text(batch.status, style: TextStyle(
-            color: batch.isOverdue ? danger :
-              batch.status == 'Aktif' ? _AssetScreenState.green : amber,
-            fontWeight: FontWeight.w800)),
+          badge(batch.status, compact: true,
+            toneColor: batch.isOverdue ? danger : null),
         ]),
         const SizedBox(height: 14),
         Wrap(spacing: 9, runSpacing: 9, children: [
-          outlineButton('Cetak / Simpan PDF Draf BAST',
-            Icons.picture_as_pdf_outlined, () async {
-            try {
-              await AssetBastPdf.printHandover(batch, store: store);
-            } catch (e) {
-              notify('PDF gagal dibuat: ' + e.toString());
-            }
-          }),
           if (batch.isPending) ...[
             primaryButton('Terima Penugasan',
               Icons.check_circle_outline, () =>
@@ -50,6 +40,14 @@ extension _AssignedAssetsDetail on _AssetScreenState {
                 selectedAssignment = batch;
                 page = 10;
               })),
+          outlineButton('Lihat / Cetak BAST',
+            Icons.picture_as_pdf_outlined, () async {
+            try {
+              await AssetBastPdf.printHandover(batch, store: store);
+            } catch (error) {
+              notify('PDF gagal dibuat: ' + error.toString());
+            }
+          }),
         ]),
         const SizedBox(height: 12),
         const Text(
@@ -154,9 +152,12 @@ extension _AssignedAssetsDetail on _AssetScreenState {
                 SizedBox(width: 205, child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    ClipRRect(borderRadius: BorderRadius.circular(9),
-                      child: Image.memory(photo.bytes,
-                        height: 115, width: 205, fit: BoxFit.contain)),
+                    InkWell(
+                      onTap: () => v5ShowProof(photo, line.assetCode),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(9),
+                        child: Image.memory(photo.bytes,
+                          height: 115, width: 205, fit: BoxFit.cover))),
                     const SizedBox(height: 5),
                     Text(line.assetCode + ' · ' + photo.fileName,
                       maxLines: 2, overflow: TextOverflow.ellipsis,
@@ -206,6 +207,28 @@ extension _AssignedAssetsDetail on _AssetScreenState {
         ),
       ])),
     ]);
+  }
+
+  Future<void> v5ShowProof(
+      AssetEvidencePhoto photo, String code) async {
+    await v4ShowModal<void>(
+      title: 'Foto Bukti Transaksi',
+      subtitle: code + ' · ' + dateText(photo.recordedAt),
+      maxWidth: 780,
+      body: (context, update) => SizedBox(
+        height: MediaQuery.sizeOf(context).height * .55,
+        child: InteractiveViewer(
+          minScale: 0.8, maxScale: 5,
+          child: Center(child: Image.memory(photo.bytes,
+            fit: BoxFit.contain, filterQuality: FilterQuality.high)),
+        ),
+      ),
+      actions: (context, update) => [
+        FilledButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Tutup')),
+      ],
+    );
   }
 
   Future<void> v5ConfirmAssignment(
