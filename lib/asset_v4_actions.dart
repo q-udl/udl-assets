@@ -113,8 +113,8 @@ extension _AssetV4Actions on _AssetScreenState {
         ],
       ),
       actions: (ctx, update) => [
-        OutlinedButton(onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Batal')),
+        OutlinedButton(onPressed: () => assetRequestModalClose(
+          ctx, isDirty: hasChanges), child: const Text('Batal')),
         FilledButton.icon(
           icon: const Icon(Icons.swap_horiz_rounded, size: 18),
           onPressed: () {
@@ -155,10 +155,12 @@ extension _AssetV4Actions on _AssetScreenState {
     final a = assetFor(transfer.assetId);
     if (a == null) return;
     final note = TextEditingController();
+    bool hasChanges() => note.text.isNotEmpty;
     final response = await v4ShowModal<bool>(
       title: 'Konfirmasi Serah Terima',
       subtitle: a.name + ' · ' + a.code,
       maxWidth: 690,
+      isDirty: hasChanges,
       body: (ctx, update) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -189,8 +191,8 @@ extension _AssetV4Actions on _AssetScreenState {
         ],
       ),
       actions: (ctx, update) => [
-        OutlinedButton(onPressed: () => Navigator.pop(ctx),
-          child: const Text('Batal')),
+        OutlinedButton(onPressed: () => assetRequestModalClose(
+          ctx, isDirty: hasChanges), child: const Text('Batal')),
         TextButton(onPressed: () => Navigator.pop(ctx, false),
           child: const Text('Tolak')),
         FilledButton(onPressed: () => Navigator.pop(ctx, true),
@@ -213,10 +215,13 @@ extension _AssetV4Actions on _AssetScreenState {
   Future<void> v4UploadPhoto(AssetRecord a, {BuildContext? anchorContext}) async {
     var kind = AssetStore.photoKinds.first;
     final note = TextEditingController();
+    bool hasChanges() => kind != AssetStore.photoKinds.first ||
+      note.text.isNotEmpty;
     final confirmed = await v4ShowModal<bool>(
       title: 'Tambah Dokumentasi Foto',
       subtitle: a.name + ' · ' + a.code,
       maxWidth: 550,
+      isDirty: hasChanges,
       body: (ctx, update) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -233,8 +238,8 @@ extension _AssetV4Actions on _AssetScreenState {
         ],
       ),
       actions: (ctx, update) => [
-        OutlinedButton(onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Batal')),
+        OutlinedButton(onPressed: () => assetRequestModalClose(
+          ctx, isDirty: hasChanges), child: const Text('Batal')),
         FilledButton(onPressed: () => Navigator.pop(ctx, true),
           child: const Text('Lanjut ke Foto')),
       ],
@@ -300,10 +305,12 @@ extension _AssetV4Actions on _AssetScreenState {
   Future<void> v4ArchivePhoto(AssetRecord a, AssetPhoto photo) async {
     final reason = TextEditingController();
     var error = '';
+    bool hasChanges() => reason.text.isNotEmpty;
     final approved = await v4ShowModal<bool>(
       title: 'Arsipkan Dokumentasi',
       subtitle: a.name + ' · ' + photo.fileName,
       maxWidth: 500,
+      isDirty: hasChanges,
       body: (ctx, update) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -318,8 +325,8 @@ extension _AssetV4Actions on _AssetScreenState {
         ],
       ),
       actions: (ctx, update) => [
-        OutlinedButton(onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Batal')),
+        OutlinedButton(onPressed: () => assetRequestModalClose(
+          ctx, isDirty: hasChanges), child: const Text('Batal')),
         FilledButton(onPressed: () {
           if (reason.text.trim().isEmpty) {
             update(() => error = 'Alasan pengarsipan wajib diisi.');
