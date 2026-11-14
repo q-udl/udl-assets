@@ -282,7 +282,7 @@ extension _AssetEmployeeScreens on _AssetScreenState {
               style: TextStyle(color: muted))
           else for (final batch in batches)
             ListTile(
-              title: Text(batch.draftReference),
+              title: Text(batch.assignmentReference),
               subtitle: Text(batch.kind + ' · ' +
                 batch.lines.length.toString() + ' aset · ' + batch.status),
               trailing: const Icon(Icons.chevron_right),
