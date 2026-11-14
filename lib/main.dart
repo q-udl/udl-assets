@@ -47,6 +47,7 @@ part 'asset_responsive_components.dart';
 part 'asset_v4_registration.dart';
 part 'asset_v4_detail.dart';
 part 'asset_v4_modal.dart';
+part 'asset_adaptive_dialog.dart';
 part 'asset_v4_tables.dart';
 part 'asset_v4_actions.dart';
 part 'asset_ui.dart';
