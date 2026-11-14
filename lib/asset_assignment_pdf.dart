@@ -305,15 +305,16 @@ class AssetBastPdf {
   }
 
   static pw.Widget assetTable(
-      List<List<String>> rows, List<String> columnHeaders) {
+      List<List<String>> rows, List<String> columnHeaders,
+      {bool compact = false}) {
     return pw.Table.fromTextArray(
       headers: columnHeaders,
       data: rows,
       headerDecoration: const pw.BoxDecoration(color: PdfColors.blueGrey100),
       headerStyle: bold(8.2),
       cellStyle: regular(8.2),
-      cellPadding: const pw.EdgeInsets.symmetric(
-        horizontal: 6, vertical: 8),
+      cellPadding: pw.EdgeInsets.symmetric(
+        horizontal: 6, vertical: compact ? 5 : 8),
       border: pw.TableBorder(
         horizontalInside: const pw.BorderSide(color: PdfColors.blueGrey200),
         bottom: const pw.BorderSide(color: PdfColors.blueGrey200)),
@@ -337,6 +338,19 @@ class AssetBastPdf {
       pageFormat: PdfPageFormat.a4,
       margin: const pw.EdgeInsets.fromLTRB(42, 45, 42, 46),
       footer: bastFooter,
+      header: (ctx) => ctx.pageNumber > 1
+        ? pw.Padding(
+            padding: const pw.EdgeInsets.only(bottom: 12),
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text('BAST ' + record.bastNumber + ' (lanjutan)',
+                  style: bold(9)),
+                pw.SizedBox(height: 5),
+                pw.Divider(color: PdfColors.blueGrey200),
+              ]),
+          )
+        : pw.SizedBox(),
       build: (ctx) => [
         bastHeader(record),
         item('Tanggal Serah Terima', date(record.acceptedAt)),
@@ -386,28 +400,35 @@ class AssetBastPdf {
               text(record.lines[i].accessories),
             ],
         ], ['No', 'Kode Aset', 'Nama Aset', 'No. Seri',
-            'Kondisi', 'Kelengkapan']),
-        pw.SizedBox(height: 11),
-        item('Catatan', record.notes.trim().isEmpty
-          ? 'Tidak ada catatan tambahan' : record.notes.trim()),
-        pw.SizedBox(height: 14),
-        pw.Text('PERNYATAAN SERAH TERIMA', style: bold(10)),
-        pw.SizedBox(height: 7),
-        pw.Text(
-          'Para pihak menyatakan bahwa serah terima aset sebagaimana '
-          'tercantum dalam dokumen ini telah dilaksanakan sesuai '
-          'dengan rincian, kondisi, dan kelengkapan yang dicatat. '
-          'Sejak serah terima dilaksanakan, Penerima bertanggung jawab '
-          'menggunakan, menjaga, dan memelihara aset sesuai ketentuan '
-          'perusahaan, serta mengembalikannya apabila diminta atau '
-          'ketika penugasan berakhir. Berita Acara ini dibuat sebagai '
-          'dokumentasi serah terima aset dan untuk ditandatangani '
-          'oleh para pihak sebagai bukti pengesahan.',
-          style: regular(9),
-        ),
-        signing('Penyerah', 'Penerima',
-          text(record.handedOverByName),
-          text(record.employeeSnapshot['name']), showGuide: false),
+            'Kondisi', 'Kelengkapan'], compact: true),
+        // Group declaration and both signature blocks as one indivisible
+        // unit: neither the heading nor the signers may be orphaned.
+        pw.Container(child: pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.SizedBox(height: 10),
+            item('Catatan', record.notes.trim().isEmpty
+              ? 'Tidak ada catatan tambahan' : record.notes.trim()),
+            pw.SizedBox(height: 11),
+            pw.Text('PERNYATAAN SERAH TERIMA', style: bold(10)),
+            pw.SizedBox(height: 7),
+            pw.Text(
+              'Para pihak menyatakan bahwa serah terima aset sebagaimana '
+              'tercantum dalam dokumen ini telah dilaksanakan sesuai '
+              'dengan rincian, kondisi, dan kelengkapan yang dicatat. '
+              'Sejak serah terima dilaksanakan, Penerima bertanggung jawab '
+              'menggunakan, menjaga, dan memelihara aset sesuai ketentuan '
+              'perusahaan, serta mengembalikannya apabila diminta atau '
+              'ketika penugasan berakhir. Berita Acara ini dibuat sebagai '
+              'dokumentasi serah terima aset dan untuk ditandatangani '
+              'oleh para pihak sebagai bukti pengesahan.',
+              style: regular(9),
+            ),
+            signing('Penyerah', 'Penerima',
+              text(record.handedOverByName),
+              text(record.employeeSnapshot['name']), showGuide: false),
+          ],
+        )),
       ],
     ));
     addEvidencePages(doc, store, 'assignment_handover', record.id, {
