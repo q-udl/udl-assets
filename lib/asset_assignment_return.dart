@@ -54,6 +54,10 @@ class _V5ReturnFormState extends State<V5ReturnForm> {
 
   Future<void> save() async {
     if (saving) { return; }
+    if (receivedBy.text.trim().isEmpty) {
+      setState(() => error = 'Nama pihak yang menerima pengembalian wajib diisi.');
+      return;
+    }
     if (selected.isEmpty) {
       setState(() => error = 'Pilih minimal satu aset yang dikembalikan.');
       return;
@@ -81,7 +85,7 @@ class _V5ReturnFormState extends State<V5ReturnForm> {
         receivingPlacement: AssetPlacement(
           widget.store.siteByName(location)?.id ?? '',
           areaId: receivingAreaId, spotId: receivingSpotId),
-        receivedByName: receivedBy.text,
+        receivedByName: receivedBy.text.trim(),
         notes: notes.text,
         proofPhotos: {
           for (final line in selectedAssets)
@@ -259,7 +263,7 @@ class _V5ReturnFormState extends State<V5ReturnForm> {
             final officer = TextField(
               controller: receivedBy,
               decoration: const InputDecoration(
-                labelText: 'Nama penerima di GA (isian simulasi)'));
+                labelText: 'Yang Menerima (nama petugas) *'));
             if (box.maxWidth < 620) {
               return Column(children: [
                 locationSelect, const SizedBox(height: 12), officer]);
@@ -321,9 +325,9 @@ class _V5ReturnFormState extends State<V5ReturnForm> {
         ]),
       )),
       const SizedBox(height: 12),
-      const Text('Pencatatan di aplikasi bersifat simulasi lokal. '
-        'Tanda tangan dan pengesahan dilakukan terpisah '
-        'pada dokumen BA perusahaan.',
+      const Text('Nama para pihak dicatat untuk dokumen BA. '
+        'Tanda tangan dan persetujuan tetap dilakukan dan '
+        'diverifikasi secara terpisah.',
         style: TextStyle(fontSize: 11.5, color: muted)),
       if (error != null) ...[
         const SizedBox(height: 10),
