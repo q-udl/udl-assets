@@ -132,7 +132,7 @@ void main() {
     await store.initialize();
     final person = await employee(store);
     final asset = store.assets.firstWhere((a) => a.status == 'Tersedia');
-    const png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO2/TnYAAAAASUVORK5CYII=';
+    const png = 'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGMMmHaJgYGBiYGBgYGBAQAUSAG8NMsrTwAAAABJRU5ErkJggg==';
     final bytes = Uint8List.fromList(base64Decode(png));
     await store.addPhoto(asset, bytes, 'serah-terima.png',
       'Tampak Fisik Aset');
