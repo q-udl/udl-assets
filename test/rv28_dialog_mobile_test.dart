@@ -136,4 +136,49 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('rv28-import-dialog')), findsNothing);
   });
+
+
+  testWidgets('RV28 keyboard inset keeps employee modal actions reachable',
+      (tester) async {
+    await setSize(tester, const Size(320, 568));
+    tester.view.viewInsets = const FakeViewPadding(bottom: 230);
+    addTearDown(tester.view.resetViewInsets);
+    await tester.pumpWidget(const AssetApp());
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Buka Menu'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Master Karyawan').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Tambah Karyawan').last);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('rv28-adaptive-modal')), findsOneWidget);
+    expect(find.byKey(const ValueKey('rv28-modal-scroll')), findsOneWidget);
+    expect(find.byKey(const ValueKey('rv28-modal-mobile-actions')),
+      findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('RV28 mobile system back requests confirmation on dirty form',
+      (tester) async {
+    await setSize(tester, const Size(375, 812));
+    await tester.pumpWidget(const AssetApp());
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Buka Menu'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Master Karyawan').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Tambah Karyawan').last);
+    await tester.pumpAndSettle();
+    final field = find.byWidgetPredicate((w) =>
+      w is TextField && w.decoration?.labelText == 'Nama lengkap *');
+    await tester.enterText(field, 'Petugas Uji');
+    await tester.pumpAndSettle();
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.text('Tinggalkan formulir?'), findsOneWidget);
+    await tester.tap(find.text('Tetap di Formulir'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('rv28-adaptive-modal')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }
