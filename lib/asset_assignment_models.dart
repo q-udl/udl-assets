@@ -66,7 +66,15 @@ String normalizeAssignmentStatus(String value) => switch (value) {
 
 class AssignedAssetLine {
   final String id, assetId, assetCode, assetName, serial, handoverCondition;
-  String accessories, state, returnReceiptId, returnedAt;
+  String accessories, accessoriesClassification, state, returnReceiptId, returnedAt;
+
+  /// Persist the original free-text entry without silently treating older
+  /// 'Kelengkapan' records as verified non-asset items.
+  bool get hasLegacyAccessories => accessories.trim().isNotEmpty &&
+    accessoriesClassification != 'non_asset';
+  String get itemRecordLabel => hasLegacyAccessories
+    ? 'Kelengkapan historis (klasifikasi belum diverifikasi)'
+    : 'Item Penyerta Non-Aset';
   final List<String> photoIds;
   List<String> handoverProofPhotoIds;
 
@@ -78,6 +86,7 @@ class AssignedAssetLine {
     required this.serial,
     required this.handoverCondition,
     this.accessories = '',
+    this.accessoriesClassification = 'non_asset',
     this.state = 'Menunggu Serah Terima',
     this.returnReceiptId = '',
     this.returnedAt = '',
@@ -89,7 +98,9 @@ class AssignedAssetLine {
     'id': id, 'assetId': assetId, 'assetCode': assetCode,
     'assetName': assetName, 'serial': serial,
     'handoverCondition': handoverCondition,
-    'accessories': accessories, 'state': state,
+    'accessories': accessories,
+    'accessoriesClassification': accessoriesClassification,
+    'state': state,
     'returnReceiptId': returnReceiptId, 'returnedAt': returnedAt,
     'photoIds': photoIds,
     'handoverProofPhotoIds': handoverProofPhotoIds,
@@ -103,6 +114,9 @@ class AssignedAssetLine {
     serial: x['serial']?.toString() ?? '',
     handoverCondition: x['handoverCondition']?.toString() ?? '',
     accessories: x['accessories']?.toString() ?? '',
+    accessoriesClassification:
+      x['accessoriesClassification']?.toString() == 'non_asset'
+        ? 'non_asset' : 'legacy_unclassified',
     state: normalizeAssignmentStatus(
       x['state']?.toString() ?? 'Menunggu Serah Terima'),
     returnReceiptId: x['returnReceiptId']?.toString() ?? '',
@@ -216,6 +230,9 @@ class AssetAssignment {
 class AssetReturnLine {
   final String assignmentLineId, assetId, assetCode, assetName;
   final String handoverCondition, returnCondition, accessoriesReturned, notes;
+  final String accessoriesClassification;
+
+  bool get hasLegacyAccessories => accessoriesClassification != 'non_asset';
   final List<String> photoIds;
   final List<String> proofPhotoIds;
   AssetReturnLine({
@@ -226,6 +243,7 @@ class AssetReturnLine {
     required this.handoverCondition,
     required this.returnCondition,
     required this.accessoriesReturned,
+    this.accessoriesClassification = 'non_asset',
     required this.notes,
     this.photoIds = const [],
     this.proofPhotoIds = const [],
@@ -236,7 +254,9 @@ class AssetReturnLine {
     'assetId': assetId, 'assetCode': assetCode, 'assetName': assetName,
     'handoverCondition': handoverCondition,
     'returnCondition': returnCondition,
-    'accessoriesReturned': accessoriesReturned, 'notes': notes,
+    'accessoriesReturned': accessoriesReturned,
+    'accessoriesClassification': accessoriesClassification,
+    'notes': notes,
     'photoIds': photoIds,
     'proofPhotoIds': proofPhotoIds,
   };
@@ -248,6 +268,9 @@ class AssetReturnLine {
     handoverCondition: x['handoverCondition']?.toString() ?? '',
     returnCondition: x['returnCondition']?.toString() ?? '',
     accessoriesReturned: x['accessoriesReturned']?.toString() ?? '',
+    accessoriesClassification:
+      x['accessoriesClassification']?.toString() == 'non_asset'
+        ? 'non_asset' : 'legacy_unclassified',
     notes: x['notes']?.toString() ?? '',
     photoIds: (x['photoIds'] as List<dynamic>? ?? [])
       .map((v) => v.toString()).toList(),
