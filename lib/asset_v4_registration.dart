@@ -320,6 +320,7 @@ class _V4RegistrationPageState extends State<V4RegistrationPage> {
           const SizedBox(height:12),
           if(pendingPhoto!=null)Image.memory(pendingPhoto!,height:180,fit:BoxFit.contain),
           if (pendingPhoto != null) TextButton.icon(
+            style: assetTextStyle(AssetActionTone.danger),
             onPressed: () { widget.onDirty?.call(); setState(() {
               pendingPhoto=null; pendingName='';
             }); },
@@ -336,7 +337,8 @@ class _V4RegistrationPageState extends State<V4RegistrationPage> {
         Row(children: [
           if (mobileStep > 0) ...[
             OutlinedButton.icon(
-              key:const ValueKey('rv26-prev-step'),
+               style: assetOutlinedStyle(AssetActionTone.secondary),
+               key:const ValueKey('rv26-prev-step'),
               onPressed:saving?null:(){ setState(()=>mobileStep--);
                 _scrollToCurrentStep(); },
               icon:const Icon(Icons.arrow_back,size:18),

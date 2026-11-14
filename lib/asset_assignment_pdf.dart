@@ -153,6 +153,91 @@ class AssetBastPdf {
     ];
   }
 
+  /// Only event-linked photos are proof. Catalog photos must not be silently
+  /// substituted for a real handover/return photograph.
+  static List<pw.Widget> evidenceAppendix(
+    AssetStore? store,
+    String transactionType,
+    String transactionId,
+    Map<String, String> assetCodes,
+    String heading, {
+    required bool completed,
+  }) {
+    final widgets = <pw.Widget>[
+      pw.SizedBox(height: 17),
+      pw.Text(heading, style: bold(10)),
+      pw.SizedBox(height: 8),
+    ];
+    if (!completed) {
+      widgets.add(pw.Text(
+        'Belum ada serah terima yang dikonfirmasi. '
+        'Foto bukti wajib ditambahkan saat transaksi berlangsung.',
+        style: regular(8.5)));
+      return widgets;
+    }
+    if (store == null) {
+      widgets.add(pw.Text(
+        'Foto bukti tersedia melalui penyimpanan UDL Assets; '
+        'cetak ulang dari aplikasi yang menyimpan data transaksi.',
+        style: regular(8.5)));
+      return widgets;
+    }
+    final pictures = <pw.Widget>[];
+    var count = 0;
+    for (final entry in assetCodes.entries) {
+      final proofs = store.evidenceFor(
+        transactionType, transactionId, entry.key);
+      for (final photo in proofs) {
+        Uint8List bytes = photo.bytes;
+        if (photo.mimeType == 'image/webp') {
+          final decoded = img.decodeImage(bytes);
+          if (decoded == null) {
+            throw const FormatException('Foto bukti WebP tidak dapat dibaca.');
+          }
+          bytes = Uint8List.fromList(img.encodeJpg(decoded, quality: 85));
+        }
+        final picture = pw.MemoryImage(bytes);
+        pictures.add(pw.Container(
+          width: 205, margin: const pw.EdgeInsets.only(bottom: 12),
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Container(
+                decoration: pw.BoxDecoration(border: pw.Border.all(
+                  color: PdfColors.blueGrey200)),
+                padding: const pw.EdgeInsets.all(5),
+                child: pw.Image(picture, width: 190,
+                  height: 122, fit: pw.BoxFit.contain)),
+              pw.SizedBox(height: 5),
+              pw.Text('Aset: ' + entry.value, style: bold(8)),
+              pw.Text('Bukti: ' + text(photo.fileName),
+                style: regular(7.5)),
+              pw.Text('Dicatat: ' + date(photo.recordedAt),
+                style: regular(7.5)),
+            ],
+          ),
+        ));
+        count++;
+      }
+    }
+    if (count == 0) {
+      widgets.add(pw.Text(
+        'Foto bukti tidak tersedia pada transaksi historis ini. '
+        'Data lama dipertahankan sebagaimana tercatat.',
+        style: regular(8.5)));
+    } else {
+      widgets.add(pw.Wrap(spacing: 10, runSpacing: 10,
+        children: pictures));
+      if (count < assetCodes.length) {
+        widgets.add(pw.Text(
+          'Perhatian: sebagian aset belum memiliki foto bukti '
+          'pada data historis ini.',
+          style: regular(8.5)));
+      }
+    }
+    return widgets;
+  }
+
   static pw.Widget assetTable(
       List<List<String>> rows, List<String> columnHeaders) {
     return pw.Table.fromTextArray(
@@ -229,10 +314,13 @@ class AssetBastPdf {
           style: regular(9),
         ),
         signing('Yang Menyerahkan (GA)', 'Yang Menerima (Karyawan)'),
-        ...photoAppendix(store, {
-          for (final line in record.lines)
-            line.assetCode: line.photoIds,
-        }, 'LAMPIRAN FOTO SAAT PENYERAHAN'),
+        ...evidenceAppendix(
+          store, 'assignment_handover', record.id, {
+            for (final line in record.lines)
+              line.assetId: line.assetCode,
+          }, 'LAMPIRAN FOTO BUKTI SERAH TERIMA',
+          completed: record.status == 'Aktif' ||
+            record.status == 'Selesai'),
       ],
     ));
     return doc.save();
@@ -298,10 +386,12 @@ class AssetBastPdf {
           style: regular(9),
         ),
         signing('Yang Mengembalikan', 'Yang Menerima (GA)'),
-        ...photoAppendix(store, {
-          for (final line in receipt.lines)
-            line.assetCode: line.photoIds,
-        }, 'LAMPIRAN FOTO SAAT PENGEMBALIAN'),
+        ...evidenceAppendix(
+          store, 'assignment_return', receipt.id, {
+            for (final line in receipt.lines)
+              line.assetId: line.assetCode,
+          }, 'LAMPIRAN FOTO BUKTI PENGEMBALIAN',
+          completed: true),
       ],
     ));
     return doc.save();

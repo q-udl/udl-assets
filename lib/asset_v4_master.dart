@@ -25,7 +25,8 @@ extension _AssetV4Master on _AssetScreenState {
         ],
       ),
       actions: (ctx, update) => [
-        OutlinedButton(onPressed: () => assetRequestModalClose(
+        OutlinedButton(style: assetOutlinedStyle(AssetActionTone.secondary),
+          onPressed: () => assetRequestModalClose(
           ctx, isDirty: hasChanges), child: const Text('Batal')),
         FilledButton(onPressed: () {
           if (controller.text.trim().isEmpty) {
@@ -100,7 +101,9 @@ extension _AssetV4Master on _AssetScreenState {
             },
             itemBuilder:(_) => [
               const PopupMenuItem(value:'rename',child:Text('Ubah Nama')),
-              PopupMenuItem(value:'toggle',child:Text(c.active ? 'Nonaktifkan' : 'Aktifkan')),
+              PopupMenuItem(value:'toggle',
+                child:assetMenuActionLabel(c.active ? 'Nonaktifkan' : 'Aktifkan',
+                  c.active ? AssetActionTone.warning : AssetActionTone.success)),
             ]),
         )]),
       v4MasterPanel('Subkategori','Tambah Subkategori',
@@ -125,7 +128,9 @@ extension _AssetV4Master on _AssetScreenState {
             },
             itemBuilder:(_) => [
               const PopupMenuItem(value:'rename',child:Text('Ubah Nama')),
-              PopupMenuItem(value:'toggle',child:Text(s.active ? 'Nonaktifkan' : 'Aktifkan')),
+              PopupMenuItem(value:'toggle',
+                child:assetMenuActionLabel(s.active ? 'Nonaktifkan' : 'Aktifkan',
+                  s.active ? AssetActionTone.warning : AssetActionTone.success)),
             ]),
         )]),
       v4MasterPanel('Jenis Aset','Tambah Jenis',
@@ -152,7 +157,8 @@ extension _AssetV4Master on _AssetScreenState {
             itemBuilder:(_) => [
               const PopupMenuItem(value:'rename',child:Text('Ubah Nama')),
               PopupMenuItem(value:'toggle',
-                child:Text(chosen.typeIsActive(t) ? 'Nonaktifkan' : 'Aktifkan')),
+                child:assetMenuActionLabel(chosen.typeIsActive(t) ? 'Nonaktifkan' : 'Aktifkan',
+                  chosen.typeIsActive(t) ? AssetActionTone.warning : AssetActionTone.success)),
             ]),
         )]),
     ];

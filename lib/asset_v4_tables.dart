@@ -28,13 +28,23 @@ extension _AssetV4Tables on _AssetScreenState {
     ),
   );
 
-  Widget _v4Td(Widget child, {VoidCallback? tap}) => InkWell(
-    onTap: tap,
-    child: Container(
-      constraints: const BoxConstraints(minHeight: 72),
-      alignment: Alignment.centerLeft,
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 10),
-      child: child,
+  Widget _v4Td(Widget child,
+      {VoidCallback? tap, String? rowKey}) => MouseRegion(
+    onEnter: rowKey == null ? null : (_) => _setTableHover(rowKey),
+    onExit: rowKey == null ? null : (_) {
+      if (_hoveredTableRow == rowKey) _setTableHover(null);
+    },
+    child: InkWell(
+      onTap: tap,
+      hoverColor: Colors.transparent,
+      highlightColor: Colors.transparent,
+      splashColor: Colors.transparent,
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 72),
+        alignment: Alignment.centerLeft,
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 10),
+        child: child,
+      ),
     ),
   );
 
@@ -69,8 +79,10 @@ extension _AssetV4Tables on _AssetScreenState {
         ),
         for (final a in assets)
           TableRow(
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: border))),
+            decoration: BoxDecoration(
+              color: _hoveredTableRow == 'asset:' + a.id
+                ? lightBlue : Colors.transparent,
+              border: const Border(bottom: BorderSide(color: border))),
             children: [
               _v4Td(Row(children: [
                 assetThumbnail(a, size: 42),
@@ -89,17 +101,20 @@ extension _AssetV4Tables on _AssetScreenState {
                       style: const TextStyle(color: muted, fontSize: 11)),
                   ],
                 )),
-              ]), tap: () => v4Change(() => selected = a)),
+              ]), tap: () => v4Change(() => selected = a),
+                rowKey: 'asset:' + a.id),
               _v4Td(Text(a.code,
                 maxLines: 1, overflow: TextOverflow.ellipsis,
                 style: const TextStyle(fontSize: 12, color: blue,
                   fontWeight: FontWeight.w700)),
-                tap: () => v4Change(() => selected = a)),
+                tap: () => v4Change(() => selected = a),
+                rowKey: 'asset:' + a.id),
               if (wide)
                 _v4Td(Text(a.category, maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(color: ink, fontSize: 12)),
-                  tap: () => v4Change(() => selected = a)),
+                  tap: () => v4Change(() => selected = a),
+                rowKey: 'asset:' + a.id),
               _v4Td(Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -114,14 +129,17 @@ extension _AssetV4Tables on _AssetScreenState {
                     style: TextStyle(fontSize: 11,
                       color: a.holder.isEmpty ? danger : muted)),
                 ],
-              ), tap: () => v4Change(() => selected = a)),
+              ), tap: () => v4Change(() => selected = a),
+                rowKey: 'asset:' + a.id),
               _v4Td(Text(a.condition,
                 style: TextStyle(fontSize: 12, color:
                   ['Rusak', 'Kurang Baik'].contains(a.condition) ?
                     danger : ink)),
-                tap: () => v4Change(() => selected = a)),
+                tap: () => v4Change(() => selected = a),
+                rowKey: 'asset:' + a.id),
               _v4Td(badge(a.lifecycle == 'Aktif' ? a.status : a.lifecycle, compact: true),
-                tap: () => v4Change(() => selected = a)),
+                tap: () => v4Change(() => selected = a),
+                rowKey: 'asset:' + a.id),
               _v4Td(PopupMenuButton<String>(
                 tooltip: 'Tindakan ' + a.code,
                 onSelected: (value) {
@@ -140,7 +158,7 @@ extension _AssetV4Tables on _AssetScreenState {
                   PopupMenuItem(value: 'copy', child: Text('Salin Kode')),
                 ],
                 child: const Icon(Icons.more_horiz, color: blue, size: 21),
-              )),
+              ), rowKey: 'asset:' + a.id),
             ],
           ),
       ],
@@ -174,8 +192,10 @@ extension _AssetV4Tables on _AssetScreenState {
         ),
         for (final e in events)
           TableRow(
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: border))),
+            decoration: BoxDecoration(
+              color: _hoveredTableRow == 'event:' + e.hashCode.toString()
+                ? lightBlue : Colors.transparent,
+              border: const Border(bottom: BorderSide(color: border))),
             children: [
               _v4Td(Column(
                 mainAxisSize: MainAxisSize.min,
@@ -189,14 +209,16 @@ extension _AssetV4Tables on _AssetScreenState {
                     ? dateText(e.timestamp).split(' · ').last : '',
                     style: const TextStyle(color: muted, fontSize: 11)),
                 ],
-              ), tap: () => v4EventDetail(e)),
+              ), tap: () => v4EventDetail(e),
+                rowKey: 'event:' + e.hashCode.toString()),
               _v4Td(Row(children: [
                 Icon(v4EventIcon(e.type), size: 17, color: blue),
                 const SizedBox(width: 7),
                 Expanded(child: Text(e.type, maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(fontSize: 12, color: ink))),
-              ]), tap: () => v4EventDetail(e)),
+              ]), tap: () => v4EventDetail(e),
+                rowKey: 'event:' + e.hashCode.toString()),
               _v4Td(Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -215,16 +237,19 @@ extension _AssetV4Tables on _AssetScreenState {
                       style: const TextStyle(color: muted, fontSize: 11)),
                   ],
                 ],
-              ), tap: () => v4EventDetail(e)),
+              ), tap: () => v4EventDetail(e),
+                rowKey: 'event:' + e.hashCode.toString()),
               if (wide)
                 _v4Td(Text(e.detail, maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(color: ink, fontSize: 12)),
-                  tap: () => v4EventDetail(e)),
+                  tap: () => v4EventDetail(e),
+                rowKey: 'event:' + e.hashCode.toString()),
               _v4Td(IconButton(
                 tooltip: 'Lihat Rincian',
                 icon: const Icon(Icons.chevron_right_rounded, color: blue),
-                onPressed: () => v4EventDetail(e))),
+                onPressed: () => v4EventDetail(e)),
+                rowKey: 'event:' + e.hashCode.toString()),
             ],
           ),
       ],

@@ -113,7 +113,8 @@ extension _AssetV4Actions on _AssetScreenState {
         ],
       ),
       actions: (ctx, update) => [
-        OutlinedButton(onPressed: () => assetRequestModalClose(
+        OutlinedButton(style: assetOutlinedStyle(AssetActionTone.secondary),
+          onPressed: () => assetRequestModalClose(
           ctx, isDirty: hasChanges), child: const Text('Batal')),
         FilledButton.icon(
           icon: const Icon(Icons.swap_horiz_rounded, size: 18),
@@ -155,9 +156,11 @@ extension _AssetV4Actions on _AssetScreenState {
     final a = assetFor(transfer.assetId);
     if (a == null) return;
     final note = TextEditingController();
-    bool hasChanges() => note.text.isNotEmpty;
+    SelectedAssetPhoto? proofPhoto;
+    var error = '';
+    bool hasChanges() => note.text.isNotEmpty || proofPhoto != null;
     final response = await v4ShowModal<bool>(
-      title: 'Konfirmasi Serah Terima',
+      title: 'Konfirmasi Serah Terima Mutasi',
       subtitle: a.name + ' · ' + a.code,
       maxWidth: 690,
       isDirty: hasChanges,
@@ -183,27 +186,63 @@ extension _AssetV4Actions on _AssetScreenState {
           TextField(controller: note, maxLines: 3,
             decoration: v4ModalDecoration(
               'Catatan penerimaan atau penolakan')),
+          const SizedBox(height: 13),
+          const Text('Foto bukti wajib untuk menerima mutasi. '
+            'Penolakan tidak memerlukan foto.',
+            style: TextStyle(color: muted, fontSize: 12)),
+          const SizedBox(height: 11),
+          assetEvidencePicker(
+            context: ctx,
+            assetCode: a.code,
+            title: 'Foto Bukti Serah Terima Mutasi',
+            selected: proofPhoto,
+            testKey: 'rv29-transfer-proof',
+            onSelected: (photo) => update(() {
+              proofPhoto = photo;
+              error = '';
+            }),
+            onRemove: () => update(() => proofPhoto = null),
+          ),
           const SizedBox(height: 12),
           const Text('Konfirmasi ini dilakukan oleh operator dalam '
             'pratinjau lokal. Belum merupakan tanda tangan atau '
             'persetujuan penerima yang terverifikasi.',
             style: TextStyle(color: muted, fontSize: 12)),
+          if (error.isNotEmpty) ...[
+            const SizedBox(height: 11), v4ModalError(error),
+          ],
         ],
       ),
       actions: (ctx, update) => [
-        OutlinedButton(onPressed: () => assetRequestModalClose(
-          ctx, isDirty: hasChanges), child: const Text('Batal')),
-        TextButton(onPressed: () => Navigator.pop(ctx, false),
+        OutlinedButton(
+          style: assetOutlinedStyle(AssetActionTone.secondary),
+          onPressed: () => assetRequestModalClose(
+            ctx, isDirty: hasChanges),
+          child: const Text('Batal')),
+        OutlinedButton(
+          style: assetOutlinedStyle(AssetActionTone.danger),
+          onPressed: () => Navigator.pop(ctx, false),
           child: const Text('Tolak')),
-        FilledButton(onPressed: () => Navigator.pop(ctx, true),
+        FilledButton(
+          key: const ValueKey('rv29-transfer-accept'),
+          style: assetFilledStyle(AssetActionTone.success),
+          onPressed: () {
+            if (proofPhoto == null) {
+              update(() => error =
+                'Unggah foto bukti sebelum menerima mutasi.');
+            } else {
+              Navigator.pop(ctx, true);
+            }
+          },
           child: const Text('Terima (Simulasi)')),
       ],
     );
     if (response != null) {
       try {
-        await store.confirmTransfer(transfer, response, note.text);
+        await store.confirmTransfer(transfer, response, note.text,
+          proofPhoto: response ? proofPhoto : null);
         repaint();
-        notify(response ? 'Serah terima simulasi diterima.' :
+        notify(response ? 'Serah terima simulasi diterima dengan bukti foto.' :
           'Serah terima simulasi ditolak.');
       } catch (e) {
         notify(e.toString());
@@ -238,7 +277,8 @@ extension _AssetV4Actions on _AssetScreenState {
         ],
       ),
       actions: (ctx, update) => [
-        OutlinedButton(onPressed: () => assetRequestModalClose(
+        OutlinedButton(style: assetOutlinedStyle(AssetActionTone.secondary),
+          onPressed: () => assetRequestModalClose(
           ctx, isDirty: hasChanges), child: const Text('Batal')),
         FilledButton(onPressed: () => Navigator.pop(ctx, true),
           child: const Text('Lanjut ke Foto')),
@@ -294,10 +334,12 @@ extension _AssetV4Actions on _AssetScreenState {
             store.setPrimaryPhoto(a, photo).then((_) => repaint())
               .catchError((Object e) => notify(e.toString()));
           }, child: const Text('Jadikan Utama')),
-        TextButton(onPressed: () {
-          Navigator.pop(ctx);
-          v4ArchivePhoto(a, photo);
-        }, child: const Text('Arsipkan / Koreksi')),
+        TextButton(
+          style: assetTextStyle(AssetActionTone.warning),
+          onPressed: () {
+            Navigator.pop(ctx);
+            v4ArchivePhoto(a, photo);
+          }, child: const Text('Arsipkan / Koreksi')),
       ],
     );
   }
@@ -325,9 +367,12 @@ extension _AssetV4Actions on _AssetScreenState {
         ],
       ),
       actions: (ctx, update) => [
-        OutlinedButton(onPressed: () => assetRequestModalClose(
+        OutlinedButton(style: assetOutlinedStyle(AssetActionTone.secondary),
+          onPressed: () => assetRequestModalClose(
           ctx, isDirty: hasChanges), child: const Text('Batal')),
-        FilledButton(onPressed: () {
+        FilledButton(
+          style: assetFilledStyle(AssetActionTone.warning),
+          onPressed: () {
           if (reason.text.trim().isEmpty) {
             update(() => error = 'Alasan pengarsipan wajib diisi.');
           } else {

@@ -95,9 +95,11 @@ extension _AssetEmployeeScreens on _AssetScreenState {
                   ]),
                 for (final employee in list)
                   TableRow(
-                    decoration: const BoxDecoration(
-                      border: Border(bottom: BorderSide(color: border))),
-                    children: [
+                  decoration: BoxDecoration(
+                    color: _hoveredTableRow == 'employee:' + employee.id
+                      ? lightBlue : Colors.transparent,
+                    border: const Border(bottom: BorderSide(color: border))),
+                  children: [
                       _v5EmployeeCell(Text(employee.name,
                         maxLines: 2, overflow: TextOverflow.ellipsis,
                         style: const TextStyle(fontWeight: FontWeight.w700)),
@@ -135,15 +137,27 @@ extension _AssetEmployeeScreens on _AssetScreenState {
   }
 
   Widget _v5EmployeeCell(Widget child, {AssetEmployee? employee}) {
-    return InkWell(
-      onTap: employee == null ? null : () => v4Change(() {
-        selectedEmployee = employee; page = 8;
-      }),
-      child: Container(
-        alignment: Alignment.centerLeft,
-        constraints: const BoxConstraints(minHeight: 62),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        child: child,
+    return MouseRegion(
+      onEnter: employee == null ? null :
+        (_) => _setTableHover('employee:' + employee.id),
+      onExit: employee == null ? null : (_) {
+        if (_hoveredTableRow == 'employee:' + employee.id) {
+          _setTableHover(null);
+        }
+      },
+      child: InkWell(
+        hoverColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        splashColor: Colors.transparent,
+        onTap: employee == null ? null : () => v4Change(() {
+          selectedEmployee = employee; page = 8;
+        }),
+        child: Container(
+          alignment: Alignment.centerLeft,
+          constraints: const BoxConstraints(minHeight: 62),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          child: child,
+        ),
       ),
     );
   }
@@ -180,7 +194,9 @@ extension _AssetEmployeeScreens on _AssetScreenState {
             outlineButton(employee.active ? 'Nonaktifkan' : 'Aktifkan',
               employee.active ? Icons.person_off_outlined :
                 Icons.person_add_alt_outlined,
-              () => v5ToggleEmployee(employee)),
+              () => v5ToggleEmployee(employee),
+              tone: employee.active
+                ? AssetActionTone.warning : AssetActionTone.success),
           ]),
         ],
       )),

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:excel/excel.dart' as xls;
 import 'package:file_picker/file_picker.dart';
 import 'package:camera/camera.dart' as cam;
@@ -48,6 +49,8 @@ part 'asset_v4_registration.dart';
 part 'asset_v4_detail.dart';
 part 'asset_v4_modal.dart';
 part 'asset_adaptive_dialog.dart';
+part 'asset_semantic_actions.dart';
+part 'asset_evidence_picker.dart';
 part 'asset_v4_tables.dart';
 part 'asset_v4_actions.dart';
 part 'asset_ui.dart';
@@ -76,7 +79,14 @@ class _AssetAppState extends State<AssetApp> {
   @override Widget build(BuildContext context) => MaterialApp(
     title: 'Manajemen Aset UD. LUTHFI', debugShowCheckedModeBanner: false,
     theme: ThemeData(useMaterial3: true, scaffoldBackgroundColor: bg,
-      colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1464A4)),
+      colorScheme: ColorScheme.fromSeed(seedColor: blue).copyWith(
+        primary: blue, error: danger),
+      filledButtonTheme: FilledButtonThemeData(
+        style: assetFilledStyle(AssetActionTone.primary)),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: assetOutlinedStyle(AssetActionTone.informational)),
+      textButtonTheme: TextButtonThemeData(
+        style: assetTextStyle(AssetActionTone.informational)),
       cardTheme: CardThemeData(elevation: 0, color: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14),
           side: const BorderSide(color: Color(0xFFE2E9F0)))),

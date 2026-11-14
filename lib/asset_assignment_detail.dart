@@ -37,9 +37,11 @@ extension _AssignedAssetsDetail on _AssetScreenState {
           if (batch.isPending) ...[
             primaryButton('Terima (Simulasi)',
               Icons.check_circle_outline, () =>
-                v5ConfirmAssignment(batch, true)),
+                v5ConfirmAssignment(batch, true),
+              tone: AssetActionTone.success),
             outlineButton('Tolak (Simulasi)', Icons.cancel_outlined,
-              () => v5ConfirmAssignment(batch, false)),
+              () => v5ConfirmAssignment(batch, false),
+              tone: AssetActionTone.danger),
           ],
           if (batch.activeCount > 0)
             primaryButton('Pengembalian Aset',
@@ -152,6 +154,33 @@ extension _AssignedAssetsDetail on _AssetScreenState {
             },
           ),
       ])),
+      if (batch.lines.any((line) =>
+          line.handoverProofPhotoIds.isNotEmpty)) ...[
+        const SizedBox(height: 13),
+        surface(child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          sectionHeader('Foto Bukti Serah Terima',
+            subtitle: 'Foto bukti per unit, terlampir dalam BAST'),
+          const SizedBox(height: 12),
+          Wrap(spacing: 10, runSpacing: 10, children: [
+            for (final line in batch.lines)
+              for (final photo in store.evidenceFor(
+                  'assignment_handover', batch.id, line.assetId))
+                SizedBox(width: 205, child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ClipRRect(borderRadius: BorderRadius.circular(9),
+                      child: Image.memory(photo.bytes,
+                        height: 115, width: 205, fit: BoxFit.contain)),
+                    const SizedBox(height: 5),
+                    Text(line.assetCode + ' · ' + photo.fileName,
+                      maxLines: 2, overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: muted, fontSize: 11)),
+                  ],
+                )),
+          ]),
+        ])),
+      ],
       const SizedBox(height: 13),
       surface(child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -183,13 +212,14 @@ extension _AssignedAssetsDetail on _AssetScreenState {
   Future<void> v5ConfirmAssignment(
       AssetAssignment batch, bool accepted) async {
     final reason = TextEditingController();
+    final proofPhotos = <String, SelectedAssetPhoto>{};
     var error = '';
-    bool hasChanges() => reason.text.isNotEmpty;
+    bool hasChanges() => reason.text.isNotEmpty || proofPhotos.isNotEmpty;
     final approved = await v4ShowModal<bool>(
       title: accepted ? 'Terima Penugasan (Simulasi)' :
         'Tolak Penugasan (Simulasi)',
       subtitle: batch.draftReference,
-      maxWidth: 590,
+      maxWidth: 650,
       isDirty: hasChanges,
       body: (ctx, update) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -199,38 +229,79 @@ extension _AssignedAssetsDetail on _AssetScreenState {
         v4ReadonlyField('Nama karyawan',
           batch.employeeSnapshot['name']?.toString() ?? ''),
         const SizedBox(height: 10),
-        v4ReadonlyField('Jumlah aset',
-          batch.lines.length.toString()),
+        v4ReadonlyField('Jumlah aset', batch.lines.length.toString()),
         const SizedBox(height: 15),
         TextField(
           controller: reason, maxLines: 3,
           decoration: v4ModalDecoration(
             accepted ? 'Catatan (opsional)' : 'Alasan penolakan *')),
+        if (accepted) ...[
+          const SizedBox(height: 17),
+          const Text('FOTO BUKTI SERAH TERIMA (WAJIB)',
+            style: TextStyle(fontWeight: FontWeight.w800,
+              color: ink, fontSize: 13)),
+          const SizedBox(height: 6),
+          const Text('Setiap unit aset memerlukan satu foto bukti aktual. '
+            'Foto akan menjadi lampiran BAST setelah dikonfirmasi.',
+            style: TextStyle(color: muted, fontSize: 12)),
+          const SizedBox(height: 12),
+          for (final line in batch.lines) ...[
+            assetEvidencePicker(
+              context: ctx,
+              assetCode: line.assetCode,
+              title: line.assetName,
+              selected: proofPhotos[line.assetId],
+              testKey: 'rv29-handover-proof-' + line.id,
+              onSelected: (photo) => update(() {
+                proofPhotos[line.assetId] = photo;
+                error = '';
+              }),
+              onRemove: () => update(() {
+                proofPhotos.remove(line.assetId);
+              }),
+            ),
+            const SizedBox(height: 10),
+          ],
+        ],
         if (error.isNotEmpty) ...[
           const SizedBox(height: 10), v4ModalError(error),
         ],
       ]),
       actions: (ctx, update) => [
-        OutlinedButton(onPressed: () => assetRequestModalClose(
-          ctx, isDirty: hasChanges), child: const Text('Batal')),
-        FilledButton(onPressed: () {
-          if (!accepted && reason.text.trim().isEmpty) {
-            update(() => error = 'Alasan penolakan wajib diisi.');
-          } else {
-            Navigator.pop(ctx, true);
-          }
-        }, child: Text(accepted ? 'Konfirmasi Simulasi' : 'Tolak')),
+        OutlinedButton(
+          style: assetOutlinedStyle(AssetActionTone.secondary),
+          onPressed: () => assetRequestModalClose(
+            ctx, isDirty: hasChanges),
+          child: const Text('Batal')),
+        FilledButton(
+          key: const ValueKey('rv29-confirm-assignment'),
+          style: assetFilledStyle(accepted
+            ? AssetActionTone.success : AssetActionTone.danger),
+          onPressed: () {
+            if (!accepted && reason.text.trim().isEmpty) {
+              update(() => error = 'Alasan penolakan wajib diisi.');
+            } else if (accepted &&
+                batch.lines.any((l) => !proofPhotos.containsKey(l.assetId))) {
+              update(() => error =
+                'Lengkapi foto bukti pada setiap aset sebelum menerima.');
+            } else {
+              Navigator.pop(ctx, true);
+            }
+          },
+          child: Text(accepted
+            ? 'Konfirmasi Serah Terima' : 'Tolak Penugasan')),
       ],
     );
     if (approved == true) {
       try {
-        await store.confirmAssignment(batch, accepted, reason.text);
+        await store.confirmAssignment(batch, accepted, reason.text,
+          proofPhotos: proofPhotos);
         repaint();
         notify(accepted
-          ? 'Penugasan aktif (simulasi); tanggung jawab tercatat.'
+          ? 'Penugasan aktif; foto bukti terlampir pada BAST simulasi.'
           : 'Pengajuan penugasan ditolak.');
       } catch (e) {
-        notify('Gagal memproses: ' + e.toString());
+        notify('Gagal memproses penugasan: ' + e.toString());
       }
     }
     reason.dispose();

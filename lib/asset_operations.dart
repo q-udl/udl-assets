@@ -161,11 +161,22 @@ extension AssetOperations on AssetStore {
     return t;
   }
 
-  Future<void> confirmTransfer(AssetTransfer transfer, bool accepted, String note) async {
+  Future<void> confirmTransfer(AssetTransfer transfer, bool accepted,
+      String note, {SelectedAssetPhoto? proofPhoto}) async {
     if (transfer.state != 'Menunggu Penerimaan') {
       throw const FormatException('Serah terima sudah diproses.');
     }
     final a = assets.firstWhere((a) => a.id == transfer.assetId);
+    final proof = accepted ? prepareEvidence(
+      transactionType: 'transfer_handover',
+      transactionId: transfer.id,
+      requiredAssetIds: {a.id},
+      selectedPhotos: {
+        if (proofPhoto != null) a.id: proofPhoto,
+      },
+    ) : <AssetEvidencePhoto>[];
+    final previousBackup = backup();
+    try {
     if (accepted) {
       final site = siteByName(transfer.toLocation);
       if (site == null) throw const FormatException('Lokasi tujuan hilang.');
@@ -178,6 +189,7 @@ extension AssetOperations on AssetStore {
       a.holder = transfer.toHolder;
     }
     transfer.state = accepted ? 'Diterima (Simulasi)' : 'Ditolak (Simulasi)';
+    if (accepted) transfer.proofPhotoIds = proof.map((p) => p.id).toList();
     transfer.note = note.trim();
     transfer.respondedAt = DateTime.now().toIso8601String();
     log(a, accepted ? 'Penerimaan Mutasi' : 'Penolakan Mutasi',
@@ -187,7 +199,12 @@ extension AssetOperations on AssetStore {
           'to': accepted ? transfer.toLocation : transfer.fromLocation},
         'PIC': {'from': transfer.fromHolder,
           'to': accepted ? transfer.toHolder : transfer.fromHolder}});
+    evidencePhotos.addAll(proof);
     await persist();
+    } catch (_) {
+      restore(previousBackup);
+      rethrow;
+    }
   }
 
   Future<void> addLocation(String name) async {

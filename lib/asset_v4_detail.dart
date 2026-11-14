@@ -15,8 +15,10 @@ extension _AssetV4Detail on _AssetScreenState {
         const SizedBox(height:9),
         Wrap(spacing:8,runSpacing:8,children:[
           badge(a.lifecycle == 'Aktif' ? a.status : a.lifecycle,compact:true),
-          Chip(label:Text('Kondisi: '+a.condition)),
-          if(photos.isEmpty)const Chip(label:Text('Foto belum lengkap')),
+          badge('Kondisi: '+a.condition,compact:true,
+            toneColor:assetConditionColor(a.condition)),
+          if(photos.isEmpty)badge('Foto belum lengkap',compact:true,
+            toneColor:muted),
         ]),
         const SizedBox(height:10),
         Wrap(spacing:8,runSpacing:8,children:[
@@ -72,6 +74,29 @@ extension _AssetV4Detail on _AssetScreenState {
           const SizedBox(height:8),
           outlineButton('Proses Serah Terima',Icons.fact_check_outlined,
             ()=>v4RespondTransfer(pending.first)),
+        ],
+        if (store.evidencePhotos.any((p) => p.assetId == a.id &&
+            p.transactionType == 'transfer_handover')) ...[
+          const Divider(height: 28),
+          const Text('Bukti Serah Terima Mutasi',
+            style: TextStyle(fontWeight: FontWeight.w800)),
+          const SizedBox(height: 10),
+          Wrap(spacing: 9, runSpacing: 9, children: [
+            for (final proof in store.evidencePhotos.where((p) =>
+                p.assetId == a.id &&
+                p.transactionType == 'transfer_handover'))
+              SizedBox(width: 170, child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Image.memory(proof.bytes, width: 170,
+                    height: 100, fit: BoxFit.contain),
+                  const SizedBox(height: 3),
+                  Text(proof.fileName, maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 11, color: muted)),
+                ],
+              )),
+          ]),
         ],
       ])),
       const SizedBox(height:14),
@@ -308,7 +333,8 @@ extension _AssetV4Detail on _AssetScreenState {
         ],
       ),
       actions: (ctx, update) => [
-        OutlinedButton(onPressed: () => assetRequestModalClose(
+        OutlinedButton(style: assetOutlinedStyle(AssetActionTone.secondary),
+          onPressed: () => assetRequestModalClose(
           ctx, isDirty: hasChanges), child: const Text('Batal')),
         FilledButton(onPressed: () {
           final int? value = unknown ? null : int.tryParse(cost.text.trim());
@@ -385,7 +411,8 @@ extension _AssetV4Detail on _AssetScreenState {
         ],
       ),
       actions: (ctx, update) => [
-        OutlinedButton(onPressed: () => assetRequestModalClose(
+        OutlinedButton(style: assetOutlinedStyle(AssetActionTone.secondary),
+          onPressed: () => assetRequestModalClose(
           ctx, isDirty: hasChanges), child: const Text('Batal')),
         FilledButton(onPressed: () {
           if (reason.text.trim().isEmpty) {
@@ -459,7 +486,8 @@ extension _AssetV4Detail on _AssetScreenState {
         ],
       ),
       actions: (ctx, update) => [
-        OutlinedButton(onPressed: () => assetRequestModalClose(
+        OutlinedButton(style: assetOutlinedStyle(AssetActionTone.secondary),
+          onPressed: () => assetRequestModalClose(
           ctx, isDirty: hasChanges), child: const Text('Batal')),
         FilledButton(onPressed: () {
           if (reason.text.trim().isEmpty) {
@@ -497,9 +525,11 @@ extension _AssetV4Detail on _AssetScreenState {
             ],
           ),
           actions: (ctx, update) => [
-            OutlinedButton(onPressed: () => Navigator.pop(ctx, false),
+            OutlinedButton(style: assetOutlinedStyle(AssetActionTone.secondary),
+              onPressed: () => Navigator.pop(ctx, false),
               child: const Text('Batal')),
-            FilledButton(onPressed: () => Navigator.pop(ctx, true),
+            FilledButton(style: assetFilledStyle(AssetActionTone.warning),
+              onPressed: () => Navigator.pop(ctx, true),
               child: const Text('Konfirmasi Hilang')),
           ],
         ) ?? false;

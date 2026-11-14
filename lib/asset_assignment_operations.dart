@@ -74,8 +74,9 @@ extension AssetAssignmentOperations on AssetStore {
   }
 
   Future<void> confirmAssignment(
-    AssetAssignment record, bool accepted, String reason,
-  ) async {
+    AssetAssignment record, bool accepted, String reason, {
+    Map<String, SelectedAssetPhoto> proofPhotos = const {},
+  }) async {
     if (!record.isPending) {
       throw const FormatException('Penugasan telah diproses.');
     }
@@ -99,12 +100,26 @@ extension AssetAssignmentOperations on AssetStore {
         }
       }
     }
+    final preparedProof = accepted ? prepareEvidence(
+      transactionType: 'assignment_handover',
+      transactionId: record.id,
+      requiredAssetIds: record.lines.map((l) => l.assetId).toSet(),
+      selectedPhotos: proofPhotos,
+    ) : <AssetEvidencePhoto>[];
+    final previousBackup = backup();
+    try {
     final now = DateTime.now().toIso8601String();
     record.status = accepted ? 'Aktif' : 'Ditolak';
     record.acceptedAt = accepted ? now : '';
     record.rejectionReason = accepted ? '' : reason.trim();
     for (final line in record.lines) {
       line.state = accepted ? 'Aktif' : 'Ditolak';
+      if (accepted) {
+        line.handoverProofPhotoIds = [
+          for (final p in preparedProof)
+            if (p.assetId == line.assetId) p.id,
+        ];
+      }
       final asset = assignmentAsset(line.assetId)!;
       if (accepted) {
         final previous = asset.status;
@@ -122,7 +137,12 @@ extension AssetAssignmentOperations on AssetStore {
           record.draftReference + ' ditolak (simulasi)', reason: reason);
       }
     }
+    evidencePhotos.addAll(preparedProof);
     await persist();
+    } catch (_) {
+      restore(previousBackup);
+      rethrow;
+    }
   }
 
   Future<AssetReturnReceipt> returnAssignedAssets({
@@ -132,6 +152,7 @@ extension AssetAssignmentOperations on AssetStore {
     AssetPlacement? receivingPlacement,
     String receivedByName = '',
     String notes = '',
+    Map<String, SelectedAssetPhoto> proofPhotos = const {},
   }) async {
     if (record.status != 'Aktif' ||
       inspections.isEmpty || !locations.contains(receivingLocation)) {
@@ -158,10 +179,19 @@ extension AssetAssignmentOperations on AssetStore {
       }
       selected.add(lines.single);
     }
+    final receiptId = uuid.v4();
+    final preparedProof = prepareEvidence(
+      transactionType: 'assignment_return',
+      transactionId: receiptId,
+      requiredAssetIds: selected.map((l) => l.assetId).toSet(),
+      selectedPhotos: proofPhotos,
+    );
+    final previousBackup = backup();
+    try {
     final now = DateTime.now().toIso8601String();
     final number = nextReturnNumber.toString().padLeft(6, '0');
     final receipt = AssetReturnReceipt(
-      id: uuid.v4(),
+      id: receiptId,
       draftReference: 'DRAF-BAP-ASG-' + number,
       assignmentId: record.id,
       employeeSnapshot: Map<String, dynamic>.from(record.employeeSnapshot),
@@ -182,12 +212,10 @@ extension AssetAssignmentOperations on AssetStore {
             returnCondition: inspections[line.id]!.condition,
             accessoriesReturned: inspections[line.id]!.accessories.trim(),
             notes: inspections[line.id]!.notes.trim(),
-            photoIds: photosFor(line.assetId).where((p) {
-              final photoTime = DateTime.tryParse(p.timestamp);
-              final acceptedTime = DateTime.tryParse(record.acceptedAt);
-              return photoTime != null && acceptedTime != null &&
-                photoTime.isAfter(acceptedTime);
-            }).take(2).map((p) => p.id).toList(),
+            proofPhotoIds: [
+              for (final p in preparedProof)
+                if (p.assetId == line.assetId) p.id,
+            ],
           ),
       ],
     );
@@ -221,7 +249,12 @@ extension AssetAssignmentOperations on AssetStore {
         });
     }
     if (record.activeCount == 0) record.status = 'Selesai';
+    evidencePhotos.addAll(preparedProof);
     await persist();
     return receipt;
+    } catch (_) {
+      restore(previousBackup);
+      rethrow;
+    }
   }
 }

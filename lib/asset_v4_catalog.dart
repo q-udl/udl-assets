@@ -109,6 +109,7 @@ extension _AssetV4Catalog on _AssetScreenState {
                   Wrap(spacing: 8, runSpacing: 8,
                     alignment: WrapAlignment.end, children: [
                       if (hasAssetFilters) OutlinedButton.icon(
+                        style: assetOutlinedStyle(AssetActionTone.secondary),
                         onPressed: () { resetAssetFilters(); update(() {}); },
                         icon: const Icon(Icons.filter_alt_off_outlined),
                         label: const Text('Reset Filter')),
@@ -248,6 +249,7 @@ extension _AssetV4Catalog on _AssetScreenState {
                   ),
                   if (hasAssetFilters)
                     TextButton.icon(
+                      style: assetTextStyle(AssetActionTone.secondary),
                       key: const ValueKey('asset-reset-filters'),
                       onPressed: resetAssetFilters,
                       icon: const Icon(Icons.filter_alt_off_outlined,
@@ -291,6 +293,7 @@ extension _AssetV4Catalog on _AssetScreenState {
                   const SizedBox(height: 17),
                   if (hasAssetFilters)
                     OutlinedButton.icon(
+                      style: assetOutlinedStyle(AssetActionTone.secondary),
                       key: const ValueKey('empty-asset-reset'),
                       onPressed: resetAssetFilters,
                       icon: const Icon(Icons.filter_alt_off_rounded),

@@ -19,6 +19,13 @@ class _AssetScreenState extends State<AssetScreen> {
   final List<Map<String, dynamic>> _navigationHistory = [];
   bool _restoringHistory = false, _formDirty = false;
   bool _sidebarCollapsed = false;
+  String? _hoveredTableRow;
+
+  void _setTableHover(String? value) {
+    if (_hoveredTableRow == value) return;
+    setState(() => _hoveredTableRow = value);
+  }
+
 
   @override
   void initState() {
@@ -259,27 +266,32 @@ class _AssetScreenState extends State<AssetScreen> {
     ]);
   }
 
-  Widget badge(String value, {bool compact = false}) {
-    final Color tint;
+  Widget badge(String value, {bool compact = false, Color? toneColor}) {
+    Color tint;
     switch (value) {
       case 'Digunakan':
+      case 'Aktif':
+      case 'Selesai':
         tint = green;
         break;
       case 'Tersedia':
         tint = blue;
         break;
       case 'Dalam Perbaikan':
+      case 'Menunggu Penerimaan':
         tint = amber;
         break;
       case 'Hilang':
       case 'Tidak Aktif':
       case 'Dilepas':
       case 'Dihapuskan':
+      case 'Ditolak':
         tint = danger;
         break;
       default:
         tint = muted;
     }
+    tint = toneColor ?? tint;
     return Container(
       padding: EdgeInsets.symmetric(horizontal: compact ? 9 : 11, vertical: compact ? 5 : 7),
       decoration: BoxDecoration(color: tint.withValues(alpha: 0.09), borderRadius: BorderRadius.circular(24)),
@@ -294,34 +306,24 @@ class _AssetScreenState extends State<AssetScreen> {
     );
   }
 
-  Widget primaryButton(String label, IconData icon, VoidCallback action) {
-    return FilledButton.icon(
-      style: FilledButton.styleFrom(
-        backgroundColor: blue,
-        foregroundColor: Colors.white,
-        minimumSize: const Size(0, 43),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
+  Widget primaryButton(String label, IconData icon, VoidCallback action,
+      {AssetActionTone tone = AssetActionTone.primary}) =>
+    FilledButton.icon(
+      style: assetFilledStyle(tone),
       onPressed: action,
       icon: Icon(icon, size: 18),
-      label: Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
+      label: Text(label,
+        style: const TextStyle(fontWeight: FontWeight.w700)),
     );
-  }
 
-  Widget outlineButton(String label, IconData icon, VoidCallback action) {
-    return OutlinedButton.icon(
-      style: OutlinedButton.styleFrom(
-        foregroundColor: blue,
-        minimumSize: const Size(0, 41),
-        side: const BorderSide(color: border),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
+  Widget outlineButton(String label, IconData icon, VoidCallback action,
+      {AssetActionTone tone = AssetActionTone.informational}) =>
+    OutlinedButton.icon(
+      style: assetOutlinedStyle(tone),
       onPressed: action,
       icon: Icon(icon, size: 18),
       label: Text(label),
     );
-  }
 
   Widget _appIdentity({required bool condensed}) {
     return Padding(
@@ -411,12 +413,12 @@ class _AssetScreenState extends State<AssetScreen> {
                     padding: const EdgeInsets.symmetric(
                       horizontal: 7, vertical: 3),
                     decoration: BoxDecoration(
-                      color: active ? Colors.white :
-                        const Color(0xFFF0F3F8),
+                      color: blue,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(store.assets.length.toString(),
-                      style: const TextStyle(fontSize: 11, color: muted)),
+                      style: const TextStyle(fontSize: 11,
+                        color: Colors.white, fontWeight: FontWeight.w800)),
                   ),
                 ],
               ],
@@ -1553,7 +1555,8 @@ class _AssetScreenState extends State<AssetScreen> {
             notify('Backup JSON berhasil disalin');
           }),
           outlineButton('Impor JSON', Icons.upload_file_outlined, restoreDialog),
-          outlineButton('Reset Data Demo', Icons.restart_alt_rounded, resetDemo),
+          outlineButton('Reset Data Demo', Icons.restart_alt_rounded, resetDemo,
+            tone: AssetActionTone.warning),
         ]),
         const Divider(color: border, height: 35),
         detailValue('Total data aset', store.assets.length.toString()),

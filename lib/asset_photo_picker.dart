@@ -347,14 +347,16 @@ class AssetPhotoPicker {
                   const SizedBox(height: 8),
                   SizedBox(width: double.infinity, height: 48,
                     child: OutlinedButton.icon(
-                      key: const ValueKey('rv25-pick-again'),
+                       style: assetOutlinedStyle(AssetActionTone.secondary),
+                       key: const ValueKey('rv25-pick-again'),
                       onPressed: () => Navigator.pop(ctx, 2),
                       icon: const Icon(Icons.refresh),
                       label: const Text('Pilih Ulang'))),
                   const SizedBox(height: 8),
                   SizedBox(width: double.infinity, height: 48,
                     child: TextButton(
-                      onPressed: () => Navigator.pop(ctx, 0),
+                       style: assetTextStyle(AssetActionTone.secondary),
+                       onPressed: () => Navigator.pop(ctx, 0),
                       child: const Text('Batal'))),
                 ] else
                   Wrap(
@@ -362,10 +364,12 @@ class AssetPhotoPicker {
                     alignment: WrapAlignment.end,
                     children: [
                       TextButton(
-                        onPressed: () => Navigator.pop(ctx, 0),
+                       style: assetTextStyle(AssetActionTone.secondary),
+                       onPressed: () => Navigator.pop(ctx, 0),
                         child: const Text('Batal')),
                       OutlinedButton.icon(
-                        key: const ValueKey('rv25-pick-again'),
+                       style: assetOutlinedStyle(AssetActionTone.secondary),
+                       key: const ValueKey('rv25-pick-again'),
                         onPressed: () => Navigator.pop(ctx, 2),
                         icon: const Icon(Icons.refresh),
                         label: const Text('Pilih Ulang')),

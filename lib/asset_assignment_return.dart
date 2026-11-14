@@ -20,6 +20,7 @@ class _V5ReturnFormState extends State<V5ReturnForm> {
   final condition = <String,String>{};
   final accessories = <String,String>{};
   final notesByLine = <String,String>{};
+  final proofPhotos = <String, SelectedAssetPhoto>{};
   final notes = TextEditingController();
   final receivedBy = TextEditingController();
   late String location;
@@ -29,6 +30,7 @@ class _V5ReturnFormState extends State<V5ReturnForm> {
   bool get hasUnsavedChanges =>
     selected.isNotEmpty || condition.isNotEmpty || accessories.isNotEmpty ||
     notesByLine.values.any((v) => v.trim().isNotEmpty) ||
+    proofPhotos.isNotEmpty ||
     notes.text.trim().isNotEmpty || receivedBy.text.trim().isNotEmpty ||
     receivingAreaId.isNotEmpty || receivingSpotId.isNotEmpty ||
     (location != (widget.store.activeSites.isEmpty
@@ -50,34 +52,17 @@ class _V5ReturnFormState extends State<V5ReturnForm> {
     super.dispose();
   }
 
-  Future<void> uploadReturnPhoto(AssignedAssetLine line,
-      {BuildContext? anchorContext}) async {
-    final asset = widget.store.assignmentAsset(line.assetId);
-    if (asset == null) return;
-    try {
-      final chosen = await AssetPhotoPicker.choose(context,
-        anchorContext: anchorContext);
-      if (chosen == null || !mounted) return;
-      await widget.store.addPhoto(
-        asset, chosen.bytes, chosen.fileName, 'Dokumentasi Kondisi',
-        note: 'Dokumentasi saat pengembalian: ' +
-          widget.assignment.draftReference);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Foto kondisi ditambahkan ke dokumentasi aset.')));
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() =>
-          error = 'Gagal menambah foto kondisi: ' + e.toString());
-      }
-    }
-  }
-
   Future<void> save() async {
     if (saving) { return; }
     if (selected.isEmpty) {
       setState(() => error = 'Pilih minimal satu aset yang dikembalikan.');
+      return;
+    }
+    final selectedAssets = widget.assignment.lines
+      .where((line) => selected.contains(line.id)).toList();
+    if (selectedAssets.any((line) => !proofPhotos.containsKey(line.assetId))) {
+      setState(() => error =
+        'Setiap aset yang dikembalikan wajib memiliki foto bukti.');
       return;
     }
     setState(() { error = null; saving = true; });
@@ -98,6 +83,10 @@ class _V5ReturnFormState extends State<V5ReturnForm> {
           areaId: receivingAreaId, spotId: receivingSpotId),
         receivedByName: receivedBy.text,
         notes: notes.text,
+        proofPhotos: {
+          for (final line in selectedAssets)
+            line.assetId: proofPhotos[line.assetId]!,
+        },
       );
       if (mounted) widget.onCompleted(receipt);
     } catch (exception) {
@@ -156,6 +145,7 @@ class _V5ReturnFormState extends State<V5ReturnForm> {
                     line.assetId)?.condition ?? line.handoverCondition;
                 } else {
                   selected.remove(line.id);
+                  proofPhotos.remove(line.assetId);
                 }
               }); },
             ),
@@ -207,14 +197,26 @@ class _V5ReturnFormState extends State<V5ReturnForm> {
                           hintText: 'Catat selisih atau kerusakan'),
                         onChanged: (value) { widget.onDirty?.call(); notesByLine[line.id] = value; },
                       ),
-                      const SizedBox(height: 8),
-                      Builder(builder:(photoAnchor)=>OutlinedButton.icon(
-                         onPressed: () => uploadReturnPhoto(line,
-                           anchorContext:photoAnchor),
-                         icon: const Icon(Icons.add_a_photo_outlined, size: 17),
-                         label: const Text('Tambah Foto Kondisi Kembali'),
-                       )),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 12),
+                       assetEvidencePicker(
+                         context: context,
+                         assetCode: line.assetCode,
+                         title: 'Foto Bukti Pengembalian',
+                         selected: proofPhotos[line.assetId],
+                         testKey: 'rv29-return-proof-' + line.id,
+                         onSelected: (photo) {
+                           widget.onDirty?.call();
+                           setState(() {
+                             proofPhotos[line.assetId] = photo;
+                             error = null;
+                           });
+                         },
+                         onRemove: () {
+                           widget.onDirty?.call();
+                           setState(() => proofPhotos.remove(line.assetId));
+                         },
+                       ),
+                       const SizedBox(height: 6),
                       if (['Rusak','Kurang Baik'].contains(condition[line.id]))
                         const Padding(
                           padding: EdgeInsets.only(top: 7),

@@ -38,9 +38,12 @@ extension _AssetLifecycleUI on _AssetScreenState {
             asset.lifecycle == 'Aktif'
               ? Icons.pause_circle_outline
               : Icons.play_circle_outline,
-            () => v6ChangeLifecycle(asset)),
+            () => v6ChangeLifecycle(asset),
+             tone: asset.lifecycle == 'Aktif'
+               ? AssetActionTone.warning : AssetActionTone.success),
           outlineButton('Catat Pelepasan', Icons.outbox_outlined,
-            () => v6ReleaseDialog(asset)),
+            () => v6ReleaseDialog(asset),
+             tone: AssetActionTone.danger),
         ]),
       ],
     ]),
@@ -73,9 +76,13 @@ extension _AssetLifecycleUI on _AssetScreenState {
         ],
       ),
       actions: (ctx, update) => [
-        OutlinedButton(onPressed: () => assetRequestModalClose(
+        OutlinedButton(style: assetOutlinedStyle(AssetActionTone.secondary),
+          onPressed: () => assetRequestModalClose(
           ctx, isDirty: hasChanges), child: const Text('Batal')),
-        FilledButton(onPressed: () {
+        FilledButton(
+          style: assetFilledStyle(newActive
+            ? AssetActionTone.success : AssetActionTone.warning),
+          onPressed: () {
           if (reason.text.trim().isEmpty) {
             update(() => error = 'Alasan wajib diisi.');
           } else {
@@ -158,10 +165,11 @@ extension _AssetLifecycleUI on _AssetScreenState {
         ],
       ),
       actions: (ctx, update) => [
-        OutlinedButton(onPressed: () => assetRequestModalClose(
+        OutlinedButton(style: assetOutlinedStyle(AssetActionTone.secondary),
+          onPressed: () => assetRequestModalClose(
           ctx, isDirty: hasChanges), child: const Text('Batal')),
         FilledButton(
-          style: FilledButton.styleFrom(backgroundColor: danger),
+          style: assetFilledStyle(AssetActionTone.danger),
           onPressed: () {
             if (reference.text.trim().isEmpty ||
                 reason.text.trim().isEmpty ||

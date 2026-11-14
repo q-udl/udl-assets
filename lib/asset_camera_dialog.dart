@@ -224,7 +224,8 @@ class _AssetCameraDialogState extends State<AssetCameraDialog> {
                       label: const Text('Ambil Foto')),
                   if (captured != null)
                     OutlinedButton.icon(
-                      key: const ValueKey('rv27-retake'),
+                       style: assetOutlinedStyle(AssetActionTone.secondary),
+                       key: const ValueKey('rv27-retake'),
                       onPressed: busy ? null :
                         () => setState(() { captured = null; error = null; }),
                       icon: const Icon(Icons.refresh_outlined),
@@ -248,8 +249,9 @@ class _AssetCameraDialogState extends State<AssetCameraDialog> {
                       icon: const Icon(Icons.cameraswitch_outlined),
                       label: const Text('Ganti Kamera')),
                   TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Batal')),
+                     style: assetTextStyle(AssetActionTone.secondary),
+                     onPressed: () => Navigator.pop(context),
+                     child: const Text('Batal')),
                 ];
                 return narrow
                   ? Column(

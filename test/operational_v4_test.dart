@@ -8,6 +8,12 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
+  SelectedAssetPhoto uatProof() {
+    final bytes = base64Decode(
+      'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGMMmHaJgYGBiYGBgYGBAQAUSAG8NMsrTwAAAABJRU5ErkJggg==');
+    return SelectedAssetPhoto(bytes, 'bukti-uat.png', bytes.length);
+  }
+
   test('Registrasi massal memberi nomor unik berurutan', () async {
     final store=AssetStore();
     await store.initialize();
@@ -38,7 +44,8 @@ void main() {
       'Kebutuhan unit');
     expect(asset.location,previous);
     expect(transfer.state,'Menunggu Penerimaan');
-    await store.confirmTransfer(transfer,true,'Diterima secara simulasi');
+    await store.confirmTransfer(transfer,true,'Diterima secara simulasi',
+      proofPhoto: uatProof());
     expect(asset.location,'Outlet Jepara');
     expect(asset.holder,'PIC Baru');
     expect(store.events.first.changes['Lokasi']['from'],previous);

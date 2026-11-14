@@ -21,6 +21,12 @@ void main() {
       status: 'Tersedia', condition: 'Baik',
       cost: null, acquisitionDate: '');
 
+  SelectedAssetPhoto uatProof() {
+    final bytes = base64Decode(
+      'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGMMmHaJgYGBiYGBgYGBAQAUSAG8NMsrTwAAAABJRU5ErkJggg==');
+    return SelectedAssetPhoto(bytes, 'bukti-uat.png', bytes.length);
+  }
+
   test('Master karyawan menggunakan kode unik dan status aktif', () async {
     final store = AssetStore();
     await store.initialize();
@@ -66,7 +72,9 @@ void main() {
     final ba = await AssetBastPdf.handover(batch);
     expect(utf8.decode(ba.take(5).toList()), '%PDF-');
     expect(ba.length, greaterThan(1700));
-    await store.confirmAssignment(batch, true, '');
+    await store.confirmAssignment(batch, true, '', proofPhotos: {
+      for (final line in batch.lines) line.assetId: uatProof(),
+    });
     expect(batch.status, 'Aktif');
     expect(records[0].assignedEmployeeId, person.id);
     expect(records[0].holder, person.name);
@@ -80,7 +88,8 @@ void main() {
       },
       receivingLocation: 'Gudang Pusat',
       receivedByName: 'Petugas GA Simulasi',
-      notes: 'Pengembalian parsial');
+      notes: 'Pengembalian parsial',
+      proofPhotos: {records[0].id: uatProof()});
     expect(batch.status, 'Aktif');
     expect(batch.activeCount, 1);
     expect(records[0].status, 'Dalam Perbaikan');
@@ -95,7 +104,8 @@ void main() {
         batch.lines[1].id: const AssetReturnInput(
           condition: 'Baik', accessories: 'Lengkap'),
       },
-      receivingLocation: 'Kantor Pusat');
+      receivingLocation: 'Kantor Pusat',
+      proofPhotos: {records[1].id: uatProof()});
     expect(batch.status, 'Selesai');
     expect(records[1].status, 'Tersedia');
     expect(records[1].holder, isEmpty);
@@ -142,7 +152,9 @@ void main() {
     expect(batch.lines.single.photoIds, hasLength(1));
     final pdf = await AssetBastPdf.handover(batch, store: store);
     expect(utf8.decode(pdf.take(5).toList()), '%PDF-');
-    await store.confirmAssignment(batch, true, '');
+    await store.confirmAssignment(batch, true, '', proofPhotos: {
+      for (final line in batch.lines) line.assetId: uatProof(),
+    });
     await store.addPhoto(asset, bytes, 'kembali.png',
       'Dokumentasi Kondisi', note: 'Kondisi saat dikembalikan');
     final receipt = await store.returnAssignedAssets(
@@ -151,14 +163,18 @@ void main() {
         batch.lines.single.id:
           const AssetReturnInput(condition: 'Baik'),
       },
-      receivingLocation: 'Gudang Pusat');
-    expect(receipt.lines.single.photoIds, isNotEmpty);
+      receivingLocation: 'Gudang Pusat',
+      proofPhotos: {asset.id: uatProof()});
+    expect(receipt.lines.single.proofPhotoIds, isNotEmpty);
+    expect(store.evidenceFor('assignment_return', receipt.id, asset.id),
+      hasLength(1));
     final returnPdf = await AssetBastPdf.assetReturn(
       batch, receipt, store: store);
     expect(utf8.decode(returnPdf.take(5).toList()), '%PDF-');
     final restored = AssetStore()..restore(store.backup());
     expect(restored.assignments.single.lines.single.photoIds, hasLength(1));
-    expect(restored.returnReceipts.single.lines.single.photoIds, isNotEmpty);
+    expect(restored.returnReceipts.single.lines.single.proofPhotoIds, isNotEmpty);
+    expect(restored.evidencePhotos, hasLength(2));
   });
 
   test('Data lama tetap terbaca tanpa auto-link PIC berdasarkan nama', () async {

@@ -9,6 +9,14 @@ void main() {
 
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
+  SelectedAssetPhoto uatProof() {
+    final bytes = base64Decode(
+      'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGMMmHaJgYGBiYGBgYGBAQAUSAG8NMsrTwAAAABJRU5ErkJggg==');
+    return SelectedAssetPhoto(bytes, 'bukti-uat.png', bytes.length);
+  }
+
+
+
   test('RV18: old flat location data migrates without fictitious areas', () async {
     final store = AssetStore();
     await store.initialize();
@@ -59,7 +67,8 @@ void main() {
       item, outlet.name, 'Operator Kasir', 'Pemindahan fasilitas',
       placement: AssetPlacement(outlet.id, areaId: outletArea.id));
     expect(item.location, 'Gudang Pusat');
-    await store.confirmTransfer(transfer, true, 'Diterima (simulasi)');
+    await store.confirmTransfer(transfer, true, 'Diterima (simulasi)',
+      proofPhoto: uatProof());
     expect(store.locationPath(item), 'Outlet Jepara / Ruang Kasir');
     expect(item.locationAreaId, outletArea.id);
     final restored = AssetStore()..restore(store.backup());
@@ -96,7 +105,8 @@ void main() {
     final batch = await store.createAssignment(
       employeeId: employee.id, kind: 'Berkelanjutan',
       assetIds: [asset.id], accessories: {});
-    await store.confirmAssignment(batch, true, '');
+    await store.confirmAssignment(batch, true, '',
+      proofPhotos: {asset.id: uatProof()});
     final site = store.siteByName('Gudang Pusat')!;
     final area = await store.addArea(site, 'Ruang Terima Barang');
     final spot = await store.addSpot(site, area, 'Rak Retur 01');
@@ -109,7 +119,8 @@ void main() {
           const AssetReturnInput(condition: 'Baik'),
       },
       receivingLocation: site.name,
-      receivingPlacement: placement);
+      receivingPlacement: placement,
+      proofPhotos: {asset.id: uatProof()});
     expect(store.locationPath(asset),
       'Gudang Pusat / Ruang Terima Barang / Rak Retur 01');
     expect(receipt.receivingLocationPath, store.locationPath(asset));

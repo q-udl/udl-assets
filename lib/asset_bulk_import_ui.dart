@@ -391,11 +391,14 @@ class _BulkImportDialogState extends State<BulkImportDialog> {
                 const SizedBox(height: 8),
                 SizedBox(width: double.infinity, height: 48,
                   child: OutlinedButton(
-                    onPressed: busy ? null : requestClose,
+                     style: assetOutlinedStyle(AssetActionTone.secondary),
+                     onPressed: busy ? null : requestClose,
                     child: const Text('Batal'))),
               ] else
               Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-                OutlinedButton(onPressed: busy ? null : requestClose,
+                OutlinedButton(
+                     style: assetOutlinedStyle(AssetActionTone.secondary),
+                     onPressed: busy ? null : requestClose,
                   child: const Text('Batal')),
                 const SizedBox(width: 10),
                 FilledButton.icon(

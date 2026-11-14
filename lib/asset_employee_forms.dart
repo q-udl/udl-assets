@@ -81,7 +81,8 @@ extension _AssetEmployeeForms on _AssetScreenState {
         ],
       ),
       actions: (ctx, update) => [
-        OutlinedButton(onPressed: () => assetRequestModalClose(
+        OutlinedButton(style: assetOutlinedStyle(AssetActionTone.secondary),
+          onPressed: () => assetRequestModalClose(
           ctx, isDirty: hasChanges), child: const Text('Batal')),
         FilledButton(onPressed: () {
           if (name.text.trim().length < 3 ||
@@ -157,9 +158,13 @@ extension _AssetEmployeeForms on _AssetScreenState {
         ],
       ),
       actions: (ctx, update) => [
-        OutlinedButton(onPressed: () => assetRequestModalClose(
+        OutlinedButton(style: assetOutlinedStyle(AssetActionTone.secondary),
+          onPressed: () => assetRequestModalClose(
           ctx, isDirty: hasChanges), child: const Text('Batal')),
-        FilledButton(onPressed: () {
+        FilledButton(
+          style: assetFilledStyle(desired
+            ? AssetActionTone.success : AssetActionTone.warning),
+          onPressed: () {
           if (reason.text.trim().isEmpty) {
             update(() => error = 'Alasan wajib diisi.');
           } else {

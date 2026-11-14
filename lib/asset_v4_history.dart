@@ -150,7 +150,8 @@ extension _AssetV4History on _AssetScreenState {
         ],
       ),
       actions: (ctx, update) => [
-        OutlinedButton(onPressed: () => Navigator.pop(ctx),
+        OutlinedButton(style: assetOutlinedStyle(AssetActionTone.secondary),
+          onPressed: () => Navigator.pop(ctx),
           child: const Text('Tutup')),
         if (a != null)
           FilledButton(

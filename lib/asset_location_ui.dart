@@ -43,7 +43,8 @@ extension _AssetLocationMasterUI on _AssetScreenState {
         const PopupMenuItem(value: 'rename',
           child: Text('Ubah Nama')),
         PopupMenuItem(value: 'toggle',
-          child: Text(active ? 'Nonaktifkan' : 'Aktifkan')),
+          child: assetMenuActionLabel(active ? 'Nonaktifkan' : 'Aktifkan',
+            active ? AssetActionTone.warning : AssetActionTone.success)),
       ],
     );
 

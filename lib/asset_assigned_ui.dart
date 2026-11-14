@@ -118,8 +118,10 @@ extension _AssignedAssetsScreens on _AssetScreenState {
                   ],
                 ),
                 for (final batch in visible)
-                  TableRow(decoration: const BoxDecoration(
-                    border: Border(bottom: BorderSide(color: border))),
+                  TableRow(decoration: BoxDecoration(
+                    color: _hoveredTableRow == 'assignment:' + batch.id
+                      ? lightBlue : Colors.transparent,
+                    border: const Border(bottom: BorderSide(color: border))),
                     children: [
                       _v5AssignedCell(Text(batch.draftReference,
                         style: const TextStyle(color: blue,
@@ -171,15 +173,27 @@ extension _AssignedAssetsScreens on _AssetScreenState {
   }
 
   Widget _v5AssignedCell(Widget child, {AssetAssignment? batch}) =>
-    InkWell(
-      onTap: batch == null ? null : () => v4Change(() {
-        selectedAssignment = batch;
-        page = 7;
-      }),
-      child: Container(
-        constraints: const BoxConstraints(minHeight: 66),
-        alignment: Alignment.centerLeft,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        child: child),
+    MouseRegion(
+      onEnter: batch == null ? null :
+        (_) => _setTableHover('assignment:' + batch.id),
+      onExit: batch == null ? null : (_) {
+        if (_hoveredTableRow == 'assignment:' + batch.id) {
+          _setTableHover(null);
+        }
+      },
+      child: InkWell(
+        hoverColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        splashColor: Colors.transparent,
+        onTap: batch == null ? null : () => v4Change(() {
+          selectedAssignment = batch;
+          page = 7;
+        }),
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 66),
+          alignment: Alignment.centerLeft,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          child: child),
+      ),
     );
 }

@@ -21,34 +21,23 @@ Future<bool> assetConfirmDialog(
       final mobile = screen.width < 650;
       final safeAction = OutlinedButton(
         key: const ValueKey('rv28-dialog-safe'),
-        style: OutlinedButton.styleFrom(
-          minimumSize: const Size(0, 48),
-          foregroundColor: blue),
+        style: assetOutlinedStyle(AssetActionTone.secondary),
         onPressed: () => Navigator.pop(dialogContext, false),
         child: Text(cancelLabel, textAlign: TextAlign.center));
       final safePrimary = FilledButton(
         key: const ValueKey('rv28-dialog-safe'),
-        style: FilledButton.styleFrom(
-          backgroundColor: blue,
-          foregroundColor: Colors.white,
-          minimumSize: const Size(0, 48)),
+        style: assetFilledStyle(AssetActionTone.primary),
         onPressed: () => Navigator.pop(dialogContext, false),
         child: Text(cancelLabel, textAlign: TextAlign.center));
       final proceed = destructive
         ? OutlinedButton(
             key: const ValueKey('rv28-dialog-destructive'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: danger,
-              side: const BorderSide(color: danger),
-              minimumSize: const Size(0, 48)),
+            style: assetOutlinedStyle(AssetActionTone.danger),
             onPressed: () => Navigator.pop(dialogContext, true),
             child: Text(confirmLabel, textAlign: TextAlign.center))
         : FilledButton(
             key: const ValueKey('rv28-dialog-confirm'),
-            style: FilledButton.styleFrom(
-              backgroundColor: blue,
-              foregroundColor: Colors.white,
-              minimumSize: const Size(0, 48)),
+            style: assetFilledStyle(AssetActionTone.primary),
             onPressed: () => Navigator.pop(dialogContext, true),
             child: Text(confirmLabel, textAlign: TextAlign.center));
       final actionButtons = destructive
@@ -205,6 +194,7 @@ Future<void> assetNoticeDialog(BuildContext context, {
                     width: mobile ? double.infinity : null,
                     height: 48,
                     child: FilledButton(
+                      style: assetFilledStyle(AssetActionTone.secondary),
                       onPressed: () => Navigator.pop(dialogContext),
                       child: const Text('Tutup'))),
                 ),
