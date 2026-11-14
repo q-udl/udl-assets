@@ -98,7 +98,7 @@ void main() {
     final store = AssetStore();
     await store.initialize();
     final employee = await store.addEmployee(
-      code: 'KRY-RV18', name: 'Karyawan Pengembalian',
+      name: 'Karyawan Pengembalian',
       unit: 'Outlet', department: 'Gudang',
       jobTitle: 'Operator', workLocation: 'Outlet Jepara');
     final asset = store.assets.firstWhere(store.canAssignAsset);
@@ -106,6 +106,7 @@ void main() {
       employeeId: employee.id, kind: 'Berkelanjutan',
       assetIds: [asset.id], accessories: {});
     await store.confirmAssignment(batch, true, '',
+      handedOverByName: 'Petugas GA',
       proofPhotos: {asset.id: uatProof()});
     final site = store.siteByName('Gudang Pusat')!;
     final area = await store.addArea(site, 'Ruang Terima Barang');
@@ -119,6 +120,7 @@ void main() {
           const AssetReturnInput(condition: 'Baik'),
       },
       receivingLocation: site.name,
+      receivedByName: 'Petugas GA',
       receivingPlacement: placement,
       proofPhotos: {asset.id: uatProof()});
     expect(store.locationPath(asset),
@@ -169,7 +171,7 @@ void main() {
     final store = AssetStore();
     await store.initialize();
     final employee = await store.addEmployee(
-      code: 'TEST-CUSTODY', name: 'Pengguna Uji',
+      name: 'Pengguna Uji',
       unit: 'Outlet', department: 'Operasional',
       jobTitle: 'Staf', workLocation: 'Outlet Jepara');
     final asset = store.assets.firstWhere((a) =>
