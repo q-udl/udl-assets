@@ -47,6 +47,42 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('RV23 Compact Sidebar preserves labels, logo and toggle',
+      (tester) async {
+    tester.view.physicalSize = const Size(1600, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(const AssetApp());
+    await tester.pumpAndSettle();
+
+    const panel = ValueKey('udl-sidebar-panel');
+    const first = ValueKey('udl-sidebar-menu-1');
+    const second = ValueKey('udl-sidebar-menu-7');
+    expect(tester.getSize(find.byKey(panel)).width, 196);
+    expect(tester.getSize(find.byKey(first)).height, 38);
+    expect(tester.getTopLeft(find.byKey(second)).dy -
+      tester.getTopLeft(find.byKey(first)).dy, 42);
+    expect(find.text('Manajemen Aset'), findsOneWidget);
+    expect(find.text('Master Klasifikasi'), findsOneWidget);
+    expect(find.byKey(const ValueKey('udl-assets-logo')), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Minimalkan Sidebar'));
+    await tester.pumpAndSettle();
+    expect(tester.getSize(find.byKey(panel)).width, 72);
+    expect(find.text('Manajemen Aset'), findsNothing);
+    expect(find.byTooltip('Master Klasifikasi'), findsOneWidget);
+    expect(tester.getSize(find.byKey(first)).height, 38);
+
+    await tester.tap(find.byTooltip('Perluas Sidebar'));
+    await tester.pumpAndSettle();
+    expect(tester.getSize(find.byKey(panel)).width, 196);
+    await tester.tap(find.text('Master Klasifikasi').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Master Klasifikasi Aset'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Master klasifikasi dapat dibuka dari sidebar', (tester) async {
     tester.view.physicalSize = const Size(1440, 900);
     tester.view.devicePixelRatio = 1;
