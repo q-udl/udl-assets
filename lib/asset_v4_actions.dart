@@ -202,7 +202,7 @@ extension _AssetV4Actions on _AssetScreenState {
     note.dispose();
   }
 
-  Future<void> v4UploadPhoto(AssetRecord a) async {
+  Future<void> v4UploadPhoto(AssetRecord a, {BuildContext? anchorContext}) async {
     var kind = AssetStore.photoKinds.first;
     final note = TextEditingController();
     final confirmed = await v4ShowModal<bool>(
@@ -233,7 +233,8 @@ extension _AssetV4Actions on _AssetScreenState {
     );
     if (confirmed == true && mounted) {
       try {
-        final selected = await AssetPhotoPicker.choose(context);
+        final selected = await AssetPhotoPicker.choose(context,
+          anchorContext: anchorContext);
         if (selected != null && mounted) {
           await store.addPhoto(a, selected.bytes, selected.fileName, kind,
             note: note.text);
