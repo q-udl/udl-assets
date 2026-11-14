@@ -86,7 +86,14 @@ void main() {
     await tester.pumpAndSettle();
     final tableAsset = find.byKey(const ValueKey('adaptive-asset-table'));
     expect(tableAsset, findsOneWidget);
-    expect(tester.getSize(tableAsset).width, greaterThan(1200));
+    final originalWidth = tester.getSize(tableAsset).width;
+    expect(originalWidth, greaterThan(1200));
+    await tester.tap(find.byTooltip('Minimalkan Sidebar'));
+    await tester.pumpAndSettle();
+    expect(tester.getSize(tableAsset).width,
+      greaterThan(originalWidth + 100));
+    await tester.tap(find.byTooltip('Perluas Sidebar'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Riwayat').first);
     await tester.pumpAndSettle();
     final tableHistory = find.byKey(const ValueKey('adaptive-history-table'));
