@@ -109,7 +109,7 @@ class AssetPhotoPicker {
     Uint8List? input;
     String name;
     if (from == AssetPhotoSource.file) {
-      final selected = await FilePicker.platform.pickFiles(
+      final selected = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['jpg', 'jpeg', 'png', 'webp'],
         allowMultiple: false, withData: true);
@@ -200,7 +200,8 @@ class AssetPhotoPicker {
   }
 
   static Future<SelectedAssetPhoto?> choose(BuildContext context) async {
-    while (context.mounted) {
+    while (true) {
+      if (!context.mounted) return null;
       final source = await _source(context);
       if (source == null || !context.mounted) return null;
       SelectedAssetPhoto? picked;
