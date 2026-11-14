@@ -14,7 +14,7 @@ class AssetRecord {
     'subcategory': subcategory, 'assetType': assetType,
     'brand': brand, 'serial': serial, 'location': location, 'holder': holder,
     'condition': condition, 'status': status, 'cost': cost,
-    'model': model, 'acquisitionDate': acquisitionDate, 'acquisitionCost': acquisitionCost ?? cost,
+    'model': model, 'acquisitionDate': acquisitionDate, 'acquisitionCost': acquisitionCost,
     'categoryId': categoryId, 'subcategoryId': subcategoryId, 'typeId': typeId,
   };
   factory AssetRecord.fromJson(Map<String, dynamic> m) {
