@@ -85,6 +85,40 @@ void main() {
     expect(restored.assets.any((a) => a.location == 'Gudang Pusat'), false);
   });
 
+  test('RV18: Assigned Assets return saves precise receiving placement', () async {
+    final store = AssetStore();
+    await store.initialize();
+    final employee = await store.addEmployee(
+      code: 'KRY-RV18', name: 'Karyawan Pengembalian',
+      unit: 'Outlet', department: 'Gudang',
+      jobTitle: 'Operator', workLocation: 'Outlet Jepara');
+    final asset = store.assets.firstWhere(store.canAssignAsset);
+    final batch = await store.createAssignment(
+      employeeId: employee.id, kind: 'Berkelanjutan',
+      assetIds: [asset.id], accessories: {});
+    await store.confirmAssignment(batch, true, '');
+    final site = store.siteByName('Gudang Pusat')!;
+    final area = await store.addArea(site, 'Ruang Terima Barang');
+    final spot = await store.addSpot(site, area, 'Rak Retur 01');
+    final placement = AssetPlacement(
+      site.id, areaId: area.id, spotId: spot.id);
+    final receipt = await store.returnAssignedAssets(
+      record: batch,
+      inspections: {
+        batch.lines.first.id:
+          const AssetReturnInput(condition: 'Baik'),
+      },
+      receivingLocation: site.name,
+      receivingPlacement: placement);
+    expect(store.locationPath(asset),
+      'Gudang Pusat / Ruang Terima Barang / Rak Retur 01');
+    expect(receipt.receivingLocationPath, store.locationPath(asset));
+    final backup = AssetStore()..restore(store.backup());
+    final same = backup.assets.firstWhere((a) => a.id == asset.id);
+    expect(backup.locationPath(same), receipt.receivingLocationPath);
+    expect(backup.returnReceipts.single.receivingSpotId, spot.id);
+  });
+
   test('RV15: inactive and released assets retain identity and audit trail',
       () async {
     final store = AssetStore();
@@ -197,6 +231,8 @@ void main() {
     await tester.tap(find.text('Master Lokasi').first);
     await tester.pumpAndSettle();
     expect(find.text('Lokasi Utama'), findsOneWidget);
+    expect(find.text('Area'), findsOneWidget);
+    expect(find.text('Titik Penempatan'), findsOneWidget);
     await tester.tap(find.byTooltip('Kembali').first);
     await tester.pumpAndSettle();
     final search = tester.widget<TextField>(find.byType(TextField).first);
