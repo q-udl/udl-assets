@@ -110,20 +110,31 @@ extension AssetOperations on AssetStore {
   }
 
   Future<AssetTransfer> proposeTransfer(AssetRecord a, String destination,
-      String receiver, String reason) async {
+      String receiver, String reason, {AssetPlacement? placement}) async {
     if (a.assignedEmployeeId.isNotEmpty || heldLinesFor(a.id).isNotEmpty) {
       throw const FormatException(
         'Aset sedang dalam proses penugasan; selesaikan dahulu.');
     }
+    final site = siteByName(destination);
+    final chosen = placement ?? AssetPlacement(site?.id ?? '');
+    if (a.lifecycle != 'Aktif' || site == null ||
+        !validPlacement(chosen) || chosen.siteId != site.id) {
+      throw const FormatException('Lokasi tujuan tidak aktif atau valid.');
+    }
+    final samePlacement = chosen.siteId == a.locationSiteId &&
+      chosen.areaId == a.locationAreaId &&
+      chosen.spotId == a.locationSpotId;
     if (a.status == 'Dihapuskan' || !locations.contains(destination) ||
-      reason.trim().isEmpty || (destination == a.location && receiver.trim() == a.holder) ||
+      reason.trim().isEmpty || (samePlacement && receiver.trim() == a.holder) ||
       transfers.any((t) => t.assetId == a.id && t.state == 'Menunggu Penerimaan')) {
       throw const FormatException('Mutasi tidak valid atau masih tertunda.');
     }
     final t = AssetTransfer(uuid.v4(), a.id, a.location, destination,
-      a.holder, receiver.trim(), reason.trim(), DateTime.now().toIso8601String());
+      a.holder, receiver.trim(), reason.trim(), DateTime.now().toIso8601String(),
+      fromAreaId: a.locationAreaId, fromSpotId: a.locationSpotId,
+      toAreaId: chosen.areaId, toSpotId: chosen.spotId);
     transfers.insert(0, t);
-    log(a, 'Permintaan Mutasi', a.location + ' → ' + destination,
+    log(a, 'Permintaan Mutasi', locationPath(a) + ' → ' + placementPath(chosen),
       reason: reason, changes: {
         'Lokasi': {'from': a.location, 'to': destination},
         'PIC': {'from': a.holder, 'to': receiver.trim()}});
@@ -137,7 +148,15 @@ extension AssetOperations on AssetStore {
     }
     final a = assets.firstWhere((a) => a.id == transfer.assetId);
     if (accepted) {
-      a.location = transfer.toLocation; a.holder = transfer.toHolder;
+      final site = siteByName(transfer.toLocation);
+      if (site == null) throw const FormatException('Lokasi tujuan hilang.');
+      final dest = AssetPlacement(site.id,
+        areaId: transfer.toAreaId, spotId: transfer.toSpotId);
+      if (!validPlacement(dest, allowInactive: true)) {
+        throw const FormatException('Area/titik tujuan tidak ditemukan.');
+      }
+      applyPlacement(a, dest);
+      a.holder = transfer.toHolder;
     }
     transfer.state = accepted ? 'Diterima (Simulasi)' : 'Ditolak (Simulasi)';
     transfer.note = note.trim();
@@ -153,11 +172,7 @@ extension AssetOperations on AssetStore {
   }
 
   Future<void> addLocation(String name) async {
-    final value = name.trim();
-    if (value.length < 3 || locations.any((x) => x.toLowerCase() == value.toLowerCase())) {
-      throw const FormatException('Lokasi tidak valid atau duplikat.');
-    }
-    locations.add(value); locations.sort(); await persist();
+    await addSite(name);
   }
 
   Future<void> renameCategory(AssetCategory c, String name) async {
