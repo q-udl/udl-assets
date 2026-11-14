@@ -1467,20 +1467,32 @@ class _AssetScreenState extends State<AssetScreen> {
 
   Future<void> restoreDialog() async {
     final input = TextEditingController();
-    final proceed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        title: const Text('Pulihkan Data dari JSON'),
-        content: SizedBox(width: 570,
-          child: TextField(controller: input, minLines: 6, maxLines: 12,
-            decoration: const InputDecoration(hintText: 'Tempel salinan backup JSON di sini',
-              filled: true, fillColor: Color(0xFFF9FBFD)))),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Pulihkan')),
+    bool hasChanges() => input.text.trim().isNotEmpty;
+    final proceed = await v4ShowModal<bool>(
+      title: 'Pulihkan Data dari JSON',
+      subtitle: 'Periksa isi backup sebelum mengganti data lokal',
+      maxWidth: 620,
+      isDirty: hasChanges,
+      body: (ctx, update) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text('Tempel backup JSON yang telah Anda simpan.',
+            style: TextStyle(color: muted, fontSize: 12)),
+          const SizedBox(height: 12),
+          TextField(
+            key: const ValueKey('rv28-restore-input'),
+            controller: input, minLines: 5, maxLines: 10,
+            decoration: v4ModalDecoration('Salinan backup JSON')),
         ],
       ),
+      actions: (ctx, update) => [
+        OutlinedButton(
+          onPressed: () => assetRequestModalClose(ctx, isDirty: hasChanges),
+          child: const Text('Batal')),
+        FilledButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          child: const Text('Lanjutkan')),
+      ],
     );
     if (proceed == true) {
       try {
@@ -1502,17 +1514,14 @@ class _AssetScreenState extends State<AssetScreen> {
   }
 
   Future<void> resetDemo() async {
-    final agree = await showDialog<bool>(context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        title: const Text('Kembalikan Data Simulasi?'),
-        content: const Text('Seluruh perubahan lokal akan diganti dengan lima data contoh. '
-          'Salin backup JSON terlebih dahulu bila diperlukan.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Reset Demo')),
-        ],
-      ));
+    final agree = await assetConfirmDialog(
+      context,
+      title: 'Kembalikan Data Simulasi?',
+      message: 'Semua perubahan lokal akan diganti dengan lima data '
+        'contoh. Unduh backup JSON sebelum melanjutkan.',
+      confirmLabel: 'Reset Data Simulasi',
+      cancelLabel: 'Batalkan Reset',
+      destructive: true);
     if (agree == true) {
       store.seed();
       await store.persist();
