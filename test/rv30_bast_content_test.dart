@@ -41,7 +41,12 @@ void main() {
       name: 'Rafi Pratama', unit: 'Distribusi',
       department: 'Operasional', jobTitle: 'Staf Gudang',
       workLocation: 'Gudang Pusat');
-    final assets = store.assets.where(store.canAssignAsset).take(2).toList();
+    final assets = await store.registerUnits(
+      quantity: 2, name: 'Kursi Operasional Pengujian',
+      category: 'Furnitur', subcategory: 'Kursi',
+      assetType: 'Kursi Kerja', brand: 'Uji', model: '', serial: '',
+      location: 'Gudang Pusat', holder: '', status: 'Tersedia',
+      condition: 'Baik', cost: null, acquisitionDate: '');
     final first = await store.createAssignment(
       employeeId: employee.id, kind: 'Berkelanjutan',
       assetIds: [assets[0].id], accessories: {});
