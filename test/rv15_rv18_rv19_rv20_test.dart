@@ -213,7 +213,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Master Karyawan').first);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Karyawan Demo A').first);
+    await tester.tap(find.text('Anisa Putri').first);
     await tester.pumpAndSettle();
     expect(find.text('Detail Karyawan'), findsOneWidget);
     await tester.tap(find.text('Assigned Assets').first);
@@ -224,7 +224,7 @@ void main() {
     expect(find.text('Detail Karyawan'), findsOneWidget);
     await tester.tap(find.byTooltip('Kembali').first);
     await tester.pumpAndSettle();
-    expect(find.text('Karyawan Demo A'), findsOneWidget);
+    expect(find.text('Anisa Putri'), findsOneWidget);
     await tester.tap(find.byTooltip('Kembali').first);
     await tester.pumpAndSettle();
     expect(find.text('Daftar Aset'), findsWidgets);
