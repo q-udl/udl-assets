@@ -25,11 +25,11 @@ extension _AssignedAssetsDetail on _AssetScreenState {
         const SizedBox(height: 14),
         Wrap(spacing: 9, runSpacing: 9, children: [
           if (batch.isPending) ...[
-            primaryButton('Terima Penugasan',
+            primaryButton('Konfirmasi Serah Terima',
               Icons.check_circle_outline, () =>
                 v5ConfirmAssignment(batch, true),
               tone: AssetActionTone.success),
-            outlineButton('Tolak Penugasan', Icons.cancel_outlined,
+            outlineButton('Batalkan Penugasan', Icons.cancel_outlined,
               () => v5ConfirmAssignment(batch, false),
               tone: AssetActionTone.danger),
           ],
@@ -40,6 +40,7 @@ extension _AssignedAssetsDetail on _AssetScreenState {
                 selectedAssignment = batch;
                 page = 10;
               })),
+          if (batch.status != 'Dibatalkan')
           outlineButton('Lihat / Cetak BAST',
             Icons.picture_as_pdf_outlined, () async {
             try {
@@ -50,11 +51,14 @@ extension _AssignedAssetsDetail on _AssetScreenState {
           }),
         ]),
         const SizedBox(height: 12),
-        const Text(
-          'Penyerahan di aplikasi ini adalah pencatatan '
-          'oleh operator, bukan tanda tangan atau persetujuan karyawan '
-          'yang terverifikasi.',
-          style: TextStyle(fontSize: 12, color: muted)),
+        Text(
+          batch.status == 'Dibatalkan'
+            ? 'Penugasan dibatalkan sebelum serah terima. '
+              'Aset kembali tersedia; alasan tersimpan di riwayat.'
+            : 'Serah terima dicatat oleh petugas. '
+              'Pencatatan ini bukan tanda tangan atau persetujuan '
+              'karyawan yang terverifikasi.',
+          style: const TextStyle(fontSize: 12, color: muted)),
       ])),
       const SizedBox(height: 13),
       LayoutBuilder(builder: (ctx, box) {
@@ -94,15 +98,17 @@ extension _AssignedAssetsDetail on _AssetScreenState {
           detailValue('Pengajuan', dateText(batch.createdAt)),
           detailValue('Batas pengembalian',
             batch.dueDate.isEmpty ? 'Tidak ditentukan' : batch.dueDate),
-          detailValue('Konfirmasi',
+          detailValue('Konfirmasi serah terima',
             batch.acceptedAt.isEmpty ? 'Belum ada' :
               dateText(batch.acceptedAt)),
+          if (batch.cancelledAt.isNotEmpty)
+            detailValue('Dibatalkan pada', dateText(batch.cancelledAt)),
           detailValue('Aset masih dikuasai',
             batch.activeCount.toString() + ' dari ' +
             batch.lines.length.toString()),
           detailValue('Catatan', batch.notes.isEmpty ? '-' : batch.notes),
-          if (batch.rejectionReason.isNotEmpty)
-            detailValue('Alasan ditolak', batch.rejectionReason),
+          if (batch.cancellationReason.isNotEmpty)
+            detailValue('Alasan pembatalan', batch.cancellationReason),
         ]));
         if (box.maxWidth < 820) {
           return Column(children: [
@@ -241,14 +247,18 @@ extension _AssignedAssetsDetail on _AssetScreenState {
       handedBy.text.isNotEmpty || proofPhotos.isNotEmpty;
     final approved = await v4ShowModal<bool>(
       title: accepted ? 'Konfirmasi Serah Terima' :
-        'Tolak Penugasan',
+        'Batalkan Penugasan',
       subtitle: batch.draftReference,
       maxWidth: 650,
       isDirty: hasChanges,
       body: (ctx, update) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        const Text('Tindakan ini dioperasikan tanpa akun penerima. '
-          'Belum menjadi penerimaan yang terautentikasi.'),
+        Text(accepted
+          ? 'Konfirmasi ini mencatat serah terima oleh petugas, '
+            'bukan persetujuan karyawan yang terautentikasi.'
+          : 'Batalkan draf sebelum serah terima fisik. '
+            'Reservasi aset akan dilepas, dan alasan pembatalan '
+            'dicatat dalam riwayat.'),
         const SizedBox(height: 12),
         v4ReadonlyField('Nama karyawan',
           batch.employeeSnapshot['name']?.toString() ?? ''),
@@ -263,7 +273,7 @@ extension _AssignedAssetsDetail on _AssetScreenState {
         TextField(
           controller: reason, maxLines: 3,
           decoration: v4ModalDecoration(
-            accepted ? 'Catatan (opsional)' : 'Alasan penolakan *')),
+            accepted ? 'Catatan (opsional)' : 'Alasan pembatalan *')),
         if (accepted) ...[
           const SizedBox(height: 17),
           const Text('FOTO BUKTI SERAH TERIMA (WAJIB)',
@@ -308,30 +318,34 @@ extension _AssignedAssetsDetail on _AssetScreenState {
             ? AssetActionTone.success : AssetActionTone.danger),
           onPressed: () {
             if (!accepted && reason.text.trim().isEmpty) {
-              update(() => error = 'Alasan penolakan wajib diisi.');
+              update(() => error = 'Alasan pembatalan wajib diisi.');
             } else if (accepted && handedBy.text.trim().isEmpty) {
               update(() => error = 'Nama pihak yang menyerahkan wajib diisi.');
             } else if (accepted &&
                 batch.lines.any((l) => !proofPhotos.containsKey(l.assetId))) {
               update(() => error =
-                'Lengkapi foto bukti pada setiap aset sebelum menerima.');
+                'Lengkapi foto bukti setiap aset sebelum konfirmasi serah terima.');
             } else {
               Navigator.pop(ctx, true);
             }
           },
           child: Text(accepted
-            ? 'Konfirmasi Serah Terima' : 'Tolak Penugasan')),
+            ? 'Konfirmasi Serah Terima' : 'Batalkan Penugasan')),
       ],
     );
     if (approved == true) {
       try {
-        await store.confirmAssignment(batch, accepted, reason.text,
-          proofPhotos: proofPhotos,
-          handedOverByName: handedBy.text);
+        if (accepted) {
+          await store.confirmAssignment(batch, true, reason.text,
+            proofPhotos: proofPhotos,
+            handedOverByName: handedBy.text);
+        } else {
+          await store.cancelAssignment(batch, reason.text);
+        }
         repaint();
         notify(accepted
           ? 'Penugasan aktif; foto bukti tercatat pada BAST.'
-          : 'Pengajuan penugasan ditolak.');
+          : 'Penugasan dibatalkan. Aset kembali tersedia.');
       } catch (e) {
         notify('Gagal memproses penugasan: ' + e.toString());
       }
