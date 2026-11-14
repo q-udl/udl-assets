@@ -72,6 +72,19 @@ void main() {
     expect(store.locationPath(item), 'Outlet Jepara / Ruang Kasir');
   });
 
+  test('RV18: rename site does not recreate old site after backup', () async {
+    final store = AssetStore();
+    await store.initialize();
+    final old = store.siteByName('Gudang Pusat')!;
+    final id = old.id;
+    await store.renameSite(old, 'Gudang Baru');
+    final restored = AssetStore()..restore(store.backup());
+    expect(restored.siteByName('Gudang Baru')?.id, id);
+    expect(restored.siteByName('Gudang Pusat'), isNull);
+    expect(restored.assets.any((a) => a.location == 'Gudang Baru'), true);
+    expect(restored.assets.any((a) => a.location == 'Gudang Pusat'), false);
+  });
+
   test('RV15: inactive and released assets retain identity and audit trail',
       () async {
     final store = AssetStore();
@@ -170,4 +183,53 @@ void main() {
     expect(find.text('Daftar Aset'), findsWidgets);
     expect(tester.takeException(), isNull);
   });
+  testWidgets('RV20: returning to asset list restores search and result count',
+      (tester) async {
+    tester.view.physicalSize = const Size(1600, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(const AssetApp());
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).first, 'Laptop');
+    await tester.pumpAndSettle();
+    expect(find.text('1 dari 5 aset'), findsOneWidget);
+    await tester.tap(find.text('Master Lokasi').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Lokasi Utama'), findsOneWidget);
+    await tester.tap(find.byTooltip('Kembali').first);
+    await tester.pumpAndSettle();
+    final search = tester.widget<TextField>(find.byType(TextField).first);
+    expect(search.controller?.text, 'Laptop');
+    expect(find.text('1 dari 5 aset'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('RV20: dirty registration warns before leaving',
+      (tester) async {
+    tester.view.physicalSize = const Size(1600, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(const AssetApp());
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Tambah Aset').first);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).first, 'Meja Uji');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Assigned Assets').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Tinggalkan formulir?'), findsOneWidget);
+    await tester.tap(find.text('Tetap di Formulir'));
+    await tester.pumpAndSettle();
+    expect(find.text('Registrasi Aset'), findsOneWidget);
+    await tester.tap(find.byTooltip('Kembali').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Tinggalkan formulir?'), findsOneWidget);
+    await tester.tap(find.text('Tinggalkan'));
+    await tester.pumpAndSettle();
+    expect(find.text('Daftar Aset'), findsWidgets);
+    expect(tester.takeException(), isNull);
+  });
+
 }
