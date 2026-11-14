@@ -77,6 +77,8 @@ extension AssetAssignmentOperations on AssetStore {
     AssetAssignment record, bool accepted, String reason, {
     Map<String, SelectedAssetPhoto> proofPhotos = const {},
     String handedOverByName = '',
+    String handedOverByJobTitle = '',
+    String handedOverByUnit = '',
     String handoverLocation = '',
     String bastNumber = '',
   }) async {
@@ -126,6 +128,8 @@ extension AssetAssignmentOperations on AssetStore {
     record.cancelledAt = accepted ? '' : now;
     record.cancellationReason = accepted ? '' : reason.trim();
     record.handedOverByName = accepted ? handedOverByName.trim() : '';
+    record.handedOverByJobTitle = accepted ? handedOverByJobTitle.trim() : '';
+    record.handedOverByUnit = accepted ? handedOverByUnit.trim() : '';
     record.handoverLocation = accepted ? handoverLocation.trim() : '';
     record.bastNumber = accepted ? bastNumber.trim() : '';
     for (final line in record.lines) {
