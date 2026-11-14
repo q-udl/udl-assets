@@ -6,7 +6,7 @@ extension _AssignedAssetsScreens on _AssetScreenState {
     final matching = store.assignments.where((a) {
       final snapshot = a.employeeSnapshot;
       final haystack = [
-        a.draftReference, snapshot['name']?.toString() ?? '',
+        a.assignmentReference, snapshot['name']?.toString() ?? '',
         snapshot['jobTitle']?.toString() ?? '',
         snapshot['unit']?.toString() ?? '',
         ...a.lines.map((l) => l.assetCode + ' ' + l.assetName),
@@ -88,7 +88,7 @@ extension _AssignedAssetsScreens on _AssetScreenState {
                 for (final a in visible)
                   ListTile(
                     title: Text(a.employeeSnapshot['name']?.toString() ?? '-'),
-                    subtitle: Text(a.draftReference + ' · ' +
+                    subtitle: Text(a.assignmentReference + ' · ' +
                       a.lines.length.toString() + ' aset · ' + a.status),
                     trailing: const Icon(Icons.chevron_right_rounded),
                     onTap: () => v4Change(() {
@@ -111,7 +111,7 @@ extension _AssignedAssetsScreens on _AssetScreenState {
                     color: Color(0xFFF7F9FC),
                     border: Border(bottom: BorderSide(color: border))),
                   children: [
-                    for (final h in ['REFERENSI DRAF','PENERIMA',
+                    for (final h in ['REFERENSI PENUGASAN','PENERIMA',
                       'JUMLAH ASET','JENIS / BATAS','STATUS',''])
                       _v5AssignedCell(Text(h, style: const TextStyle(
                         fontSize: 10.5, fontWeight: FontWeight.w800,
@@ -124,7 +124,7 @@ extension _AssignedAssetsScreens on _AssetScreenState {
                       ? _AssetScreenState.lightBlue : Colors.transparent,
                     border: const Border(bottom: BorderSide(color: border))),
                     children: [
-                      _v5AssignedCell(Text(batch.draftReference,
+                      _v5AssignedCell(Text(batch.assignmentReference,
                         style: const TextStyle(color: blue,
                           fontWeight: FontWeight.w700)),
                         batch: batch),
