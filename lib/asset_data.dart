@@ -7,6 +7,8 @@ class AssetRecord {
   String assignedEmployeeId = '';
   String locationSiteId = '', locationAreaId = '', locationSpotId = '';
   String lifecycle = 'Aktif';
+  String qrToken = newAssetQrToken();
+  bool qrRevoked = false;
   String releaseType = '', releaseDate = '', releaseReference = '',
     releaseReason = '', releaseHandledBy = '';
   int? acquisitionCost;
@@ -22,6 +24,7 @@ class AssetRecord {
     'model': model, 'acquisitionDate': acquisitionDate, 'acquisitionCost': acquisitionCost,
     'categoryId': categoryId, 'subcategoryId': subcategoryId, 'typeId': typeId,
     'assignedEmployeeId': assignedEmployeeId,
+    'qrToken': qrToken, 'qrRevoked': qrRevoked,
     'locationSiteId': locationSiteId,
     'locationAreaId': locationAreaId, 'locationSpotId': locationSpotId,
     'lifecycle': lifecycle,
@@ -50,6 +53,8 @@ class AssetRecord {
     a.subcategoryId = m['subcategoryId']?.toString() ?? '';
     a.typeId = m['typeId']?.toString() ?? '';
     a.assignedEmployeeId = m['assignedEmployeeId']?.toString() ?? '';
+    a.qrToken = m['qrToken']?.toString() ?? '';
+    a.qrRevoked = m['qrRevoked'] == true;
     a.locationSiteId = m['locationSiteId']?.toString() ?? '';
     a.locationAreaId = m['locationAreaId']?.toString() ?? '';
     a.locationSpotId = m['locationSpotId']?.toString() ?? '';
@@ -209,11 +214,49 @@ class AssetStore extends ChangeNotifier {
   static const maxEvidenceEncodedBytes = 2000000;
   AssetStore();
 
+  /// The scanner never accepts a plain UDL-AST code as a secure QR.
+  AssetRecord? resolveQrPayload(String payload) {
+    const prefix = 'UDLQR1:';
+    if (!payload.startsWith(prefix)) return null;
+    final token = payload.substring(prefix.length);
+    if (token.isEmpty) return null;
+    for (final asset in assets) {
+      if (!asset.qrRevoked && asset.qrToken == token) return asset;
+    }
+    return null;
+  }
+
+  Future<void> rotateQrToken(AssetRecord asset) async {
+    if (!assets.any((a) => a.id == asset.id)) {
+      throw const FormatException('Aset tidak ditemukan.');
+    }
+    final oldToken = asset.qrToken;
+    asset.qrToken = newAssetQrToken();
+    asset.qrRevoked = false;
+    try {
+      log(asset, 'Penerbitan Ulang QR',
+        'Identitas QR diganti; QR sebelumnya tidak berlaku.');
+      await persist();
+    } catch (_) {
+      asset.qrToken = oldToken;
+      rethrow;
+    }
+  }
+
   Future<void> initialize() async {
     try {
       final raw = (await SharedPreferences.getInstance()).getString(key);
       if (raw == null) { seed(); await persist(); }
-      else { restore(raw); }
+      else {
+        restore(raw);
+        // Upgrade legacy backups without changing any visible asset code.
+        if (assets.any((a) => a.qrToken.isEmpty)) {
+          for (final asset in assets) {
+            if (asset.qrToken.isEmpty) asset.qrToken = newAssetQrToken();
+          }
+          await persist();
+        }
+      }
     } catch (e) {
       loadError = 'Data browser tidak dapat dibaca. Data lama tidak ditimpa: ' + e.toString();
     }
