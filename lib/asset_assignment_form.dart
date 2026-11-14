@@ -60,9 +60,9 @@ class _V5AssignmentFormState extends State<V5AssignmentForm> {
       context,
       title: 'Tinjau Penugasan Aset',
       message: 'Penerima: ' + (assignee?.name ?? '-') +
-        '\\nJumlah aset: ' + selectedIds.length.toString() +
-        '\\nJenis: ' + kind +
-        '\\nPastikan identitas penerima dan aset sudah sesuai. '
+        '\nJumlah aset: ' + selectedIds.length.toString() +
+        '\nJenis: ' + kind +
+        '\nPastikan identitas penerima dan aset sudah sesuai. '
         'Pembuatan draf belum membuktikan serah terima fisik.',
       confirmLabel: 'Buat Draf Penugasan');
     if (!confirmed || !mounted) return;
@@ -221,11 +221,12 @@ class _V5AssignmentFormState extends State<V5AssignmentForm> {
                 secondary: ClipRRect(
                   borderRadius: BorderRadius.circular(9),
                   child: SizedBox(width: 52, height: 52,
-                    child: widget.store.primaryPhotoFor(a.id) case final photo?
-                      ? Image.memory(photo.bytes, fit: BoxFit.cover)
-                      : const ColoredBox(color: Color(0xFFF1F5FA),
+                    child: widget.store.primaryPhotoFor(a.id) == null
+                      ? const ColoredBox(color: Color(0xFFF1F5FA),
                           child: Icon(Icons.inventory_2_outlined,
-                            color: blue, size: 23)))),
+                            color: blue, size: 23))
+                      : Image.memory(widget.store.primaryPhotoFor(a.id)!.bytes,
+                          fit: BoxFit.cover))),
                 subtitle: Text(a.code + ' · ' + a.condition +
                   ' · ' + a.location),
                 onChanged: (value) { widget.onDirty?.call(); setState(() {
