@@ -187,6 +187,10 @@ extension _AssetV4Detail on _AssetScreenState {
 
 
   Future<void> v4QrDialog(AssetRecord a) async {
+    if (a.qrToken.isEmpty) {
+      a.qrToken = newAssetQrToken();
+      await store.persist();
+    }
     await v4ShowModal<void>(
       title: 'Identitas QR Aset',
       subtitle: a.name + ' · ' + a.code,
@@ -211,7 +215,7 @@ extension _AssetV4Detail on _AssetScreenState {
                 height: 200,
                 child: RepaintBoundary(
                   child: QrImageView(
-                    data: a.code,
+                    data: 'UDLQR1:' + a.qrToken,
                     size: 200,
                     version: QrVersions.auto,
                     padding: EdgeInsets.zero,
@@ -225,13 +229,31 @@ extension _AssetV4Detail on _AssetScreenState {
           SelectableText(a.code,
             style: const TextStyle(color: ink, fontWeight: FontWeight.w800)),
           const SizedBox(height: 12),
-          const Text('QR pratinjau lokal hanya memuat kode aset. '
-              'Belum terhubung ke sistem online.',
+          const Text('QR memuat token acak, bukan kode aset. '
+              'Pencocokan lokal bukan verifikasi keamanan server.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 12, color: muted)),
         ],
       ),
       actions: (ctx, update) => [
+        OutlinedButton.icon(
+          onPressed: () async {
+            final confirmed = await assetConfirmDialog(ctx,
+              title: 'Terbitkan ulang QR aset?',
+              message: 'QR lama akan tidak berlaku pada data ini. '
+                'Cetak dan pasang label baru sebelum digunakan.',
+              confirmLabel: 'Terbitkan Ulang', destructive: true);
+            if (!confirmed || !ctx.mounted) return;
+            try {
+              await store.rotateQrToken(a);
+              if (ctx.mounted) update(() {});
+              notify('QR baru diterbitkan. QR lama tidak berlaku.');
+            } catch (error) {
+              notify('Gagal menerbitkan ulang QR: ' + error.toString());
+            }
+          },
+          icon: const Icon(Icons.autorenew_rounded, size: 17),
+          label: const Text('Terbitkan Ulang')),
         TextButton(onPressed: () => Navigator.pop(ctx),
           child: const Text('Tutup')),
         FilledButton.icon(
