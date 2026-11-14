@@ -2,8 +2,18 @@ part of 'main.dart';
 
 // UDL Assets local preview — UI layer. Data model and persistence remain in main.dart.
 class _AssetScreenState extends State<AssetScreen> {
-  int page = 0;
+  int page = 1;
   String query = '';
+  String v4LocationFilter = 'Semua lokasi';
+  String v4ConditionFilter = 'Semua kondisi';
+  bool v4NoPic = false, v4NoPhoto = false, v4Attention = false,
+    v4NeedsClassification = false, v4SortAscending = true;
+  String v4Sort = 'Kode';
+  int v4PerPage = 20, v4CatalogPage = 0;
+  String v4CategoryCode = '03', v4SubcategoryId = '', v4TaxonomySearch = '';
+  String v4HistoryQuery = '', v4HistoryType = 'Semua aktivitas',
+    v4HistoryPeriod = 'Semua periode';
+  int v4HistoryPerPage = 20, v4HistoryPage = 0;
   String statusFilter = 'Semua status';
   String categoryFilter = 'Semua kategori';
   AssetRecord? selected;
@@ -21,13 +31,16 @@ class _AssetScreenState extends State<AssetScreen> {
   static const amber = Color(0xFFB97813);
   static const danger = Color(0xFFC04D53);
 
-  final labels = const ['Ringkasan', 'Daftar Aset', 'Master Klasifikasi', 'Riwayat', 'Pengaturan'];
+  final labels = const ['Ringkasan', 'Daftar Aset', 'Master Klasifikasi',
+    'Riwayat', 'Pengaturan', 'Master Lokasi', 'Registrasi Aset'];
   final icons = const [
     Icons.space_dashboard_outlined,
     Icons.inventory_2_outlined,
     Icons.account_tree_outlined,
     Icons.history_rounded,
     Icons.tune_rounded,
+    Icons.place_outlined,
+    Icons.add_box_outlined,
   ];
 
   void notify(String message) {
@@ -174,7 +187,7 @@ class _AssetScreenState extends State<AssetScreen> {
   }
 
   Widget _sideItem(int index, {bool inDrawer = false}) {
-    final active = page == index && selected == null;
+    final active = page == index;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Material(
@@ -224,17 +237,21 @@ class _AssetScreenState extends State<AssetScreen> {
               fontSize: 10, letterSpacing: 1.7, color: Color(0xFF9AA8B9), fontWeight: FontWeight.w800)),
           ),
           Padding(padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Column(children: [_sideItem(0, inDrawer: inDrawer),
-              _sideItem(1, inDrawer: inDrawer), _sideItem(3, inDrawer: inDrawer)])), 
+            child: Column(children: [
+              _sideItem(1, inDrawer: inDrawer),
+              _sideItem(3, inDrawer: inDrawer),
+            ])), 
           const SizedBox(height: 18),
           const Padding(
             padding: EdgeInsets.only(left: 22, right: 16, bottom: 12),
-            child: Text('SISTEM', style: TextStyle(
+            child: Text('MASTER DATA', style: TextStyle(
               fontSize: 10, letterSpacing: 1.7, color: Color(0xFF9AA8B9), fontWeight: FontWeight.w800)),
           ),
           Padding(padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Column(children: [
               _sideItem(2, inDrawer: inDrawer),
+              _sideItem(5, inDrawer: inDrawer),
+              const Divider(height: 20),
               _sideItem(4, inDrawer: inDrawer),
             ])), 
           const Spacer(),
@@ -254,7 +271,7 @@ class _AssetScreenState extends State<AssetScreen> {
                 const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text('Pratinjau Lokal', style: TextStyle(fontSize: 12, color: ink, fontWeight: FontWeight.w700)),
                   SizedBox(height: 3),
-                  Text('UDL Assets · v0.3.0', style: TextStyle(fontSize: 11, color: muted)),
+                  Text('UDL Assets · v0.4.0', style: TextStyle(fontSize: 11, color: muted)),
                 ])),
               ]),
             ),
@@ -291,6 +308,8 @@ class _AssetScreenState extends State<AssetScreen> {
       page == 1 ? 'Temukan, registrasikan, dan kelola seluruh inventaris perusahaan.' :
       page == 2 ? 'Kelola kategori, subkategori, dan jenis aset operasional.' :
       page == 3 ? 'Lacak aktivitas dan perubahan sepanjang siklus hidup aset.' :
+      page == 5 ? 'Kelola lokasi penempatan aset.' :
+      page == 6 ? 'Registrasikan aset satuan atau beberapa unit sekaligus.' :
       'Kelola data simulasi dan standar identitas aset.';
     final isMobile = MediaQuery.sizeOf(context).width < 650;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -314,7 +333,7 @@ class _AssetScreenState extends State<AssetScreen> {
         if (selected != null)
           outlineButton('Kembali', Icons.arrow_back_rounded, () => setState(() => selected = null)),
         if (selected == null && page == 1)
-          primaryButton('Tambah Aset', Icons.add_rounded, register),
+          primaryButton('Tambah Aset', Icons.add_rounded, () => setState(() => page = 6)),
       ] else
         Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -327,7 +346,7 @@ class _AssetScreenState extends State<AssetScreen> {
           if (selected != null)
             outlineButton('Kembali', Icons.arrow_back_rounded, () => setState(() => selected = null)),
           if (selected == null && page == 1)
-            primaryButton('Tambah Aset', Icons.add_rounded, register),
+            primaryButton('Tambah Aset', Icons.add_rounded, () => setState(() => page = 6)),
         ]),
     ]);
   }
@@ -1335,11 +1354,24 @@ class _AssetScreenState extends State<AssetScreen> {
                     ),
                   ],
                   const SizedBox(height: 23),
-                  if (selected != null) detail(selected!)
+                  if (selected != null) v4Detail(selected!)
                   else if (page == 0) dashboard()
-                  else if (page == 1) catalog()
-                  else if (page == 2) taxonomyPage()
-                  else if (page == 3) history()
+                  else if (page == 1) v4Catalog()
+                  else if (page == 2) v4Taxonomy()
+                  else if (page == 3) v4History()
+                  else if (page == 5) v4Locations()
+                  else if (page == 6) V4RegistrationPage(
+                    store: store,
+                    onCompleted: (created) {
+                      setState(() {
+                        page = 1;
+                        selected = created.first;
+                        viewedPhotoId = null;
+                      });
+                      notify(created.length.toString() +
+                        ' unit berhasil diregistrasikan. Lengkapi foto tiap unit.');
+                    },
+                  )
                   else settings(),
                 ]),
               ),
