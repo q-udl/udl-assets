@@ -99,7 +99,13 @@ extension _AssetViewNavigation on _AssetScreenState {
   }
 
   Future<bool> _mayLeaveUnsavedForm() async {
-    if (!_formDirty || ![6,9,10].contains(page)) return true;
+    if (![6, 9, 10].contains(page)) return true;
+    final dirty = page == 6
+      ? (_registrationKey.currentState?.hasUnsavedChanges ?? _formDirty)
+      : page == 9
+        ? (_assignmentKey.currentState?.hasUnsavedChanges ?? _formDirty)
+        : (_returnKey.currentState?.hasUnsavedChanges ?? _formDirty);
+    if (!dirty) return true;
     return assetAllowDiscard(context, isDirty: true);
   }
 
