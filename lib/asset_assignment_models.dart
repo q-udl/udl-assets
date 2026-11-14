@@ -64,6 +64,19 @@ String normalizeAssignmentStatus(String value) => switch (value) {
   _ => value,
 };
 
+/// Older backups may have a free-text 'Kelengkapan' value without a
+/// classification marker. Preserve only nonempty historical notes as
+/// unclassified; an empty historical field contains nothing to reclassify.
+String accessoryClassificationFromJson(
+    Map<String, dynamic> record, String legacyTextKey) {
+  final declared = record['accessoriesClassification']?.toString();
+  if (declared == 'non_asset' || declared == 'legacy_unclassified') {
+    return declared!;
+  }
+  return (record[legacyTextKey]?.toString() ?? '').trim().isEmpty
+    ? 'non_asset' : 'legacy_unclassified';
+}
+
 class AssignedAssetLine {
   final String id, assetId, assetCode, assetName, serial, handoverCondition;
   String accessories, accessoriesClassification, state, returnReceiptId, returnedAt;
@@ -115,8 +128,7 @@ class AssignedAssetLine {
     handoverCondition: x['handoverCondition']?.toString() ?? '',
     accessories: x['accessories']?.toString() ?? '',
     accessoriesClassification:
-      x['accessoriesClassification']?.toString() == 'non_asset'
-        ? 'non_asset' : 'legacy_unclassified',
+      accessoryClassificationFromJson(x, 'accessories'),
     state: normalizeAssignmentStatus(
       x['state']?.toString() ?? 'Menunggu Serah Terima'),
     returnReceiptId: x['returnReceiptId']?.toString() ?? '',
@@ -269,8 +281,7 @@ class AssetReturnLine {
     returnCondition: x['returnCondition']?.toString() ?? '',
     accessoriesReturned: x['accessoriesReturned']?.toString() ?? '',
     accessoriesClassification:
-      x['accessoriesClassification']?.toString() == 'non_asset'
-        ? 'non_asset' : 'legacy_unclassified',
+      accessoryClassificationFromJson(x, 'accessoriesReturned'),
     notes: x['notes']?.toString() ?? '',
     photoIds: (x['photoIds'] as List<dynamic>? ?? [])
       .map((v) => v.toString()).toList(),
