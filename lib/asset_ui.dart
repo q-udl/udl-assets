@@ -1559,17 +1559,17 @@ class _AssetScreenState extends State<AssetScreen> with WidgetsBindingObserver {
   Future<void> resetDemo() async {
     final agree = await assetConfirmDialog(
       context,
-      title: 'Kembalikan Data Simulasi?',
+      title: 'Pulihkan Data Awal?',
       message: 'Semua perubahan lokal akan diganti dengan lima data '
         'contoh. Unduh backup JSON sebelum melanjutkan.',
-      confirmLabel: 'Reset Data Simulasi',
+      confirmLabel: 'Pulihkan Data Awal',
       cancelLabel: 'Batalkan Reset',
       destructive: true);
     if (agree == true) {
       store.seed();
       await store.persist();
       setState(() { selected = null; query = ''; statusFilter = 'Semua status'; categoryFilter = 'Semua kategori'; });
-      notify('Data simulasi dikembalikan');
+      notify('Data awal dipulihkan');
     }
   }
 
@@ -1596,7 +1596,7 @@ class _AssetScreenState extends State<AssetScreen> with WidgetsBindingObserver {
             notify('Backup JSON berhasil disalin');
           }),
           outlineButton('Impor JSON', Icons.upload_file_outlined, restoreDialog),
-          outlineButton('Reset Data Demo', Icons.restart_alt_rounded, resetDemo,
+          outlineButton('Pulihkan Data Awal', Icons.restart_alt_rounded, resetDemo,
             tone: AssetActionTone.warning),
         ]),
         const Divider(color: border, height: 35),
