@@ -41,6 +41,7 @@ extension AssetLifecycleOperations on AssetStore {
     final parsed = DateTime.tryParse(date);
     if (!kinds.contains(kind) || parsed == null ||
         date.length != 10 ||
+        parsed.toIso8601String().substring(0, 10) != date ||
         parsed.isAfter(DateTime.now()) ||
         reference.trim().isEmpty || reason.trim().isEmpty ||
         asset.lifecycle == 'Dilepas' || asset.status == 'Hilang') {
