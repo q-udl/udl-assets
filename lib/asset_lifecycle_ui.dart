@@ -50,10 +50,12 @@ extension _AssetLifecycleUI on _AssetScreenState {
     final newActive = asset.lifecycle == 'Tidak Aktif';
     final reason = TextEditingController();
     var error = '';
+    bool hasChanges() => reason.text.isNotEmpty;
     final okay = await v4ShowModal<bool>(
       title: newActive ? 'Aktifkan Kembali Aset' : 'Nonaktifkan Aset',
       subtitle: asset.name + ' · ' + asset.code,
       maxWidth: 540,
+      isDirty: hasChanges,
       body: (ctx, update) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -71,8 +73,8 @@ extension _AssetLifecycleUI on _AssetScreenState {
         ],
       ),
       actions: (ctx, update) => [
-        OutlinedButton(onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Batal')),
+        OutlinedButton(onPressed: () => assetRequestModalClose(
+          ctx, isDirty: hasChanges), child: const Text('Batal')),
         FilledButton(onPressed: () {
           if (reason.text.trim().isEmpty) {
             update(() => error = 'Alasan wajib diisi.');
@@ -103,10 +105,16 @@ extension _AssetLifecycleUI on _AssetScreenState {
     final confirmation = TextEditingController();
     var kind = 'Dijual';
     var error = '';
+    final originalDate = date.text;
+    bool hasChanges() => reference.text.isNotEmpty ||
+      reason.text.isNotEmpty || date.text != originalDate ||
+      handledBy.text.isNotEmpty || confirmation.text.isNotEmpty ||
+      kind != 'Dijual';
     final result = await v4ShowModal<bool>(
       title: 'Pelepasan Aset (Simulasi)',
       subtitle: asset.name + ' · ' + asset.code,
       maxWidth: 700,
+      isDirty: hasChanges,
       body: (ctx, update) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -150,8 +158,8 @@ extension _AssetLifecycleUI on _AssetScreenState {
         ],
       ),
       actions: (ctx, update) => [
-        OutlinedButton(onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Batal')),
+        OutlinedButton(onPressed: () => assetRequestModalClose(
+          ctx, isDirty: hasChanges), child: const Text('Batal')),
         FilledButton(
           style: FilledButton.styleFrom(backgroundColor: danger),
           onPressed: () {
