@@ -3,7 +3,6 @@ part of 'main.dart';
 extension _AssetEmployeeForms on _AssetScreenState {
   Future<void> v5EditEmployee({AssetEmployee? employee}) async {
     final isEdit = employee != null;
-    final code = TextEditingController(text: employee?.code ?? '');
     final name = TextEditingController(text: employee?.name ?? '');
     final unit = TextEditingController(text: employee?.unit ?? '');
     final department = TextEditingController(
@@ -17,10 +16,10 @@ extension _AssetEmployeeForms on _AssetScreenState {
       (store.locations.isEmpty ? '' : store.locations.first);
     var error = '';
     final originalWorkLocation = workLocation;
-    final startingValues = [code.text, name.text, unit.text,
+    final startingValues = [name.text, unit.text,
       department.text, jobTitle.text, startDate.text, reason.text];
     bool hasChanges() {
-      final current = [code.text, name.text, unit.text, department.text,
+      final current = [name.text, unit.text, department.text,
         jobTitle.text, startDate.text, reason.text];
       for (var i = 0; i < current.length; i++) {
         if (current[i] != startingValues[i]) return true;
@@ -36,20 +35,14 @@ extension _AssetEmployeeForms on _AssetScreenState {
     final accepted = await v4ShowModal<bool>(
       title: isEdit ? 'Ubah Master Karyawan' : 'Tambah Karyawan',
       subtitle: isEdit
-        ? 'Kode ' + employee.code + ' tidak dapat diubah'
+        ? 'Perubahan akan tercatat pada riwayat karyawan'
         : 'Untuk keperluan penguasaan aset, bukan database HRIS',
       maxWidth: 720,
       isDirty: hasChanges,
       body: (ctx, update) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          v4ModalPair(
-            editField(name, 'Nama lengkap *'),
-            editField(code,
-              isEdit ? 'Kode karyawan permanen' :
-                'Kode karyawan (kosong = otomatis)',
-              enabled: !isEdit),
-          ),
+          editField(name, 'Nama lengkap *'),
           const SizedBox(height: 14),
           v4ModalPair(
             editField(unit, 'Unit *'),
@@ -102,7 +95,7 @@ extension _AssetEmployeeForms on _AssetScreenState {
       try {
         if (employee == null) {
           await store.addEmployee(
-            code: code.text, name: name.text,
+            name: name.text,
             unit: unit.text, department: department.text,
             jobTitle: jobTitle.text, workLocation: workLocation,
             startDate: startDate.text.trim());
@@ -119,7 +112,7 @@ extension _AssetEmployeeForms on _AssetScreenState {
         notify('Gagal menyimpan karyawan: ' + e.toString());
       }
     }
-    for (final ctrl in [code,name,unit,department,jobTitle,
+    for (final ctrl in [name,unit,department,jobTitle,
       startDate,reason]) {
       ctrl.dispose();
     }
@@ -136,7 +129,7 @@ extension _AssetEmployeeForms on _AssetScreenState {
     final desired = !employee.active;
     final confirmed = await v4ShowModal<bool>(
       title: desired ? 'Aktifkan Karyawan' : 'Nonaktifkan Karyawan',
-      subtitle: employee.name + ' · ' + employee.code,
+      subtitle: employee.name + ' · ' + employee.unit,
       maxWidth: 520,
       isDirty: hasChanges,
       body: (ctx, update) => Column(
