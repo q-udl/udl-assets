@@ -24,6 +24,7 @@ part 'asset_assignment_detail.dart';
 part 'asset_assignment_return.dart';
 part 'asset_location_models.dart';
 part 'asset_location_operations.dart';
+part 'asset_location_ui.dart';
 part 'asset_v4_catalog.dart';
 part 'asset_v4_master.dart';
 part 'asset_v4_history.dart';
