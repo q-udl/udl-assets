@@ -28,40 +28,16 @@ extension AssetBulkImportOperations on AssetStore {
     }
 
     final oldAssets = assets, oldStaff = employees, oldEvents = events;
-    final oldNextAsset = nextNumber, oldNextEmployee = nextEmployeeNumber;
+    final oldNextAsset = nextNumber;
     try {
       final now = DateTime.now().toIso8601String();
       final importedEvents = <EventRecord>[];
       if (preview.kind == BulkImportKind.employees) {
-        // Reserve every supplied code before assigning generated codes.
-        final reserved = <String>{
-          for (final staff in employees) staff.code.toLowerCase(),
-          for (final row in valid)
-            if (row.value('Kode Karyawan').isNotEmpty)
-              row.value('Kode Karyawan').toLowerCase(),
-        };
         final imported = <AssetEmployee>[];
         for (final row in valid) {
-          var code = row.value('Kode Karyawan');
-          if (code.isEmpty) {
-            while (true) {
-              final candidate = 'KRY-' +
-                nextEmployeeNumber.toString().padLeft(6, '0');
-              nextEmployeeNumber++;
-              if (reserved.add(candidate.toLowerCase())) {
-                code = candidate;
-                break;
-              }
-            }
-          } else if (code.toUpperCase().startsWith('KRY-')) {
-            final number = int.tryParse(code.substring(4));
-            if (number != null && number >= nextEmployeeNumber) {
-              nextEmployeeNumber = number + 1;
-            }
-          }
           final site = siteByName(row.value('Lokasi Kerja'))!;
           final staff = AssetEmployee(
-            id: uuid.v4(), code: code,
+            id: uuid.v4(),
             name: row.value('Nama Lengkap'),
             unit: row.value('Unit'),
             department: row.value('Departemen'),
@@ -75,7 +51,7 @@ extension AssetBulkImportOperations on AssetStore {
           imported.add(staff);
           importedEvents.add(EventRecord('', 'Impor Karyawan',
             'Baris ' + row.excelRow.toString() + ': ' +
-              staff.name + ' (' + staff.code + ')', now));
+              staff.name, now));
         }
         employees = [...imported, ...employees];
       } else {
@@ -100,7 +76,7 @@ extension AssetBulkImportOperations on AssetStore {
           final cost = textCost.isEmpty ? null : int.parse(textCost);
           final asset = AssetRecord(
             uuid.v4(),
-            'UDL-AST-' + nextNumber.toString().padLeft(6,'0'),
+            'UDL-AST-' + nextNumber.toString().padLeft(8,'0'),
             row.value('Nama Aset'), c.name, row.value('Merek'),
             row.value('Nomor Seri'), site.name, '',
             condition.isEmpty ? 'Baik' : condition,
@@ -131,7 +107,6 @@ extension AssetBulkImportOperations on AssetStore {
       employees = oldStaff;
       events = oldEvents;
       nextNumber = oldNextAsset;
-      nextEmployeeNumber = oldNextEmployee;
       rethrow;
     }
   }
