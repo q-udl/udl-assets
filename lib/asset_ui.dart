@@ -319,8 +319,8 @@ class _AssetScreenState extends State<AssetScreen> {
 
   Widget _appIdentity({required bool condensed}) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(condensed ? 15 : 18, 19,
-        condensed ? 15 : 16, 14),
+      padding: EdgeInsets.fromLTRB(condensed ? 15 : 14, 14,
+        condensed ? 15 : 12, 10),
       child: Row(
         mainAxisAlignment: condensed
           ? MainAxisAlignment.center : MainAxisAlignment.start,
@@ -338,7 +338,7 @@ class _AssetScreenState extends State<AssetScreen> {
             ),
           ),
           if (!condensed) ...[
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             Expanded(child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: const [
@@ -363,9 +363,11 @@ class _AssetScreenState extends State<AssetScreen> {
   }) {
     final active = page == index;
     final condensed = condensedOverride ?? (_sidebarCollapsed && !inDrawer);
+    final denseDesktop = !inDrawer;
     final item = Padding(
-      padding: EdgeInsets.symmetric(vertical: 3,
-        horizontal: condensed ? 9 : 12),
+      padding: EdgeInsets.symmetric(
+        vertical: denseDesktop ? 2 : 3,
+        horizontal: condensed ? 9 : (denseDesktop ? 10 : 12)),
       child: Material(
         color: active ? lightBlue : Colors.transparent,
         borderRadius: BorderRadius.circular(11),
@@ -376,8 +378,10 @@ class _AssetScreenState extends State<AssetScreen> {
             if (inDrawer) Navigator.of(context).pop();
           },
           child: Container(
-            height: 43,
-            padding: EdgeInsets.symmetric(horizontal: condensed ? 0 : 13),
+            key: ValueKey('udl-sidebar-menu-$index'),
+            height: denseDesktop ? 38 : 43,
+            padding: EdgeInsets.symmetric(
+              horizontal: condensed ? 0 : (denseDesktop ? 11 : 13)),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(11),
               border: active ? Border.all(
@@ -387,10 +391,10 @@ class _AssetScreenState extends State<AssetScreen> {
               mainAxisAlignment: condensed
                 ? MainAxisAlignment.center : MainAxisAlignment.start,
               children: [
-                Icon(icons[index], size: 19,
+                Icon(icons[index], size: denseDesktop ? 18 : 19,
                   color: active ? blue : const Color(0xFF697B91)),
                 if (!condensed) ...[
-                  const SizedBox(width: 12),
+                  SizedBox(width: denseDesktop ? 10 : 12),
                   Expanded(child: Text(labels[index],
                     maxLines: 1, overflow: TextOverflow.ellipsis,
                     style: TextStyle(fontSize: 13.5,
@@ -420,13 +424,17 @@ class _AssetScreenState extends State<AssetScreen> {
       : item;
   }
 
-  Widget _sidebarSectionLabel(String label, {bool condensed = false}) {
+  Widget _sidebarSectionLabel(String label, {
+    bool condensed = false, bool inDrawer = false,
+  }) {
     if (condensed) {
       return const Divider(
-        height: 24, indent: 17, endIndent: 17, color: border);
+        height: 18, indent: 17, endIndent: 17, color: border);
     }
     return Padding(
-      padding: const EdgeInsets.fromLTRB(23, 17, 12, 8),
+      padding: inDrawer
+        ? const EdgeInsets.fromLTRB(23, 17, 12, 8)
+        : const EdgeInsets.fromLTRB(20, 11, 12, 5),
       child: Text(label, style: const TextStyle(
         color: Color(0xFF9AA8B9), fontSize: 10,
         letterSpacing: 1.5, fontWeight: FontWeight.w800)),
@@ -435,9 +443,9 @@ class _AssetScreenState extends State<AssetScreen> {
 
   Widget _accountFooter({required bool condensed}) {
     return Container(
-      margin: EdgeInsets.fromLTRB(condensed ? 9 : 12, 8,
-        condensed ? 9 : 12, 15),
-      padding: EdgeInsets.all(condensed ? 8 : 10),
+      margin: EdgeInsets.fromLTRB(condensed ? 9 : 10, 7,
+        condensed ? 9 : 10, 11),
+      padding: EdgeInsets.all(condensed ? 8 : 9),
       decoration: BoxDecoration(
         color: const Color(0xFFF6F9FD),
         borderRadius: BorderRadius.circular(12),
@@ -476,8 +484,9 @@ class _AssetScreenState extends State<AssetScreen> {
     return LayoutBuilder(builder: (context, available) {
       // During width animation, keep icon-only content until there is
       // enough physical room for the expanded labels.
-      final condensed = !inDrawer && available.maxWidth < 208;
+      final condensed = !inDrawer && available.maxWidth < 184;
       return Container(
+      key: const ValueKey('udl-sidebar-panel'),
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(right: BorderSide(color: border)),
@@ -489,22 +498,23 @@ class _AssetScreenState extends State<AssetScreen> {
             _appIdentity(condensed: condensed),
             const Divider(height: 1, color: border),
             Expanded(child: ListView(
-              padding: const EdgeInsets.only(top: 8),
+              padding: EdgeInsets.only(top: inDrawer ? 8 : 4),
               children: [
                 _sidebarSectionLabel('MENU UTAMA',
-                  condensed: condensed),
+                  condensed: condensed, inDrawer: inDrawer),
                 _sideItem(1, inDrawer: inDrawer, condensedOverride: condensed),
                 _sideItem(7, inDrawer: inDrawer, condensedOverride: condensed),
                 _sideItem(3, inDrawer: inDrawer, condensedOverride: condensed),
-                const SizedBox(height: 7),
+                SizedBox(height: inDrawer ? 7 : 3),
                 _sidebarSectionLabel('MASTER DATA',
-                  condensed: condensed),
+                  condensed: condensed, inDrawer: inDrawer),
                 _sideItem(2, inDrawer: inDrawer, condensedOverride: condensed),
                 _sideItem(5, inDrawer: inDrawer, condensedOverride: condensed),
                 _sideItem(8, inDrawer: inDrawer, condensedOverride: condensed),
                 Padding(
                   padding: EdgeInsets.symmetric(
-                    horizontal: condensed ? 15 : 18, vertical: 10),
+                    horizontal: condensed ? 15 : (inDrawer ? 18 : 14),
+                    vertical: inDrawer ? 10 : 7),
                   child: const Divider(height: 1, color: border),
                 ),
                 _sideItem(4, inDrawer: inDrawer, condensedOverride: condensed),
@@ -1568,7 +1578,7 @@ class _AssetScreenState extends State<AssetScreen> {
   @override
   Widget build(BuildContext context) {
     final compact = MediaQuery.sizeOf(context).width < 920;
-    final sidebarWidth = _sidebarCollapsed ? 72.0 : 238.0;
+    final sidebarWidth = _sidebarCollapsed ? 72.0 : 196.0;
     return PopScope(
       canPop: _navigationHistory.isEmpty,
       onPopInvokedWithResult: (didPop, result) {
