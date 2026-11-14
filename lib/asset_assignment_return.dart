@@ -26,7 +26,29 @@ class _V5ReturnFormState extends State<V5ReturnForm> {
   late String location;
   String receivingAreaId = '', receivingSpotId = '';
   bool saving = false;
+  int stepIndex = 0;
   String? error;
+
+  void moveStep(int next) {
+    if (next > stepIndex && stepIndex == 0) {
+      if (selected.isEmpty) {
+        setState(() => error = 'Pilih aset yang akan dikembalikan.');
+        return;
+      }
+      final missing = widget.assignment.lines.any((line) =>
+        selected.contains(line.id) && !proofPhotos.containsKey(line.assetId));
+      if (missing) {
+        setState(() => error = 'Lengkapi foto bukti setiap aset terpilih.');
+        return;
+      }
+    }
+    if (next > stepIndex && stepIndex == 1 &&
+        receivedBy.text.trim().isEmpty) {
+      setState(() => error = 'Nama Yang Menerima wajib diisi.');
+      return;
+    }
+    setState(() { stepIndex = next; error = null; });
+  }
   bool get hasUnsavedChanges =>
     selected.isNotEmpty || condition.isNotEmpty || accessories.isNotEmpty ||
     notesByLine.values.any((v) => v.trim().isNotEmpty) ||
@@ -118,7 +140,22 @@ class _V5ReturnFormState extends State<V5ReturnForm> {
           style: const TextStyle(color: ink, fontSize: 12)),
       ),
       const SizedBox(height: 13),
-      Card(child: Padding(padding: const EdgeInsets.all(20),
+      Row(children: [
+        for (var index = 0; index < 3; index++) ...[
+          if (index != 0) const SizedBox(width: 6),
+          Expanded(child: Container(
+            height: 5,
+            decoration: BoxDecoration(
+              color: index <= stepIndex ? blue : const Color(0xFFE4EAF1),
+              borderRadius: BorderRadius.circular(10)))),
+        ],
+      ]),
+      const SizedBox(height: 11),
+      Text('Langkah ' + (stepIndex + 1).toString() + ' dari 3 · ' +
+        const ['Pilih Aset', 'Informasi Pengembalian', 'Tinjau & Konfirmasi'][stepIndex],
+        style: const TextStyle(color: ink, fontWeight: FontWeight.w700)),
+      const SizedBox(height: 13),
+      if (stepIndex == 0) Card(child: Padding(padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -238,7 +275,7 @@ class _V5ReturnFormState extends State<V5ReturnForm> {
         ]),
       )),
       const SizedBox(height: 13),
-      Card(child: Padding(padding: const EdgeInsets.all(20),
+      if (stepIndex == 1) Card(child: Padding(padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -324,6 +361,37 @@ class _V5ReturnFormState extends State<V5ReturnForm> {
               labelText: 'Catatan pengembalian (opsional)')),
         ]),
       )),
+      if (stepIndex == 2) Card(child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text('3. Tinjau & Konfirmasi',
+              style: TextStyle(color: ink, fontSize: 14,
+                fontWeight: FontWeight.w800)),
+            const SizedBox(height: 12),
+            Text('Yang Mengembalikan: ' +
+              (widget.assignment.employeeSnapshot['name']?.toString() ?? '-')),
+            const SizedBox(height: 5),
+            Text('Yang Menerima: ' + receivedBy.text.trim()),
+            const SizedBox(height: 5),
+            Text('Lokasi: ' + location),
+            const SizedBox(height: 5),
+            Text('Jumlah aset: ' + selected.length.toString()),
+            const Divider(height: 25),
+            for (final line in widget.assignment.lines)
+              if (selected.contains(line.id)) Padding(
+                padding: const EdgeInsets.only(bottom: 7),
+                child: Text('• ' + line.assetName + ' · ' + line.assetCode +
+                  ' · ' + (condition[line.id] ?? line.handoverCondition),
+                  style: const TextStyle(fontSize: 12))),
+            const SizedBox(height: 8),
+            const Text('Pastikan pemeriksaan dan bukti foto sudah sesuai '
+              'sebelum menyimpan pengembalian.',
+              style: TextStyle(color: muted, fontSize: 12)),
+          ],
+        ),
+      )),
       const SizedBox(height: 12),
       const Text('Nama para pihak dicatat untuk dokumen BA. '
         'Tanda tangan dan persetujuan tetap dilakukan dan '
@@ -334,19 +402,37 @@ class _V5ReturnFormState extends State<V5ReturnForm> {
         Text(error!, style: const TextStyle(color: danger)),
       ],
       const SizedBox(height: 16),
-      LayoutBuilder(builder:(ctx,box)=>Align(
-        alignment:Alignment.centerRight,
-        child:SizedBox(
-          width:box.maxWidth<530?box.maxWidth:null,
-          child:FilledButton.icon(
-            key:const ValueKey('return-submit'),
-            onPressed:saving?null:save,
-            icon:const Icon(Icons.assignment_return_outlined),
-            label:Text(saving?'Mencatat...':'Catat Pengembalian & Draf BA',
-              textAlign:TextAlign.center),
-          ),
-        ),
-      )),
+      LayoutBuilder(builder: (ctx, bounds) {
+        final previous = OutlinedButton.icon(
+          onPressed: saving || stepIndex == 0 ? null :
+            () => moveStep(stepIndex - 1),
+          icon: const Icon(Icons.arrow_back_rounded),
+          label: const Text('Sebelumnya'));
+        final next = FilledButton.icon(
+          key: const ValueKey('return-submit'),
+          onPressed: saving ? null : stepIndex < 2
+            ? () => moveStep(stepIndex + 1) : save,
+          icon: Icon(stepIndex < 2 ? Icons.arrow_forward_rounded :
+            Icons.assignment_return_outlined),
+          label: Text(stepIndex < 2 ? 'Berikutnya' :
+            saving ? 'Mencatat...' : 'Konfirmasi Pengembalian'));
+        if (bounds.maxWidth < 530) {
+          return Column(crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(height: 48, child: next),
+              if (stepIndex > 0) ...[
+                const SizedBox(height: 10),
+                SizedBox(height: 48, child: previous),
+              ],
+            ]);
+        }
+        return Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+          if (stepIndex > 0) ...[
+            previous, const SizedBox(width: 10),
+          ],
+          next,
+        ]);
+      }),
     ]);
   }
 }
