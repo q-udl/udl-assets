@@ -60,7 +60,7 @@ void main() {
       accessories: {records[0].id: 'Kunci cadangan'},
       notes: 'Fasilitas kerja');
     expect(batch.lines, hasLength(2));
-    expect(batch.status, 'Menunggu Penerimaan');
+    expect(batch.status, 'Menunggu Serah Terima');
     expect(records[0].status, 'Tersedia');
     expect(records[0].assignedEmployeeId, isEmpty);
     expect(store.canAssignAsset(records[0]), false);
@@ -135,8 +135,11 @@ void main() {
       store.confirmAssignment(batch, true, '',
         handedOverByName: 'Petugas GA'),
       throwsFormatException);
-    await store.confirmAssignment(batch, false, 'Penerima nonaktif');
-    expect(batch.status, 'Ditolak');
+    await store.cancelAssignment(batch, 'Penerima nonaktif');
+    expect(batch.status, 'Dibatalkan');
+    expect(batch.cancellationReason, 'Penerima nonaktif');
+    expect(batch.cancelledAt, isNotEmpty);
+    expect(store.events.any((e) => e.type == 'Pembatalan Penugasan'), true);
     expect(store.canAssignAsset(item), true);
   });
 
