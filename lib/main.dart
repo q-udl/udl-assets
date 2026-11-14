@@ -5,10 +5,17 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 part 'asset_taxonomy.dart';
 part 'asset_data.dart';
 part 'asset_operations.dart';
+part 'asset_assignment_models.dart';
+part 'asset_employee_operations.dart';
+part 'asset_assignment_operations.dart';
+part 'asset_assignment_pdf.dart';
 part 'asset_v4_catalog.dart';
 part 'asset_v4_master.dart';
 part 'asset_v4_history.dart';
