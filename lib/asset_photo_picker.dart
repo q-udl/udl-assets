@@ -285,7 +285,14 @@ class AssetPhotoPicker {
       if (outcome == null) return null;
       if (outcome.chooseFile) {
         if (!context.mounted) return null;
-        return _read(context, AssetPhotoSource.file);
+        while (context.mounted) {
+          final file = await _read(context, AssetPhotoSource.file);
+          if (file == null || !context.mounted) return null;
+          final decision = await _preview(context, file);
+          if (decision == 1) return file;
+          if (decision != 2) return null;
+        }
+        return null;
       }
       return outcome.photo;
     }
