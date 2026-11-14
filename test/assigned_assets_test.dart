@@ -9,7 +9,7 @@ void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
   Future<AssetEmployee> employee(AssetStore store) => store.addEmployee(
-    code: 'KRY-TES-001', name: 'Karyawan Uji Aset',
+    name: 'Karyawan Uji Aset',
     unit: 'Outlet', department: 'Penjualan',
     jobTitle: 'Supervisor', workLocation: 'Outlet Jepara');
 
@@ -27,14 +27,14 @@ void main() {
     return SelectedAssetPhoto(bytes, 'bukti-uat.png', bytes.length);
   }
 
-  test('Master karyawan menggunakan kode unik dan status aktif', () async {
+  test('Master karyawan menggunakan UUID unik dan status aktif', () async {
     final store = AssetStore();
     await store.initialize();
     final person = await employee(store);
-    expect(person.code, 'KRY-TES-001');
+    expect(person.id, isNotEmpty);
     expect(person.active, true);
-    await expectLater(
-      employee(store), throwsFormatException);
+    final second = await employee(store);
+    expect(second.id, isNot(person.id));
     await store.updateEmployee(person,
       name: 'Karyawan Uji Aset Baru',
       unit: 'Outlet', department: 'Penjualan',
@@ -72,7 +72,8 @@ void main() {
     final ba = await AssetBastPdf.handover(batch);
     expect(utf8.decode(ba.take(5).toList()), '%PDF-');
     expect(ba.length, greaterThan(1700));
-    await store.confirmAssignment(batch, true, '', proofPhotos: {
+    await store.confirmAssignment(batch, true, '',
+      handedOverByName: 'Petugas GA', proofPhotos: {
       for (final line in batch.lines) line.assetId: uatProof(),
     });
     expect(batch.status, 'Aktif');
@@ -105,6 +106,7 @@ void main() {
           condition: 'Baik', accessories: 'Lengkap'),
       },
       receivingLocation: 'Kantor Pusat',
+      receivedByName: 'Petugas GA',
       proofPhotos: {records[1].id: uatProof()});
     expect(batch.status, 'Selesai');
     expect(records[1].status, 'Tersedia');
@@ -130,7 +132,8 @@ void main() {
     await store.setEmployeeActive(person, false, 'Keluar perusahaan');
     expect(batch.employeeSnapshot['name'], snapshot);
     await expectLater(
-      store.confirmAssignment(batch, true, ''),
+      store.confirmAssignment(batch, true, '',
+        handedOverByName: 'Petugas GA'),
       throwsFormatException);
     await store.confirmAssignment(batch, false, 'Penerima nonaktif');
     expect(batch.status, 'Ditolak');
@@ -152,7 +155,8 @@ void main() {
     expect(batch.lines.single.photoIds, hasLength(1));
     final pdf = await AssetBastPdf.handover(batch, store: store);
     expect(utf8.decode(pdf.take(5).toList()), '%PDF-');
-    await store.confirmAssignment(batch, true, '', proofPhotos: {
+    await store.confirmAssignment(batch, true, '',
+      handedOverByName: 'Petugas GA', proofPhotos: {
       for (final line in batch.lines) line.assetId: uatProof(),
     });
     await store.addPhoto(asset, bytes, 'kembali.png',
@@ -164,6 +168,7 @@ void main() {
           const AssetReturnInput(condition: 'Baik'),
       },
       receivingLocation: 'Gudang Pusat',
+      receivedByName: 'Petugas GA',
       proofPhotos: {asset.id: uatProof()});
     expect(receipt.lines.single.proofPhotoIds, isNotEmpty);
     expect(store.evidenceFor('assignment_return', receipt.id, asset.id),
