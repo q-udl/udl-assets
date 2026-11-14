@@ -38,6 +38,22 @@ jobs:
               exit 1
             fi
             pdftotext "$file" - | grep -qi 'LAMPIRAN FOTO BUKTI'
+            if [[ "$(basename "$file")" == BAST-* ]]; then
+              textfile="build/rv030-pdf-qa/render/BAST-contents.txt"
+              pdftotext -layout "$file" "$textfile"
+              grep -qi 'Nomor BAST' "$textfile"
+              grep -qi 'Referensi Penugasan' "$textfile"
+              grep -qi 'Tanggal Serah Terima' "$textfile"
+              grep -qi 'Lokasi Serah Terima' "$textfile"
+              grep -qi 'PARA PIHAK' "$textfile"
+              grep -qi 'Penyerah' "$textfile"
+              grep -qi 'Penerima' "$textfile"
+              grep -qi 'PERNYATAAN SERAH TERIMA' "$textfile"
+              if grep -Eqi 'DRAF - TANDA|Nomor dokumen resmi:|Status sistem|Tanda tangan:' "$textfile"; then
+                echo "BAST contains a retired draft label or signature guide"
+                exit 1
+              fi
+            fi
             pdftoppm -f 1 -l 3 -png -r 115 "$file"               "build/rv030-pdf-qa/render/$(basename "$file" .pdf)"
           done
       - name: Preserve RV030 PDF visual QA
