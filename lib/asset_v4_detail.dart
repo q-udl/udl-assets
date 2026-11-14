@@ -42,9 +42,9 @@ extension _AssetV4Detail on _AssetScreenState {
       LayoutBuilder(builder:(ctx,box) {
         final photo=v4PhotoCard(a,primary,photos);
         final info=v4InfoCard(a);
-        if(box.maxWidth<820)return Column(children:[
+        if(box.maxWidth<820) { return Column(children:[
           info,const SizedBox(height:14),photo,
-        ]);
+        ]); }
         return Row(crossAxisAlignment:CrossAxisAlignment.start,children:[
           Expanded(child:info),const SizedBox(width:14),Expanded(child:photo),
         ]);
@@ -167,7 +167,7 @@ extension _AssetV4Detail on _AssetScreenState {
     if(ok==true){
       try{
         final value=unknown?null:int.tryParse(cost.text);
-        if(!unknown&&value==null)throw const FormatException('Nilai tidak valid.');
+        if(!unknown&&value==null) { throw const FormatException('Nilai tidak valid.'); }
         await store.editIdentity(a,name.text,brand.text,model.text,serial.text,
           value,reason.text);
         repaint();notify('Informasi aset diperbarui');
