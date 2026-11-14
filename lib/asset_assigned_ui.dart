@@ -14,10 +14,6 @@ extension _AssignedAssetsScreens on _AssetScreenState {
         (v5AssignmentFilter == 'Semua' ||
           a.status == v5AssignmentFilter);
     }).toList()..sort((a,b) => b.createdAt.compareTo(a.createdAt));
-    final allActive = store.assignments.fold<int>(
-      0, (sum, a) => sum + a.activeCount);
-    final pending = store.assignments.where((a) => a.isPending).length;
-    final overdue = store.assignments.where((a) => a.isOverdue).length;
     final pages = matching.isEmpty ? 1 :
       ((matching.length - 1) ~/ v5AssignmentPerPage) + 1;
     if (v5AssignmentPage >= pages) v5AssignmentPage = pages - 1;
@@ -25,61 +21,10 @@ extension _AssignedAssetsScreens on _AssetScreenState {
       v5AssignmentPage * v5AssignmentPerPage)
       .take(v5AssignmentPerPage).toList();
 
-    Widget counter(String label, int amount, IconData icon) => Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: Colors.white,
-        border: Border.all(color: border),
-        borderRadius: BorderRadius.circular(12)),
-      child: Row(children: [
-        Icon(icon, color: blue, size: 23),
-        const SizedBox(width: 9),
-        Expanded(child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(amount.toString(), style: const TextStyle(
-              fontSize: 20, color: ink, fontWeight: FontWeight.w800)),
-            Text(label, style: const TextStyle(
-              fontSize: 11, color: muted)),
-          ],
-        )),
-      ]),
-    );
-
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      LayoutBuilder(builder: (ctx, box) => GridView.count(
-        crossAxisCount: box.maxWidth >= 1000 ? 3 :
-          box.maxWidth >= 640 ? 2 : 1,
-        childAspectRatio: box.maxWidth >= 1000 ? 3.5 :
-          box.maxWidth >= 640 ? 3.0 : 4.0,
-        mainAxisSpacing: 10, crossAxisSpacing: 10,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        children: [
-          counter('Aset ditugaskan aktif', allActive,
-            Icons.inventory_2_outlined),
-          counter('Menunggu penerimaan', pending,
-            Icons.pending_actions_outlined),
-          counter('Penugasan jatuh tempo', overdue,
-            Icons.event_busy_outlined),
-        ],
-      )),
-      const SizedBox(height: 13),
       surface(child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          sectionHeader('Assigned Assets',
-            subtitle: 'Penugasan dan pengembalian aset kepada karyawan',
-            trailing: primaryButton('Tugaskan Aset',
-              Icons.add_rounded, () => v4Change(() {
-                selectedAssignment = null;
-                page = 9;
-              }))),
-          const SizedBox(height: 14),
-          const Text(
-            'Konfirmasi penerimaan dan BA di prototipe adalah SIMULASI '
-            'tanpa autentikasi atau tanda tangan digital.',
-            style: TextStyle(fontSize: 11.5, color: muted)),
-          const SizedBox(height: 15),
           LayoutBuilder(builder: (ctx, box) {
             final search = TextField(
               decoration: const InputDecoration(
@@ -106,7 +51,19 @@ extension _AssignedAssetsScreens on _AssetScreenState {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [search, const SizedBox(height: 10), status]);
           }),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
+          const Text('Penerimaan dan BA di pratinjau lokal adalah '
+            'SIMULASI tanpa autentikasi atau tanda tangan digital.',
+            style: TextStyle(fontSize: 11, color: muted)),
+        ],
+      )),
+      const SizedBox(height: 12),
+      surface(child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          sectionHeader('Daftar Penugasan',
+            subtitle: matching.length.toString() + ' penugasan sesuai filter'),
+          const SizedBox(height: 12),
           if (matching.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 32),
