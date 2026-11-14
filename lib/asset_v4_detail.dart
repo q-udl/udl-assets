@@ -24,6 +24,33 @@ extension _AssetV4Detail on _AssetScreenState {
             outlineButton('Ubah Informasi',Icons.edit_outlined,()=>v4EditIdentity(a)),
             outlineButton('Ubah Kondisi',Icons.build_outlined,()=>v4Condition(a)),
             outlineButton('Ubah Status',Icons.flag_outlined,()=>v4Status(a)),
+            PopupMenuButton<String>(
+              tooltip: 'Tindakan lainnya',
+              onSelected: (value) {
+                if (value == 'dispose') v4DisposeAsset(a);
+              },
+              itemBuilder: (ctx) => const [
+                PopupMenuItem(value: 'dispose',
+                  child: Row(children: [
+                    Icon(Icons.delete_outline, color: danger),
+                    SizedBox(width: 9),
+                    Text('Hapuskan Aset', style: TextStyle(color: danger)),
+                  ])),
+              ],
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                decoration: BoxDecoration(
+                  border: Border.all(color: border),
+                  borderRadius: BorderRadius.circular(10),
+                  color: Colors.white,
+                ),
+                child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(Icons.more_horiz, color: blue, size: 18),
+                  SizedBox(width: 6),
+                  Text('Tindakan Lainnya', style: TextStyle(color: blue)),
+                ]),
+              ),
+            ),
           ],
           outlineButton('Lihat QR',Icons.qr_code_2,()=>v4QrDialog(a)),
         ]),
