@@ -31,6 +31,21 @@ jobs:
           if-no-files-found: error
           retention-days: 5
 
+      - name: Assemble isolated Windows UAT one-click package
+        run: |
+          mkdir -p build/udl-assets-uat-windows-rv030/web
+          cp -a build/web/. build/udl-assets-uat-windows-rv030/web/
+          cp uat/windows/JALANKAN-UDL-ASSETS.cmd build/udl-assets-uat-windows-rv030/
+          cp uat/windows/start-uat.ps1 build/udl-assets-uat-windows-rv030/
+          cp uat/windows/README.md build/udl-assets-uat-windows-rv030/
+      - name: Preserve Windows UAT package (no deploy)
+        uses: actions/upload-artifact@v4
+        with:
+          name: udl-assets-uat-windows-rv030
+          path: build/udl-assets-uat-windows-rv030/
+          if-no-files-found: error
+          retention-days: 10
+
       - name: Capture responsive previews (if browser available)
         run: |
           CHROME_BIN="$(command -v google-chrome || command -v chromium || true)"
