@@ -9,6 +9,7 @@ extension AssetOperations on AssetStore {
     required String model, required String serial, required String location,
     required String holder, required String status, required String condition,
     required int? cost, required String acquisitionDate,
+    AssetPlacement? placement,
   }) async {
     if (quantity < 1 || quantity > 100) throw const FormatException('Jumlah unit harus 1-100.');
     if (quantity > 1 && serial.trim().isNotEmpty) {
@@ -27,6 +28,13 @@ extension AssetOperations on AssetStore {
       a.status != 'Dihapuskan' && a.serial.toLowerCase() == serial.trim().toLowerCase())) {
       throw const FormatException('Nomor seri sudah digunakan.');
     }
+    final site = placement == null ?
+      siteByName(location) : siteById(placement.siteId);
+    final chosen = placement ?? AssetPlacement(site?.id ?? '');
+    if (site == null || site.name != location ||
+        !validPlacement(chosen)) {
+      throw const FormatException('Lokasi/area/titik tidak aktif atau valid.');
+    }
     final result = <AssetRecord>[];
     for (var i = 0; i < quantity; i++) {
       final a = AssetRecord(uuid.v4(), 'UDL-AST-' + nextNumber.toString().padLeft(6, '0'),
@@ -34,6 +42,7 @@ extension AssetOperations on AssetStore {
         condition, status, cost ?? 0, subcategory: subcategory, assetType: assetType);
       a.model = model.trim(); a.acquisitionDate = acquisitionDate;
       a.acquisitionCost = cost;
+      applyPlacement(a, chosen);
       a.categoryId = c.code; a.subcategoryId = sub.id; a.typeId = sub.typeId(assetType);
       assets.insert(0, a); nextNumber++; result.add(a);
       log(a, 'Registrasi', 'Registrasi aset pada ' + location);
