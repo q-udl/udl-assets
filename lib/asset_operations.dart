@@ -81,6 +81,10 @@ extension AssetOperations on AssetStore {
   }
 
   Future<void> editStatus(AssetRecord a, String status, String reason) async {
+    if (a.assignedEmployeeId.isNotEmpty) {
+      throw const FormatException(
+        'Aset masih ditugaskan. Selesaikan pengembalian sebelum ubah status.');
+    }
     if (a.status == 'Dihapuskan' || status == a.status ||
       reason.trim().isEmpty ||
       !['Tersedia', 'Digunakan', 'Dalam Perbaikan', 'Hilang', 'Dihapuskan'].contains(status)) {
@@ -98,6 +102,10 @@ extension AssetOperations on AssetStore {
 
   Future<AssetTransfer> proposeTransfer(AssetRecord a, String destination,
       String receiver, String reason) async {
+    if (a.assignedEmployeeId.isNotEmpty || heldLinesFor(a.id).isNotEmpty) {
+      throw const FormatException(
+        'Aset sedang dalam proses penugasan; selesaikan dahulu.');
+    }
     if (a.status == 'Dihapuskan' || !locations.contains(destination) ||
       reason.trim().isEmpty || (destination == a.location && receiver.trim() == a.holder) ||
       transfers.any((t) => t.assetId == a.id && t.state == 'Menunggu Penerimaan')) {
