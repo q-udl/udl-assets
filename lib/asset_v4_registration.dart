@@ -50,8 +50,8 @@ class _V4RegistrationPageState extends State<V4RegistrationPage> {
     if(x==null) { return; }
     final bytes=await x.readAsBytes();
     if(bytes.length>AssetStore.maxPhotoBytes){
-      if(mounted)ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content:Text('Foto melebihi 500 KB setelah kompresi.')));
+      if(mounted) { ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content:Text('Foto melebihi 500 KB setelah kompresi.'))); }
       return;
     }
     setState((){pendingPhoto=bytes;pendingName=x.name;});
@@ -91,8 +91,8 @@ class _V4RegistrationPageState extends State<V4RegistrationPage> {
       }
       if(mounted) { widget.onCompleted(created); }
     }catch(e){
-      if(mounted)ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content:Text('Registrasi gagal: '+e.toString())));
+      if(mounted) { ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content:Text('Registrasi gagal: '+e.toString()))); }
     }finally{
       if(mounted) { setState(()=>saving=false); }
     }
