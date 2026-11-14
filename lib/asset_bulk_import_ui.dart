@@ -154,7 +154,7 @@ class _BulkImportDialogState extends State<BulkImportDialog> {
       ? row.value('Nama Aset') : row.value('Nama Lengkap');
     final secondary = widget.kind == BulkImportKind.assets
       ? row.value('Kategori') + ' · ' + row.value('Lokasi Utama')
-      : row.value('Kode Karyawan') + ' · ' + row.value('Unit');
+      : row.value('Unit') + ' · ' + row.value('Departemen');
     final status = Text(row.valid ? 'Valid' : 'Perlu perbaikan',
       textAlign: TextAlign.right,
       style: TextStyle(
