@@ -3,7 +3,8 @@ part of 'main.dart';
 class V4RegistrationPage extends StatefulWidget {
   final AssetStore store;
   final void Function(List<AssetRecord>) onCompleted;
-  const V4RegistrationPage({super.key,required this.store,required this.onCompleted});
+  final VoidCallback? onDirty;
+  const V4RegistrationPage({super.key,required this.store,required this.onCompleted,this.onDirty});
   @override State<V4RegistrationPage> createState()=>_V4RegistrationPageState();
 }
 
@@ -26,6 +27,7 @@ class _V4RegistrationPageState extends State<V4RegistrationPage> {
   Widget field(TextEditingController c,String label,{bool required=false,
       TextInputType? keyboard})=>TextFormField(
     controller:c,keyboardType:keyboard,
+    onChanged: (_) => widget.onDirty?.call(),
     decoration:InputDecoration(labelText:label,
       filled:true,fillColor:const Color(0xFFF9FBFD)),
     validator:(v)=>required && (v==null || v.trim().isEmpty)?'Wajib diisi':null);
@@ -38,7 +40,8 @@ class _V4RegistrationPageState extends State<V4RegistrationPage> {
       filled:true,fillColor:const Color(0xFFF9FBFD)),
     items:values.map((v)=>DropdownMenuItem(value:v,
       child:Text(v,maxLines:1,overflow:TextOverflow.ellipsis))).toList(),
-    validator:(v)=>v==null?'Wajib dipilih':null,onChanged:change);
+    validator:(v)=>v==null?'Wajib dipilih':null,
+    onChanged:(v) { widget.onDirty?.call(); change(v); });
 
   Widget optionalPlace(String label, String value,
       Map<String,String> values, void Function(String?) changed) =>
@@ -56,7 +59,7 @@ class _V4RegistrationPageState extends State<V4RegistrationPage> {
             child: Text(entry.value, maxLines: 1,
               overflow: TextOverflow.ellipsis)),
       ],
-      onChanged: changed,
+      onChanged: (v) { widget.onDirty?.call(); changed(v); },
     );
 
   Widget pairs(Widget a,Widget b,bool narrow){
@@ -74,6 +77,7 @@ class _V4RegistrationPageState extends State<V4RegistrationPage> {
         const SnackBar(content:Text('Foto melebihi 500 KB setelah kompresi.'))); }
       return;
     }
+    widget.onDirty?.call();
     setState((){pendingPhoto=bytes;pendingName=x.name;});
   }
 
@@ -159,7 +163,7 @@ class _V4RegistrationPageState extends State<V4RegistrationPage> {
           CheckboxListTile(value:costUnknown,
             title:const Text('Nilai perolehan belum diketahui'),
             contentPadding:EdgeInsets.zero,
-            onChanged:(v)=>setState(()=>costUnknown=v??false)),
+            onChanged:(v) { widget.onDirty?.call(); setState(()=>costUnknown=v??false); }),
         ]))),
       const SizedBox(height:12),
       Card(child:Padding(padding:const EdgeInsets.all(20),child:Column(
