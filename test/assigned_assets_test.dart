@@ -162,7 +162,9 @@ void main() {
     await expectLater(AssetBastPdf.handover(batch, store: store),
       throwsFormatException);
     await store.confirmAssignment(batch, true, '',
-      handedOverByName: 'Petugas GA', proofPhotos: {
+      handedOverByName: 'Petugas GA',
+      handoverLocation: 'Gudang Pusat', bastNumber: 'BAST-TEST-002',
+      proofPhotos: {
       for (final line in batch.lines) line.assetId: uatProof(),
     });
     final pdf = await AssetBastPdf.handover(batch, store: store);
