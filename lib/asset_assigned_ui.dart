@@ -153,27 +153,17 @@ extension _AssignedAssetsScreens on _AssetScreenState {
           }),
           if (matching.isNotEmpty) ...[
             const Divider(height: 23, color: border),
-            Row(children: [
-              Expanded(child: Text(
-                matching.length.toString() + ' penugasan sesuai filter',
-                style: const TextStyle(color: muted, fontSize: 12))),
-              DropdownButton<int>(
-                value: v5AssignmentPerPage,
-                items: [20,40,80].map((n) => DropdownMenuItem(
-                  value: n, child: Text(n.toString()))).toList(),
-                onChanged: (value) => v4Change(() {
-                  v5AssignmentPerPage = value ?? 20;
-                  v5AssignmentPage = 0;
-                })),
-              IconButton(
-                onPressed: v5AssignmentPage == 0 ? null :
-                  () => v4Change(() => v5AssignmentPage--),
-                icon: const Icon(Icons.chevron_left)),
-              IconButton(
-                onPressed: v5AssignmentPage >= pages - 1 ? null :
-                  () => v4Change(() => v5AssignmentPage++),
-                icon: const Icon(Icons.chevron_right)),
-            ]),
+            responsiveAssetPager(
+              description:matching.length.toString() + ' penugasan sesuai filter',
+              perPage:v5AssignmentPerPage,
+              onPerPage:(value)=>v4Change(() {
+                v5AssignmentPerPage=value;v5AssignmentPage=0;
+              }),
+              onPrevious:v5AssignmentPage==0?null:
+                ()=>v4Change(()=>v5AssignmentPage--),
+              onNext:v5AssignmentPage>=pages-1?null:
+                ()=>v4Change(()=>v5AssignmentPage++),
+            ),
           ],
         ],
       )),
