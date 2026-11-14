@@ -193,7 +193,7 @@ void main() {
       name: 'Nadia', unit: 'Outlet', department: 'Penjualan',
       jobTitle: 'Sales', workLocation: 'Outlet Jepara');
     final item = store.assets.firstWhere(store.canAssignAsset);
-    final batch = await store.createAssignment(
+    await store.createAssignment(
       employeeId: person.id, kind: 'Berkelanjutan',
       assetIds: [item.id], accessories: {});
     final json = jsonDecode(store.backup()) as Map<String, dynamic>;
