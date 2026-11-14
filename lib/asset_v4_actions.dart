@@ -10,10 +10,18 @@ extension _AssetV4Actions on _AssetScreenState {
     final receiver = TextEditingController(text: a.holder);
     final reason = TextEditingController();
     var error = '';
+    final initialDestination = destination;
+    final initialArea = destinationArea;
+    final initialSpot = destinationSpot;
+    final initialHolder = receiver.text;
+    bool hasChanges() => destination != initialDestination ||
+      destinationArea != initialArea || destinationSpot != initialSpot ||
+      receiver.text != initialHolder || reason.text.isNotEmpty;
     final ok = await v4ShowModal<bool>(
       title: 'Mutasi Aset',
       subtitle: a.name + ' · ' + a.code,
       maxWidth: 760,
+      isDirty: hasChanges,
       body: (ctx, update) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
