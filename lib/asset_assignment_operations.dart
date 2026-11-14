@@ -193,7 +193,11 @@ extension AssetAssignmentOperations on AssetStore {
       line.returnedAt = now;
       asset.assignedEmployeeId = '';
       asset.holder = '';
-      asset.location = receivingLocation;
+      final receivingSite = siteByName(receivingLocation);
+      if (receivingSite == null) {
+        throw const FormatException('Lokasi pengembalian tidak ditemukan.');
+      }
+      applyPlacement(asset, AssetPlacement(receivingSite.id));
       asset.condition = inspection.condition;
       asset.status = ['Rusak','Kurang Baik'].contains(inspection.condition)
         ? 'Dalam Perbaikan' : 'Tersedia';
