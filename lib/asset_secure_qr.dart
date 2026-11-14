@@ -1,5 +1,13 @@
 part of 'main.dart';
 
+/// QR scanning is an action for locating an asset from the catalog.
+/// It must never appear in breadcrumbs, settings, master data, or history.
+bool assetQrScanVisible({
+  required bool cameraAvailable,
+  required int page,
+  required bool showingAssetDetail,
+}) => cameraAvailable && page == 1 && !showingAssetDetail;
+
 /// Camera scanning is only available when the device has a detected camera.
 /// No permissions or camera stream are opened by the availability probe.
 extension _AssetSecureQrScanner on _AssetScreenState {
