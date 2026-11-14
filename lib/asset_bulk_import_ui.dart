@@ -50,8 +50,8 @@ class _BulkImportDialogState extends State<BulkImportDialog> {
         bytes: bytes,
       );
     } catch (e) {
-      if (mounted) setState(() =>
-        error = 'Gagal mengunduh template: ' + e.toString());
+      if (mounted) { setState(() =>
+        error = 'Gagal mengunduh template: ' + e.toString()); }
     } finally {
       if (mounted) setState(() => busy = false);
     }
@@ -81,8 +81,8 @@ class _BulkImportDialogState extends State<BulkImportDialog> {
         widget.store, widget.kind, bytes, fileName: file.name);
       if (mounted) setState(() => preview = reviewed);
     } catch (e) {
-      if (mounted) setState(() =>
-        error = 'Gagal membaca template: ' + e.toString());
+      if (mounted) { setState(() =>
+        error = 'Gagal membaca template: ' + e.toString()); }
     } finally {
       if (mounted) setState(() => busy = false);
     }
@@ -102,8 +102,8 @@ class _BulkImportDialogState extends State<BulkImportDialog> {
         bytes: bytes,
       );
     } catch (e) {
-      if (mounted) setState(() =>
-        error = 'Gagal mengunduh laporan: ' + e.toString());
+      if (mounted) { setState(() =>
+        error = 'Gagal mengunduh laporan: ' + e.toString()); }
     } finally {
       if (mounted) setState(() => busy = false);
     }
@@ -117,8 +117,8 @@ class _BulkImportDialogState extends State<BulkImportDialog> {
       final total = await widget.store.confirmBulkImport(current);
       if (mounted) Navigator.of(context).pop(total);
     } catch (e) {
-      if (mounted) setState(() =>
-        error = 'Impor tidak disimpan: ' + e.toString());
+      if (mounted) { setState(() =>
+        error = 'Impor tidak disimpan: ' + e.toString()); }
     } finally {
       if (mounted) setState(() => busy = false);
     }
@@ -167,8 +167,7 @@ class _BulkImportDialogState extends State<BulkImportDialog> {
               padding: const EdgeInsets.only(top: 5),
               child: Text(row.errors.join('; '),
                 style: const TextStyle(color: danger, fontSize: 11.5))),
-          ]),
-        )),
+          ])),
         const SizedBox(width: 12),
         SizedBox(width: 105, child: Text(
           row.valid ? 'Valid' : 'Perlu perbaikan',
