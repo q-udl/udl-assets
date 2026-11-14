@@ -46,13 +46,13 @@ void main() {
     final original = store.employees.length;
     final bytes = fillTemplate(
       BulkImportService.makeTemplate(BulkImportKind.employees, store), [
-        cells(['','Karyawan Excel Satu','Distribusi','Operasional',
+        cells(['Karyawan Excel Satu','Distribusi','Operasional',
           'Staf Gudang','Gudang Pusat','2026-11-01','Aktif']),
-        cells(['KRY-009991','Karyawan Excel Dua','Outlet','Sales',
+        cells(['Karyawan Excel Dua','Outlet','Sales',
           'Supervisor','Outlet Jepara','2026-10-04','Tidak Aktif']),
-        cells(['KRY-009991','Karyawan Ganda','Outlet','Sales',
+        cells(['Karyawan Excel Dua','Outlet','Sales',
           'Supervisor','Outlet Jepara','2026-10-04','Aktif']),
-        cells(['','Karyawan Lokasi Salah','Distribusi','Operasional',
+        cells(['Karyawan Lokasi Salah','Distribusi','Operasional',
           'Staf Gudang','Gudang Tidak Ada','2026-11-01','Aktif']),
       ]);
     final reviewed = BulkImportService.inspect(
@@ -60,7 +60,7 @@ void main() {
     expect(reviewed.rows, hasLength(4));
     expect(reviewed.validCount, 2);
     expect(reviewed.invalidCount, 2);
-    expect(reviewed.rows[2].errors.join(' '), contains('Kode Karyawan'));
+    expect(reviewed.rows[2].errors.join(' '), contains('Karyawan dengan nama'));
     expect(reviewed.rows[3].errors.join(' '), contains('Lokasi Kerja'));
     final report = BulkImportService.makeErrorReport(reviewed);
     expect(xls.Excel.decodeBytes(report)['KESALAHAN'].rows.length, 3);
@@ -69,11 +69,11 @@ void main() {
     expect(store.employees.length, original + 2);
     final one = store.employees.firstWhere((e) => e.name == 'Karyawan Excel Satu');
     final two = store.employees.firstWhere((e) => e.name == 'Karyawan Excel Dua');
-    expect(one.code, startsWith('KRY-'));
-    expect(two.code, 'KRY-009991');
+    expect(one.id, isNot(two.id));
+    expect(one.id, isNotEmpty);
     expect(one.startDate, '2026-11-01');
     expect(two.active, false);
-    expect(store.employees.where((e) => e.code == two.code), hasLength(1));
+    expect(store.employees.where((e) => e.id == two.id), hasLength(1));
     final backup = AssetStore()..restore(store.backup());
     expect(backup.employees.length, original + 2);
     expect(backup.employeeById(one.id)?.startDate, '2026-11-01');
@@ -114,8 +114,8 @@ void main() {
     expect(store.nextNumber, first + 2);
     final firstAdded = store.assets.firstWhere((a) => a.name == 'Meja Excel Satu');
     final secondAdded = store.assets.firstWhere((a) => a.name == 'Meja Excel Dua');
-    expect(firstAdded.code, 'UDL-AST-' + first.toString().padLeft(6,'0'));
-    expect(secondAdded.code, 'UDL-AST-' + (first+1).toString().padLeft(6,'0'));
+    expect(firstAdded.code, 'UDL-AST-' + first.toString().padLeft(8,'0'));
+    expect(secondAdded.code, 'UDL-AST-' + (first+1).toString().padLeft(8,'0'));
     expect(store.locationPath(firstAdded), 'Gudang Pusat / Gudang Bawah / Rak C-3');
     expect(store.locationPath(secondAdded), 'Gudang Pusat');
     expect(firstAdded.acquisitionCost, 1200000);
@@ -133,7 +133,7 @@ void main() {
     await store.initialize();
     final date = fillTemplate(
       BulkImportService.makeTemplate(BulkImportKind.employees, store), [
-        cells(['','Tanggal Salah','Outlet','Penjualan',
+        cells(['Tanggal Salah','Outlet','Penjualan',
           'Staf','Outlet Jepara','2026-02-30','Aktif']),
       ]);
     expect(BulkImportService.inspect(store, BulkImportKind.employees, date)
@@ -141,7 +141,7 @@ void main() {
     final duplicate = fillTemplate(
       BulkImportService.makeTemplate(BulkImportKind.assets, store), [
         cells(['Printer Duplikat','Teknologi Informasi & Komunikasi',
-          'Periferal Komputer','Printer Dokumen','Brother','','DEMO-002',
+          'Periferal Komputer','Printer Dokumen','Brother','','SN-PR-240122',
           'Gudang Pusat','','','','2000000','Baik','Tersedia']),
       ]);
     final report = BulkImportService.inspect(store, BulkImportKind.assets, duplicate);
@@ -150,14 +150,14 @@ void main() {
     await expectLater(store.confirmBulkImport(report), throwsFormatException);
     final valid = fillTemplate(
       BulkImportService.makeTemplate(BulkImportKind.employees, store), [
-        cells(['KRY-STABLE','Karyawan Simulasi Stale','Outlet','Sales',
+        cells(['Karyawan Review Stale','Outlet','Sales',
           'Sales','Outlet Jepara','','Aktif']),
       ]);
     final preview = BulkImportService.inspect(store, BulkImportKind.employees, valid);
-    await store.addEmployee(code:'KRY-STABLE',
-      name:'Karyawan Sudah Ada',
-      unit:'Distribusi', department:'Operasional', jobTitle:'Staf',
-      workLocation:'Gudang Pusat');
+    await store.addEmployee(
+      name:'Karyawan Review Stale',
+      unit:'Outlet', department:'Sales', jobTitle:'Staf',
+      workLocation:'Outlet Jepara');
     final count = store.employees.length;
     await expectLater(store.confirmBulkImport(preview), throwsStateError);
     expect(store.employees.length, count);
