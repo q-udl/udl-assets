@@ -115,7 +115,7 @@ void main() {
     for (final id in ['rv25-camera','rv25-gallery','rv25-file']) {
       expect(find.byKey(ValueKey(id)), findsOneWidget);
     }
-    await tester.pageBack();
+    await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
   });
@@ -152,6 +152,7 @@ void main() {
     expect(find.text('IDENTITAS ASET'), findsOneWidget);
     expect(find.text('PEROLEHAN ASET'), findsNothing);
     expect(find.byKey(const ValueKey('rv26-next-step')), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const ValueKey('rv26-next-step')));
     await tester.tap(find.byKey(const ValueKey('rv26-next-step')));
     await tester.pump();
     expect(find.text('IDENTITAS ASET'), findsOneWidget);
