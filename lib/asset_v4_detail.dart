@@ -233,10 +233,18 @@ extension _AssetV4Detail on _AssetScreenState {
     var unknown = a.acquisitionCost == null;
     var dateUnknown = a.acquisitionDate.trim().isEmpty;
     var error = '';
+    bool hasChanges() => name.text != a.name || brand.text != a.brand ||
+      model.text != a.model || serial.text != a.serial ||
+      cost.text != (a.acquisitionCost?.toString() ?? '') ||
+      date.text != a.acquisitionDate ||
+      unknown != (a.acquisitionCost == null) ||
+      dateUnknown != a.acquisitionDate.trim().isEmpty ||
+      reason.text.isNotEmpty;
     final ok = await v4ShowModal<bool>(
       title: 'Ubah Informasi Aset',
       subtitle: a.name + ' · ' + a.code,
       maxWidth: 720,
+      isDirty: hasChanges,
       body: (ctx, update) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -300,8 +308,8 @@ extension _AssetV4Detail on _AssetScreenState {
         ],
       ),
       actions: (ctx, update) => [
-        OutlinedButton(onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Batal')),
+        OutlinedButton(onPressed: () => assetRequestModalClose(
+          ctx, isDirty: hasChanges), child: const Text('Batal')),
         FilledButton(onPressed: () {
           final int? value = unknown ? null : int.tryParse(cost.text.trim());
           if (name.text.trim().isEmpty || reason.text.trim().isEmpty) {
@@ -338,10 +346,12 @@ extension _AssetV4Detail on _AssetScreenState {
     var condition = a.condition;
     final reason = TextEditingController();
     var error = '';
+    bool hasChanges() => condition != a.condition || reason.text.isNotEmpty;
     final ok = await v4ShowModal<bool>(
       title: 'Ubah Kondisi Aset',
       subtitle: a.name + ' · ' + a.code,
       maxWidth: 520,
+      isDirty: hasChanges,
       body: (ctx, update) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -375,8 +385,8 @@ extension _AssetV4Detail on _AssetScreenState {
         ],
       ),
       actions: (ctx, update) => [
-        OutlinedButton(onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Batal')),
+        OutlinedButton(onPressed: () => assetRequestModalClose(
+          ctx, isDirty: hasChanges), child: const Text('Batal')),
         FilledButton(onPressed: () {
           if (reason.text.trim().isEmpty) {
             update(() => error = 'Alasan atau hasil pemeriksaan wajib diisi.');
@@ -404,10 +414,12 @@ extension _AssetV4Detail on _AssetScreenState {
     var status = a.status;
     final reason = TextEditingController();
     var error = '';
+    bool hasChanges() => status != a.status || reason.text.isNotEmpty;
     final ok = await v4ShowModal<bool>(
       title: 'Ubah Status Aset',
       subtitle: a.name + ' · ' + a.code,
       maxWidth: 520,
+      isDirty: hasChanges,
       body: (ctx, update) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -447,8 +459,8 @@ extension _AssetV4Detail on _AssetScreenState {
         ],
       ),
       actions: (ctx, update) => [
-        OutlinedButton(onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Batal')),
+        OutlinedButton(onPressed: () => assetRequestModalClose(
+          ctx, isDirty: hasChanges), child: const Text('Batal')),
         FilledButton(onPressed: () {
           if (reason.text.trim().isEmpty) {
             update(() => error = 'Alasan perubahan status wajib diisi.');
