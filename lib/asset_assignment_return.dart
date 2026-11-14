@@ -4,9 +4,11 @@ class V5ReturnForm extends StatefulWidget {
   final AssetStore store;
   final AssetAssignment assignment;
   final void Function(AssetReturnReceipt) onCompleted;
+  final VoidCallback? onDirty;
   const V5ReturnForm({
     super.key, required this.store,
     required this.assignment, required this.onCompleted,
+    this.onDirty,
   });
 
   @override
@@ -27,6 +29,8 @@ class _V5ReturnFormState extends State<V5ReturnForm> {
   @override
   void initState() {
     super.initState();
+    notes.addListener(() => widget.onDirty?.call());
+    receivedBy.addListener(() => widget.onDirty?.call());
     location = widget.store.locations.isEmpty
       ? '' : widget.store.locations.first;
   }
@@ -135,7 +139,7 @@ class _V5ReturnFormState extends State<V5ReturnForm> {
                 style: const TextStyle(fontWeight: FontWeight.w700)),
               subtitle: Text(line.assetCode + ' · kondisi saat penyerahan: ' +
                 line.handoverCondition),
-              onChanged: (checked) => setState(() {
+              onChanged: (checked) { widget.onDirty?.call(); setState(() {
                 if (checked == true) {
                   selected.add(line.id);
                   condition[line.id] = widget.store.assignmentAsset(
@@ -143,7 +147,7 @@ class _V5ReturnFormState extends State<V5ReturnForm> {
                 } else {
                   selected.remove(line.id);
                 }
-              }),
+              }); },
             ),
             if (selected.contains(line.id))
               Padding(
@@ -157,8 +161,8 @@ class _V5ReturnFormState extends State<V5ReturnForm> {
                     items: ['Baru','Baik','Cukup','Kurang Baik','Rusak']
                       .map((value) => DropdownMenuItem(
                         value: value, child: Text(value))).toList(),
-                    onChanged: (value) => setState(() =>
-                      condition[line.id] = value ?? 'Baik'),
+                    onChanged: (value) { widget.onDirty?.call(); setState(() =>
+                      condition[line.id] = value ?? 'Baik'); },
                   );
                   final accessory = TextFormField(
                     key: ValueKey('return-accessories-' + line.id),
@@ -166,8 +170,8 @@ class _V5ReturnFormState extends State<V5ReturnForm> {
                     decoration: const InputDecoration(
                       labelText: 'Kelengkapan yang kembali',
                       hintText: 'Contoh: adaptor, kabel, tas'),
-                    onChanged: (value) =>
-                      accessories[line.id] = value,
+                    onChanged: (value) { widget.onDirty?.call();
+                      accessories[line.id] = value; },
                   );
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -191,7 +195,7 @@ class _V5ReturnFormState extends State<V5ReturnForm> {
                         decoration: const InputDecoration(
                           labelText: 'Temuan pemeriksaan / kerusakan',
                           hintText: 'Catat selisih atau kerusakan'),
-                        onChanged: (value) => notesByLine[line.id] = value,
+                        onChanged: (value) { widget.onDirty?.call(); notesByLine[line.id] = value; },
                       ),
                       const SizedBox(height: 8),
                       OutlinedButton.icon(
@@ -233,8 +237,8 @@ class _V5ReturnFormState extends State<V5ReturnForm> {
                 labelText: 'Lokasi aset diterima kembali *'),
               items: widget.store.locations.map((value) =>
                 DropdownMenuItem(value: value, child: Text(value))).toList(),
-              onChanged: (value) => setState(() =>
-                location = value ?? location),
+              onChanged: (value) { widget.onDirty?.call(); setState(() =>
+                location = value ?? location); },
             );
             final officer = TextField(
               controller: receivedBy,
