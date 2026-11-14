@@ -179,13 +179,13 @@ class _V4RegistrationPageState extends State<V4RegistrationPage> {
           pairs(optionalPlace('Area (opsional)', areaId,
               {
                 for (final a in (widget.store.siteByName(location??'')
-                  ?.areas.where((a)=>a.active) ?? <AssetArea>[])
+                  ?.areas.where((a)=>a.active) ?? <AssetArea>[]))
                   a.id: a.name,
               }, (v)=>setState(() { areaId=v??''; spotId=''; })),
             optionalPlace('Titik Penempatan (opsional)',spotId,
               {
                 for (final a in (widget.store.siteByName(location??'')
-                  ?.areas ?? <AssetArea>[])
+                  ?.areas ?? <AssetArea>[]))
                   if (a.id==areaId)
                     for (final spot in a.spots.where((spot)=>spot.active))
                       spot.id: spot.name,
