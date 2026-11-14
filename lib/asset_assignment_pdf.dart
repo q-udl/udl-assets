@@ -46,7 +46,7 @@ class AssetBastPdf {
         pw.SizedBox(height: 5),
         pw.Text(heading.toUpperCase(), style: bold(16)),
         pw.SizedBox(height: 5),
-        pw.Text('DRAF / SIMULASI - BELUM DITANDATANGANI',
+        pw.Text('DRAF - TANDA TANGAN DILAKUKAN TERPISAH',
           style: pw.TextStyle(
             color: PdfColors.red700, fontSize: 9,
             fontWeight: pw.FontWeight.bold)),
@@ -62,8 +62,8 @@ class AssetBastPdf {
 
   static pw.Widget footer(pw.Context ctx) => pw.Column(children: [
     pw.Divider(color: PdfColors.blueGrey200),
-    pw.Text('Dokumen dibuat dari prototipe lokal tanpa autentikasi. '
-      'Bukan bukti tanda tangan, persetujuan, atau serah terima yang sah.',
+    pw.Text('Nama pihak berasal dari catatan transaksi. '
+      'Penandatanganan dan persetujuan tidak diverifikasi otomatis.',
       style: pw.TextStyle(fontSize: 7, color: PdfColors.grey700)),
     pw.SizedBox(height: 4),
     pw.Align(alignment: pw.Alignment.centerRight,
@@ -72,22 +72,23 @@ class AssetBastPdf {
         style: pw.TextStyle(fontSize: 7, color: PdfColors.grey700))),
   ]);
 
-  static pw.Widget signing(String left, String right) => pw.Padding(
+  static pw.Widget signing(String left, String right,
+      String leftName, String rightName) => pw.Padding(
     padding: const pw.EdgeInsets.only(top: 20),
     child: pw.Row(
       children: [
         pw.Expanded(child: pw.Column(children: [
           pw.Text(left, style: bold(9)),
           pw.SizedBox(height: 60),
-          pw.Text('(__________________________)', style: regular(9)),
-          pw.Text('Nama & tanda tangan manual', style: regular(8)),
+          pw.Text(leftName, style: bold(9)),
+          pw.Text('Tanda tangan: __________________', style: regular(8)),
         ])),
         pw.SizedBox(width: 20),
         pw.Expanded(child: pw.Column(children: [
           pw.Text(right, style: bold(9)),
           pw.SizedBox(height: 60),
-          pw.Text('(__________________________)', style: regular(9)),
-          pw.Text('Nama & tanda tangan manual', style: regular(8)),
+          pw.Text(rightName, style: bold(9)),
+          pw.Text('Tanda tangan: __________________', style: regular(8)),
         ])),
       ],
     ),
@@ -238,6 +239,26 @@ class AssetBastPdf {
     return widgets;
   }
 
+  /// Append proof photographs on their own page so the appendix heading
+  /// can never be orphaned below the signatures on the preceding page.
+  static void addEvidencePages(
+    pw.Document document, AssetStore? store, String transactionType,
+    String transactionId, Map<String, String> assetCodes, String heading,
+  ) {
+    if (store == null || !assetCodes.keys.any((id) =>
+        store.evidenceFor(transactionType, transactionId, id).isNotEmpty)) {
+      return; // Never produce an empty photo appendix.
+    }
+    document.addPage(pw.MultiPage(
+      pageFormat: PdfPageFormat.a4,
+      margin: const pw.EdgeInsets.fromLTRB(42, 45, 42, 46),
+      footer: footer,
+      build: (ctx) => evidenceAppendix(
+        store, transactionType, transactionId, assetCodes, heading,
+        completed: true),
+    ));
+  }
+
   static pw.Widget assetTable(
       List<List<String>> rows, List<String> columnHeaders) {
     return pw.Table.fromTextArray(
@@ -260,7 +281,7 @@ class AssetBastPdf {
   static Future<Uint8List> handover(AssetAssignment record, {AssetStore? store}) async {
     final doc = pw.Document(
       title: 'DRAF BAST ' + record.draftReference,
-      author: 'UDL Assets - Simulasi Lokal');
+      author: 'UDL Assets');
     doc.addPage(pw.MultiPage(
       pageFormat: PdfPageFormat.a4,
       margin: const pw.EdgeInsets.fromLTRB(42, 45, 42, 46),
@@ -275,7 +296,7 @@ class AssetBastPdf {
         pw.Text('PIHAK YANG MENERIMA', style: bold(10)),
         pw.SizedBox(height: 7),
         item('Nama', text(record.employeeSnapshot['name'])),
-        item('Kode karyawan', text(record.employeeSnapshot['code'])),
+        item('Yang Menyerahkan', text(record.handedOverByName)),
         item('Jabatan', text(record.employeeSnapshot['jobTitle'])),
         item('Unit / Departemen',
           text(record.employeeSnapshot['unit']) + ' / ' +
@@ -299,7 +320,7 @@ class AssetBastPdf {
         pw.SizedBox(height: 13),
         item('Catatan', text(record.notes)),
         item('Status sistem', record.status +
-          ' (simulasi, bukan persetujuan terautentikasi)'),
+          ' (pencatatan, bukan tanda tangan terverifikasi)'),
         pw.SizedBox(height: 12),
         pw.Text('PERNYATAAN', style: bold(10)),
         pw.SizedBox(height: 5),
@@ -313,16 +334,13 @@ class AssetBastPdf {
           'dan para pihak menandatangani sesuai kewenangannya.',
           style: regular(9),
         ),
-        signing('Yang Menyerahkan (GA)', 'Yang Menerima (Karyawan)'),
-        ...evidenceAppendix(
-          store, 'assignment_handover', record.id, {
-            for (final line in record.lines)
-              line.assetId: line.assetCode,
-          }, 'LAMPIRAN FOTO BUKTI SERAH TERIMA',
-          completed: record.status == 'Aktif' ||
-            record.status == 'Selesai'),
+        signing('Yang Menyerahkan', 'Yang Menerima',
+          text(record.handedOverByName), text(record.employeeSnapshot['name'])),
       ],
     ));
+    addEvidencePages(doc, store, 'assignment_handover', record.id, {
+      for (final line in record.lines) line.assetId: line.assetCode,
+    }, 'LAMPIRAN FOTO BUKTI SERAH TERIMA');
     return doc.save();
   }
 
@@ -332,7 +350,7 @@ class AssetBastPdf {
   ) async {
     final doc = pw.Document(
       title: 'DRAF Pengembalian ' + receipt.draftReference,
-      author: 'UDL Assets - Simulasi Lokal');
+      author: 'UDL Assets');
     doc.addPage(pw.MultiPage(
       pageFormat: PdfPageFormat.a4,
       margin: const pw.EdgeInsets.fromLTRB(42, 45, 42, 46),
@@ -348,11 +366,10 @@ class AssetBastPdf {
         pw.Text('PIHAK YANG MENGEMBALIKAN', style: bold(10)),
         pw.SizedBox(height: 7),
         item('Nama', text(receipt.employeeSnapshot['name'])),
-        item('Kode karyawan', text(receipt.employeeSnapshot['code'])),
         item('Unit / Departemen',
           text(receipt.employeeSnapshot['unit']) + ' / ' +
           text(receipt.employeeSnapshot['department'])),
-        item('Penerima di GA (isian)', text(receipt.receivedByName)),
+        item('Yang Menerima', text(receipt.receivedByName)),
         pw.SizedBox(height: 12),
         pw.Text('HASIL PEMERIKSAAN PENGEMBALIAN', style: bold(10)),
         pw.SizedBox(height: 8),
@@ -385,15 +402,13 @@ class AssetBastPdf {
           'atas aset lainnya yang belum dikembalikan.',
           style: regular(9),
         ),
-        signing('Yang Mengembalikan', 'Yang Menerima (GA)'),
-        ...evidenceAppendix(
-          store, 'assignment_return', receipt.id, {
-            for (final line in receipt.lines)
-              line.assetId: line.assetCode,
-          }, 'LAMPIRAN FOTO BUKTI PENGEMBALIAN',
-          completed: true),
+        signing('Yang Mengembalikan', 'Yang Menerima',
+          text(receipt.employeeSnapshot['name']), text(receipt.receivedByName)),
       ],
     ));
+    addEvidencePages(doc, store, 'assignment_return', receipt.id, {
+      for (final line in receipt.lines) line.assetId: line.assetCode,
+    }, 'LAMPIRAN FOTO BUKTI PENGEMBALIAN');
     return doc.save();
   }
 
