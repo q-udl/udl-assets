@@ -182,7 +182,17 @@ class _V4RegistrationPageState extends State<V4RegistrationPage> {
     final types=selectedSub?.types.where(selectedSub.typeIsActive).toList()??[];
     return Form(key:keyForm,child:Column(
       crossAxisAlignment:CrossAxisAlignment.stretch,children:[
-      Card(child:Padding(padding:const EdgeInsets.all(20),child:Column(
+      if (mobile) ...[
+        Text('Langkah ' + (mobileStep + 1).toString() + ' dari 4 · ' +
+          ['Identitas Aset','Perolehan Aset','Penempatan Awal','Dokumentasi Foto'][mobileStep],
+          style:const TextStyle(color:ink,fontWeight:FontWeight.w700)),
+        const SizedBox(height:10),
+        LinearProgressIndicator(value:(mobileStep + 1)/4,
+          minHeight:6,borderRadius:BorderRadius.circular(8)),
+        const SizedBox(height:14),
+      ],
+      if (!mobile || mobileStep == 0)
+      Card(child:Padding(padding:EdgeInsets.all(mobile ? 14 : 20),child:Column(
         crossAxisAlignment:CrossAxisAlignment.start,children:[
           const Text('IDENTITAS ASET',
             style:TextStyle(fontSize:13,fontWeight:FontWeight.bold)),
@@ -199,20 +209,47 @@ class _V4RegistrationPageState extends State<V4RegistrationPage> {
           pairs(field(model,'Model / Tipe'),field(serial,'Nomor seri (unik)'),narrow),
         ]))),
       const SizedBox(height:12),
-      Card(child:Padding(padding:const EdgeInsets.all(20),child:Column(
+      if (!mobile || mobileStep == 1)
+      Card(child:Padding(padding:EdgeInsets.all(mobile ? 14 : 20),child:Column(
         crossAxisAlignment:CrossAxisAlignment.start,children:[
           const Text('PEROLEHAN ASET',
             style:TextStyle(fontSize:13,fontWeight:FontWeight.bold)),
           const SizedBox(height:13),
-          pairs(field(date,'Tanggal perolehan (opsional, YYYY-MM-DD)'),
-            field(cost,'Nilai perolehan (Rp)',keyboard:TextInputType.number),narrow),
-          CheckboxListTile(value:costUnknown,
-            title:const Text('Nilai perolehan belum diketahui'),
-            contentPadding:EdgeInsets.zero,
-            onChanged:(v) { widget.onDirty?.call(); setState(()=>costUnknown=v??false); }),
+          pairs(
+            Column(crossAxisAlignment:CrossAxisAlignment.stretch,children:[
+              field(date,'Tanggal Perolehan (YYYY-MM-DD)',
+                keyboard:TextInputType.datetime,enabled:!dateUnknown),
+              CheckboxListTile(
+                key:const ValueKey('rv24-date-unknown'),
+                value:dateUnknown,dense:true,
+                contentPadding:EdgeInsets.zero,
+                controlAffinity:ListTileControlAffinity.leading,
+                title:const Text('Tanggal perolehan belum diketahui',
+                  style:TextStyle(fontSize:13)),
+                onChanged:(v) {
+                  widget.onDirty?.call();
+                  setState(()=>dateUnknown=v??false);
+                }),
+            ]),
+            Column(crossAxisAlignment:CrossAxisAlignment.stretch,children:[
+              field(cost,'Nilai Perolehan (Rp)',
+                keyboard:TextInputType.number,enabled:!costUnknown),
+              CheckboxListTile(
+                key:const ValueKey('rv24-value-unknown'),
+                value:costUnknown,dense:true,
+                contentPadding:EdgeInsets.zero,
+                controlAffinity:ListTileControlAffinity.leading,
+                title:const Text('Nilai perolehan belum diketahui',
+                  style:TextStyle(fontSize:13)),
+                onChanged:(v) {
+                  widget.onDirty?.call();
+                  setState(()=>costUnknown=v??false);
+                }),
+            ]),narrow),
         ]))),
       const SizedBox(height:12),
-      Card(child:Padding(padding:const EdgeInsets.all(20),child:Column(
+      if (!mobile || mobileStep == 2)
+      Card(child:Padding(padding:EdgeInsets.all(mobile ? 14 : 20),child:Column(
         crossAxisAlignment:CrossAxisAlignment.start,children:[
           const Text('PENEMPATAN AWAL',
             style:TextStyle(fontSize:13,fontWeight:FontWeight.bold)),
@@ -250,7 +287,8 @@ class _V4RegistrationPageState extends State<V4RegistrationPage> {
             style:TextStyle(fontSize:11,color:Color(0xFF718199))),
         ]))),
       const SizedBox(height:12),
-      Card(child:Padding(padding:const EdgeInsets.all(20),child:Column(
+      if (!mobile || mobileStep == 3)
+      Card(child:Padding(padding:EdgeInsets.all(mobile ? 14 : 20),child:Column(
         crossAxisAlignment:CrossAxisAlignment.start,children:[
           const Text('DOKUMENTASI FOTO',
             style:TextStyle(fontSize:13,fontWeight:FontWeight.bold)),
@@ -258,16 +296,40 @@ class _V4RegistrationPageState extends State<V4RegistrationPage> {
           const Text('Foto opsional. Untuk registrasi beberapa unit, unggah foto setiap unit setelah disimpan.'),
           const SizedBox(height:12),
           if(pendingPhoto!=null)Image.memory(pendingPhoto!,height:180,fit:BoxFit.contain),
+          if (pendingPhoto != null) TextButton.icon(
+            onPressed: () { widget.onDirty?.call(); setState(() {
+              pendingPhoto=null; pendingName='';
+            }); },
+            icon:const Icon(Icons.delete_outline),
+            label:const Text('Hapus Foto Pilihan')),
           const SizedBox(height:10),
           OutlinedButton.icon(onPressed:selectPhoto,icon:const Icon(Icons.add_a_photo_outlined),
             label:Text(pendingPhoto==null?'Pilih Foto Aktual':'Ganti Foto')),
         ]))),
       const SizedBox(height:14),
-      Row(mainAxisAlignment:MainAxisAlignment.end,children:[
-        FilledButton.icon(onPressed:saving?null:save,
-          icon:const Icon(Icons.save_outlined),
-          label:Text(saving?'Menyimpan...':'Simpan Registrasi')),
-      ]),
+      if (mobile)
+        Row(children: [
+          if (mobileStep > 0) ...[
+            OutlinedButton.icon(
+              key:const ValueKey('rv26-prev-step'),
+              onPressed:saving?null:()=>setState(()=>mobileStep--),
+              icon:const Icon(Icons.arrow_back,size:18),
+              label:const Text('Kembali')),
+            const SizedBox(width:8),
+          ],
+          Expanded(child:FilledButton.icon(
+            key:const ValueKey('rv26-next-step'),
+            onPressed:saving?null:(mobileStep == 3 ? save : mobileNext),
+            icon:Icon(mobileStep==3 ? Icons.save_outlined : Icons.arrow_forward),
+            label:Text(saving?'Menyimpan...':
+              mobileStep==3?'Simpan Registrasi':'Berikutnya'))),
+        ])
+      else
+        Row(mainAxisAlignment:MainAxisAlignment.end,children:[
+          FilledButton.icon(onPressed:saving?null:save,
+            icon:const Icon(Icons.save_outlined),
+            label:Text(saving?'Menyimpan...':'Simpan Registrasi')),
+        ]),
     ]));
   }
 }
