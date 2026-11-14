@@ -205,28 +205,40 @@ class _V5ReturnFormState extends State<V5ReturnForm> {
                     onChanged: (value) { widget.onDirty?.call(); setState(() =>
                       condition[line.id] = value ?? 'Baik'); },
                   );
-                  final accessory = TextFormField(
+                  final includedItems = TextFormField(
                     key: ValueKey('return-accessories-' + line.id),
                     initialValue: accessories[line.id] ?? '',
-                    decoration: const InputDecoration(
-                      labelText: 'Kelengkapan yang kembali',
-                      hintText: 'Contoh: adaptor, kabel, tas'),
+                    decoration: InputDecoration(
+                      labelText: line.hasLegacyAccessories
+                        ? 'Kelengkapan historis yang kembali (opsional)'
+                        : 'Item Penyerta Non-Aset kembali (opsional)',
+                      hintText: 'Tuliskan hanya barang tanpa kode aset yang benar-benar kembali',
+                      helperText: line.hasLegacyAccessories
+                        ? 'Catatan lama belum diverifikasi sebagai non-aset.'
+                        : 'Barang dengan kode aset dikembalikan sebagai unit tersendiri.',
+                      helperMaxLines: 2),
                     onChanged: (value) { widget.onDirty?.call();
                       accessories[line.id] = value; },
                   );
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      if (line.accessories.trim().isNotEmpty) ...[
+                        Text(line.itemRecordLabel + ' saat penyerahan: ' +
+                          line.accessories,
+                          style: const TextStyle(fontSize: 11.5, color: muted)),
+                        const SizedBox(height: 10),
+                      ],
                       if (box.maxWidth >= 580)
                         Row(children: [
                           Expanded(child: selector),
                           const SizedBox(width: 12),
-                          Expanded(child: accessory),
+                          Expanded(child: includedItems),
                         ])
                       else ...[
                         selector,
                         const SizedBox(height: 10),
-                        accessory,
+                        includedItems,
                       ],
                       const SizedBox(height: 11),
                       TextFormField(
@@ -385,6 +397,14 @@ class _V5ReturnFormState extends State<V5ReturnForm> {
                 child: Text('• ' + line.assetName + ' · ' + line.assetCode +
                   ' · ' + (condition[line.id] ?? line.handoverCondition),
                   style: const TextStyle(fontSize: 12))),
+              if (selected.contains(line.id) &&
+                  (accessories[line.id] ?? '').trim().isNotEmpty)
+                Padding(padding: const EdgeInsets.only(left: 14, bottom: 6),
+                  child: Text(
+                    (line.hasLegacyAccessories ? 'Kelengkapan arsip kembali: '
+                      : 'Penyerta non-aset kembali: ') +
+                    accessories[line.id]!.trim(),
+                    style: const TextStyle(fontSize: 11, color: muted))),
             const SizedBox(height: 8),
             const Text('Pastikan pemeriksaan dan bukti foto sudah sesuai '
               'sebelum menyimpan pengembalian.',
