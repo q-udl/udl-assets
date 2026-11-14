@@ -14,6 +14,7 @@ class _V4RegistrationPageState extends State<V4RegistrationPage> {
     holder=TextEditingController(),cost=TextEditingController(),
     date=TextEditingController(),quantity=TextEditingController(text:'1');
   String? category,sub,kind,location,status,condition;
+  String areaId = '', spotId = '';
   Uint8List? pendingPhoto;
   String pendingName='';
   bool costUnknown=false,saving=false;
@@ -38,6 +39,25 @@ class _V4RegistrationPageState extends State<V4RegistrationPage> {
     items:values.map((v)=>DropdownMenuItem(value:v,
       child:Text(v,maxLines:1,overflow:TextOverflow.ellipsis))).toList(),
     validator:(v)=>v==null?'Wajib dipilih':null,onChanged:change);
+
+  Widget optionalPlace(String label, String value,
+      Map<String,String> values, void Function(String?) changed) =>
+    DropdownButtonFormField<String>(
+      key: ValueKey(label + '-' + value),
+      initialValue: value,
+      isExpanded: true,
+      decoration: InputDecoration(labelText: label,
+        filled: true, fillColor: const Color(0xFFF9FBFD)),
+      items: [
+        const DropdownMenuItem(value: '',
+          child: Text('Belum ditentukan')),
+        for (final entry in values.entries)
+          DropdownMenuItem(value: entry.key,
+            child: Text(entry.value, maxLines: 1,
+              overflow: TextOverflow.ellipsis)),
+      ],
+      onChanged: changed,
+    );
 
   Widget pairs(Widget a,Widget b,bool narrow){
     if(narrow) { return Column(children:[a,const SizedBox(height:12),b]); }
@@ -81,7 +101,9 @@ class _V4RegistrationPageState extends State<V4RegistrationPage> {
         subcategory:sub!,assetType:kind!,brand:brand.text,
         model:model.text,serial:serial.text,location:location!,
         holder:holder.text,status:status!,condition:condition!,
-        cost:value,acquisitionDate:date.text);
+        cost:value,acquisitionDate:date.text,
+         placement: AssetPlacement(widget.store.siteByName(location!)?.id ?? '',
+           areaId: areaId, spotId: spotId));
       if(pendingPhoto!=null && created.length==1){
         try{
           await widget.store.addPhoto(created.single,pendingPhoto!,pendingName,'Tampak Fisik Aset');
@@ -145,9 +167,25 @@ class _V4RegistrationPageState extends State<V4RegistrationPage> {
           const Text('PENEMPATAN AWAL',
             style:TextStyle(fontSize:13,fontWeight:FontWeight.bold)),
           const SizedBox(height:13),
-          pairs(choose('Lokasi *',location,widget.store.locations,
-              (v)=>setState(()=>location=v)),
+          pairs(choose('Lokasi Utama *',location,
+              widget.store.activeSites.map((site)=>site.name).toList(),
+              (v)=>setState(() { location=v; areaId=''; spotId=''; })),
             field(holder,'Penanggung jawab (opsional)'),narrow),
+          const SizedBox(height:12),
+          pairs(optionalPlace('Area (opsional)', areaId,
+              {
+                for (final a in (widget.store.siteByName(location??'')
+                  ?.areas.where((a)=>a.active) ?? <AssetArea>[])
+                  a.id: a.name,
+              }, (v)=>setState(() { areaId=v??''; spotId=''; })),
+            optionalPlace('Titik Penempatan (opsional)',spotId,
+              {
+                for (final a in (widget.store.siteByName(location??'')
+                  ?.areas ?? <AssetArea>[])
+                  if (a.id==areaId)
+                    for (final spot in a.spots.where((spot)=>spot.active))
+                      spot.id: spot.name,
+              },(v)=>setState(()=>spotId=v??'')),narrow),
           const SizedBox(height:12),
           pairs(choose('Status *',status,
               ['Tersedia','Digunakan','Dalam Perbaikan','Hilang'],
