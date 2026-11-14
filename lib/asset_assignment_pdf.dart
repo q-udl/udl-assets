@@ -104,7 +104,7 @@ class AssetBastPdf {
       line.accessories.trim().isNotEmpty).toList();
     if (entries.isEmpty) return [];
     return [
-      pw.SizedBox(height: 9),
+      pw.SizedBox(height: 6),
       pw.Text('CATATAN ITEM PENYERTA (OPSIONAL)', style: bold(9)),
       pw.SizedBox(height: 5),
       for (final line in entries)
@@ -373,7 +373,7 @@ class AssetBastPdf {
       headerStyle: bold(8.2),
       cellStyle: regular(8.2),
       cellPadding: pw.EdgeInsets.symmetric(
-        horizontal: 6, vertical: compact ? 5 : 8),
+        horizontal: 6, vertical: compact ? 4 : 8),
       border: pw.TableBorder(
         horizontalInside: const pw.BorderSide(color: PdfColors.blueGrey200),
         bottom: const pw.BorderSide(color: PdfColors.blueGrey200)),
@@ -419,7 +419,7 @@ class AssetBastPdf {
         item('Jenis Penugasan', record.kind),
         item('Batas Pengembalian', record.kind == 'Sementara'
           ? text(record.dueDate) : 'Tidak ditentukan'),
-        pw.SizedBox(height: 13),
+        pw.SizedBox(height: 10),
         pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
             pw.Expanded(child: party('Penyerah', [
@@ -441,13 +441,13 @@ class AssetBastPdf {
             ])),
           ],
         ),
-        pw.SizedBox(height: 12),
+        pw.SizedBox(height: 10),
         pw.Text('RINCIAN ASET', style: bold(10)),
         pw.SizedBox(height: 7),
         pw.Text('Dengan ini, Penyerah telah menyerahkan dan Penerima '
           'telah menerima aset milik UD. LUTHFI dengan rincian:',
           style: regular(9)),
-        pw.SizedBox(height: 9),
+        pw.SizedBox(height: 7),
         assetTable([
           for (var i = 0; i < record.lines.length; i++)
             [
@@ -465,10 +465,10 @@ class AssetBastPdf {
         pw.Inseparable(canSpan: false, child: pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
-            pw.SizedBox(height: 5),
+            pw.SizedBox(height: 3),
             item('Catatan', record.notes.trim().isEmpty
               ? 'Tidak ada catatan tambahan' : record.notes.trim()),
-            pw.SizedBox(height: 7),
+            pw.SizedBox(height: 5),
             pw.Text('PERNYATAAN SERAH TERIMA', style: bold(10)),
             pw.SizedBox(height: 5),
             pw.Text(
