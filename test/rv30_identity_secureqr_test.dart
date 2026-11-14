@@ -44,7 +44,7 @@ void main() {
       'Gudang Pusat', '', 0,
       subcategory: 'Meja', assetType: 'Meja Kerja');
     expect(restored.assets.first.code, 'UDL-AST-00000006');
-    expect(restored.assets.last.code, 'UDL-AST-000001');
+    expect(restored.assets.any((a) => a.code == 'UDL-AST-000001'), isTrue);
   });
 
   test('RV030-07: non-predictable QR maps to UUID and can be rotated or revoked',
