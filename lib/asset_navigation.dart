@@ -89,7 +89,8 @@ extension _AssetViewNavigation on _AssetScreenState {
     v5EmployeePerPage = data['employeePerPage'] as int? ?? 20;
     v5AssignmentSearch = data['assignmentQuery'] as String? ?? '';
     _assignmentSearchController.text = v5AssignmentSearch;
-    v5AssignmentFilter = data['assignmentFilter'] as String? ?? 'Semua';
+    v5AssignmentFilter = normalizeAssignmentStatus(
+      data['assignmentFilter'] as String? ?? 'Semua');
     v5AssignmentPage = data['assignmentPage'] as int? ?? 0;
     v5AssignmentPerPage = data['assignmentPerPage'] as int? ?? 20;
   }
