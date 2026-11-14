@@ -7,7 +7,10 @@ extension _AssetV4Catalog on _AssetScreenState {
       final searchable = [a.name, a.code, a.serial, a.category, a.subcategory,
         a.assetType, a.brand, a.location, a.holder].join(' ').toLowerCase();
       return searchable.contains(q) &&
-        (statusFilter == 'Semua status' || a.status == statusFilter) &&
+        (statusFilter == 'Semua status' ||
+          (statusFilter == 'Tidak Aktif' || statusFilter == 'Dilepas'
+            ? a.lifecycle == statusFilter
+            : a.lifecycle == 'Aktif' && a.status == statusFilter)) &&
         (categoryFilter == 'Semua kategori' || a.category == categoryFilter) &&
         (v4LocationFilter == 'Semua lokasi' || a.location == v4LocationFilter) &&
         (v4LocationAreaFilter.isEmpty || a.locationAreaId == v4LocationAreaFilter) &&
@@ -54,7 +57,7 @@ extension _AssetV4Catalog on _AssetScreenState {
           final filters = <Widget>[
             filterDropdown(statusFilter,
               const ['Semua status', 'Tersedia', 'Digunakan',
-                'Dalam Perbaikan', 'Hilang', 'Dihapuskan'],
+                'Dalam Perbaikan', 'Hilang', 'Tidak Aktif', 'Dilepas'],
               (value) => v4Change(() {
                 statusFilter = value; v4CatalogPage = 0;
               }), width: 168),
