@@ -26,7 +26,7 @@ extension AssetEmployeeOperations on AssetStore {
     assignments.expand((a) => a.lines).where((line) =>
       line.assetId == assetId && (
         line.state == 'Aktif' ||
-        line.state == 'Menunggu Penerimaan')).toList();
+        line.state == 'Menunggu Serah Terima')).toList();
 
   List<AssetAssignment> assignmentsForEmployee(String id) =>
     assignments.where((a) => a.employeeId == id).toList();
@@ -67,7 +67,7 @@ extension AssetEmployeeOperations on AssetStore {
         if (!assetIds.contains(line.assetId)) {
           throw const FormatException('Penugasan mengacu aset yang tidak ditemukan.');
         }
-        if (line.state == 'Aktif' || line.state == 'Menunggu Penerimaan') {
+        if (line.state == 'Aktif' || line.state == 'Menunggu Serah Terima') {
           if (!activeAssetIds.add(line.assetId)) {
             throw const FormatException('Aset tercatat pada dua penugasan aktif.');
           }
