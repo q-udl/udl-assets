@@ -61,7 +61,9 @@ void main() {
     expect(store.evidencePhotos, isEmpty);
 
     await store.confirmAssignment(batch, true, '',
-      handedOverByName: 'Petugas GA', proofPhotos: {
+      handedOverByName: 'Petugas GA',
+      handoverLocation: 'Gudang Pusat', bastNumber: 'BAST-TEST-002',
+      proofPhotos: {
       for (final unit in units) unit.id: proof('serah-' + unit.code + '.png'),
     });
     expect(batch.status, 'Aktif');
