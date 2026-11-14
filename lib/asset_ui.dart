@@ -110,6 +110,7 @@ class _AssetScreenState extends State<AssetScreen> with WidgetsBindingObserver {
   AssetEmployee? selectedEmployee;
   AssetAssignment? selectedAssignment;
   String v5EmployeeSearch = '', v5EmployeeFilter = 'Semua';
+  int v5EmployeePage = 0, v5EmployeePerPage = 20;
   String v5AssignmentSearch = '', v5AssignmentFilter = 'Semua';
   int v5AssignmentPage = 0, v5AssignmentPerPage = 20;
   String? viewedPhotoId;
