@@ -84,7 +84,9 @@ class BulkImportService {
     final data = book['DATA'];
     final keys = columns(kind);
     data.appendRow([for (final key in keys) xls.TextCellValue(key)]);
-    for (var i=0; i<keys.length; i++) data.setColumnWidth(i, 23);
+    for (var i=0; i<keys.length; i++) {
+      data.setColumnWidth(i, 23);
+    }
 
     final guide = book['PANDUAN'];
     final instructions = <List<String>>[
@@ -368,7 +370,9 @@ class BulkImportService {
       ]);
     }
     sheet.setColumnWidth(0, 14);
-    for (var i=1; i<=fields.length; i++) sheet.setColumnWidth(i, 22);
+    for (var i=1; i<=fields.length; i++) {
+      sheet.setColumnWidth(i, 22);
+    }
     sheet.setColumnWidth(fields.length+1, 66);
     return Uint8List.fromList(book.encode()!);
   }
