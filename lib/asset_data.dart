@@ -309,10 +309,14 @@ class AssetStore extends ChangeNotifier {
         e.draftReference.split('-').last) ?? 0));
     transfers = (value['transfers'] as List<dynamic>? ?? [])
       .map((v) => AssetTransfer.fromJson(Map<String, dynamic>.from(v as Map))).toList();
-    locations = (value['locations'] as List<dynamic>? ?? [])
+    final legacyLocations = (value['locations'] as List<dynamic>? ?? [])
       .map((v) => v.toString()).toList();
-    locations = {...locations, 'Kantor Pusat', 'Gudang Pusat', 'Outlet Jepara',
-      ...assets.map((a) => a.location)}.toList();
+    locations = {
+      ...legacyLocations,
+      if (legacyLocations.isEmpty && value['locationSites'] is! List)
+        ...['Kantor Pusat', 'Gudang Pusat', 'Outlet Jepara'],
+      ...assets.map((a) => a.location),
+    }.toList();
     migrateLocationMaster(value);
     if (assets.any((v) => !['Aktif','Tidak Aktif','Dilepas']
         .contains(v.lifecycle))) {
