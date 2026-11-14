@@ -130,7 +130,7 @@ class _V5AssignmentFormState extends State<V5AssignmentForm> {
                   for (final e in activeEmployees)
                     DropdownMenuItem(
                       value: e.id,
-                      child: Text(e.name + ' · ' + e.code,
+                      child: Text(e.name + ' · ' + e.jobTitle + ' · ' + e.unit,
                         maxLines: 1, overflow: TextOverflow.ellipsis)),
                 ],
                 onChanged: (value) { widget.onDirty?.call();
