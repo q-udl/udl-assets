@@ -66,7 +66,7 @@ extension AssetAssignmentOperations on AssetStore {
     for (final asset in selected) {
       log(asset, 'Pengajuan Penugasan',
         record.draftReference + ' kepada ' + employee.name +
-        '; menunggu penerimaan',
+        '; menunggu serah terima',
         reason: notes.trim());
     }
     await persist();
@@ -79,13 +79,13 @@ extension AssetAssignmentOperations on AssetStore {
     String handedOverByName = '',
   }) async {
     if (!record.isPending) {
-      throw const FormatException('Penugasan telah diproses.');
+      throw const FormatException('Penugasan sudah dikonfirmasi atau dibatalkan.');
     }
     if (accepted && handedOverByName.trim().isEmpty) {
       throw const FormatException('Nama pihak yang menyerahkan wajib diisi.');
     }
     if (!accepted && reason.trim().isEmpty) {
-      throw const FormatException('Alasan penolakan wajib diisi.');
+      throw const FormatException('Alasan pembatalan penugasan wajib diisi.');
     }
     final employee = employeeById(record.employeeId);
     if (accepted && (employee == null || !employee.active)) {
@@ -100,7 +100,7 @@ extension AssetAssignmentOperations on AssetStore {
             transfers.any((t) => t.assetId == asset.id &&
               t.state == 'Menunggu Penerimaan')) {
           throw const FormatException(
-            'Ada aset yang berubah kondisinya; tinjau sebelum menerima.');
+            'Ada aset yang berubah kondisinya; tinjau sebelum konfirmasi serah terima.');
         }
       }
     }
@@ -113,12 +113,13 @@ extension AssetAssignmentOperations on AssetStore {
     final previousBackup = backup();
     try {
     final now = DateTime.now().toIso8601String();
-    record.status = accepted ? 'Aktif' : 'Ditolak';
+    record.status = accepted ? 'Aktif' : 'Dibatalkan';
     record.acceptedAt = accepted ? now : '';
-    record.rejectionReason = accepted ? '' : reason.trim();
+    record.cancelledAt = accepted ? '' : now;
+    record.cancellationReason = accepted ? '' : reason.trim();
     record.handedOverByName = accepted ? handedOverByName.trim() : '';
     for (final line in record.lines) {
-      line.state = accepted ? 'Aktif' : 'Ditolak';
+      line.state = accepted ? 'Aktif' : 'Dibatalkan';
       if (accepted) {
         line.handoverProofPhotoIds = [
           for (final p in preparedProof)
@@ -131,15 +132,16 @@ extension AssetAssignmentOperations on AssetStore {
         asset.status = 'Digunakan';
         asset.holder = employee!.name;
         asset.assignedEmployeeId = employee.id;
-        log(asset, 'Penerimaan Penugasan',
-          record.draftReference + ' dicatat sebagai diterima oleh ' + employee.name,
+        log(asset, 'Konfirmasi Serah Terima',
+          record.draftReference + ' diserahterimakan kepada ' + employee.name,
           changes: {
             'Status': {'from': previous, 'to': asset.status},
             'PIC': {'from': '', 'to': employee.name},
           });
       } else {
-        log(asset, 'Penolakan Penugasan',
-          record.draftReference + ' dicatat sebagai ditolak', reason: reason);
+        log(asset, 'Pembatalan Penugasan',
+          record.draftReference + ' dibatalkan sebelum serah terima',
+          reason: reason.trim());
       }
     }
     evidencePhotos.addAll(preparedProof);
@@ -149,6 +151,12 @@ extension AssetAssignmentOperations on AssetStore {
       rethrow;
     }
   }
+
+  /// Explicit cancellation releases reservation while keeping the asset's
+  /// physical location, custody data, and historical code unchanged.
+  Future<void> cancelAssignment(
+      AssetAssignment record, String reason) =>
+    confirmAssignment(record, false, reason);
 
   Future<AssetReturnReceipt> returnAssignedAssets({
     required AssetAssignment record,
