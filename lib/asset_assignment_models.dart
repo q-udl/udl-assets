@@ -3,13 +3,12 @@ part of 'main.dart';
 /// Employee records contain only the fields needed for physical asset custody.
 /// This is a local prototype, not an HR employee system.
 class AssetEmployee {
-  final String id, code, createdAt;
+  final String id, createdAt;
   String name, unit, department, jobTitle, workLocation, startDate, updatedAt;
   bool active;
 
   AssetEmployee({
     required this.id,
-    required this.code,
     required this.name,
     required this.unit,
     required this.department,
@@ -22,13 +21,13 @@ class AssetEmployee {
   });
 
   Map<String, dynamic> snapshot() => {
-    'code': code, 'name': name, 'unit': unit,
+    'name': name, 'unit': unit,
     'department': department, 'jobTitle': jobTitle,
     'workLocation': workLocation,
   };
 
   Map<String, dynamic> toJson() => {
-    'id': id, 'code': code, 'name': name, 'unit': unit,
+    'id': id, 'name': name, 'unit': unit,
     'department': department, 'jobTitle': jobTitle,
     'workLocation': workLocation, 'startDate': startDate,
     'active': active, 'createdAt': createdAt, 'updatedAt': updatedAt,
@@ -36,7 +35,6 @@ class AssetEmployee {
 
   factory AssetEmployee.fromJson(Map<String, dynamic> x) => AssetEmployee(
     id: x['id']?.toString() ?? '',
-    code: x['code']?.toString() ?? '',
     name: x['name']?.toString() ?? '',
     unit: x['unit']?.toString() ?? '',
     department: x['department']?.toString() ?? '',
@@ -104,6 +102,7 @@ class AssetAssignment {
   final Map<String, dynamic> employeeSnapshot;
   final List<AssignedAssetLine> lines;
   String dueDate, notes, status, acceptedAt, rejectionReason;
+  String handedOverByName;
 
   AssetAssignment({
     required this.id,
@@ -118,6 +117,7 @@ class AssetAssignment {
     this.status = 'Menunggu Penerimaan',
     this.acceptedAt = '',
     this.rejectionReason = '',
+    this.handedOverByName = '',
   });
 
   int get activeCount => lines.where((l) => l.state == 'Aktif').length;
@@ -139,6 +139,7 @@ class AssetAssignment {
     'createdAt': createdAt, 'dueDate': dueDate, 'notes': notes,
     'status': status, 'acceptedAt': acceptedAt,
     'rejectionReason': rejectionReason,
+    'handedOverByName': handedOverByName,
     'lines': lines.map((l) => l.toJson()).toList(),
   };
 
@@ -159,6 +160,7 @@ class AssetAssignment {
     status: x['status']?.toString() ?? 'Menunggu Penerimaan',
     acceptedAt: x['acceptedAt']?.toString() ?? '',
     rejectionReason: x['rejectionReason']?.toString() ?? '',
+    handedOverByName: x['handedOverByName']?.toString() ?? '',
   );
 }
 
