@@ -109,10 +109,8 @@ extension _AssetV4Master on _AssetScreenState {
           subtitle:Text(store.assets.where((a)=>a.categoryId==current.code &&
             a.subcategoryId==chosen.id && a.assetType==t).length.toString()+
             ' aset'+(chosen.typeIsActive(t) ? '' : ' · Nonaktif')),
-          onTap:()=>v4Change(() {
-            page=1;selected=null;categoryFilter=current.name;
-            query=t;v4CatalogPage=0;
-          }),
+          onTap:()=>openAssetListFromMaster(
+            category: current.name, type: t),
           trailing:PopupMenuButton<String>(
             onSelected:(action) {
               if(action=='rename') {
@@ -170,9 +168,7 @@ extension _AssetV4Master on _AssetScreenState {
       leading:const Icon(Icons.place_outlined),
       title:Text(location),
       subtitle:Text(store.assets.where((a)=>a.location==location).length.toString()+' aset'),
-      onTap:()=>v4Change(() {
-        page=1;selected=null;v4LocationFilter=location;v4CatalogPage=0;
-      }),
+      onTap:()=>openAssetListFromMaster(location: location),
       trailing:const Icon(Icons.chevron_right)),
   ]));
 }
