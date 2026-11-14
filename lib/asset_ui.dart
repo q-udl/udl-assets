@@ -1620,6 +1620,7 @@ class _AssetScreenState extends State<AssetScreen> {
                               else if (page == 8) v5Employees()
                               else if (page == 9) V5AssignmentForm(
                                 store: store,
+                                onDirty: markFormChanged,
                                 onCreated: (batch) {
                                   replaceRouteAfterSave(() {
                                     page = 7;
@@ -1634,6 +1635,7 @@ class _AssetScreenState extends State<AssetScreen> {
                                 V5ReturnForm(
                                   store: store,
                                   assignment: selectedAssignment!,
+                                  onDirty: markFormChanged,
                                   onCompleted: (receipt) {
                                     replaceRouteAfterSave(() => page = 7);
                                     notify('Pengembalian disimpan: ' +
@@ -1642,6 +1644,7 @@ class _AssetScreenState extends State<AssetScreen> {
                                 )
                               else if (page == 6) V4RegistrationPage(
                                 store: store,
+                                onDirty: markFormChanged,
                                 onCompleted: (created) {
                                   replaceRouteAfterSave(() {
                                     page = 1;
