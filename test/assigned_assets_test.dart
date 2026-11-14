@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:udl_assets/main.dart';
@@ -124,6 +125,40 @@ void main() {
     await store.confirmAssignment(batch, false, 'Penerima nonaktif');
     expect(batch.status, 'Ditolak');
     expect(store.canAssignAsset(item), true);
+  });
+
+  test('BAST PDF menyimpan bukti foto penyerahan dan pengembalian', () async {
+    final store = AssetStore();
+    await store.initialize();
+    final person = await employee(store);
+    final asset = store.assets.firstWhere((a) => a.status == 'Tersedia');
+    const png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO2/TnYAAAAASUVORK5CYII=';
+    final bytes = Uint8List.fromList(base64Decode(png));
+    await store.addPhoto(asset, bytes, 'serah-terima.png',
+      'Tampak Fisik Aset');
+    final batch = await store.createAssignment(
+      employeeId: person.id, kind: 'Berkelanjutan',
+      assetIds: [asset.id], accessories: {});
+    expect(batch.lines.single.photoIds, hasLength(1));
+    final pdf = await AssetBastPdf.handover(batch, store: store);
+    expect(utf8.decode(pdf.take(5).toList()), '%PDF-');
+    await store.confirmAssignment(batch, true, '');
+    await store.addPhoto(asset, bytes, 'kembali.png',
+      'Dokumentasi Kondisi', note: 'Kondisi saat dikembalikan');
+    final receipt = await store.returnAssignedAssets(
+      record: batch,
+      inspections: {
+        batch.lines.single.id:
+          const AssetReturnInput(condition: 'Baik'),
+      },
+      receivingLocation: 'Gudang Pusat');
+    expect(receipt.lines.single.photoIds, isNotEmpty);
+    final returnPdf = await AssetBastPdf.assetReturn(
+      batch, receipt, store: store);
+    expect(utf8.decode(returnPdf.take(5).toList()), '%PDF-');
+    final restored = AssetStore()..restore(store.backup());
+    expect(restored.assignments.single.lines.single.photoIds, hasLength(1));
+    expect(restored.returnReceipts.single.lines.single.photoIds, isNotEmpty);
   });
 
   test('Data lama tetap terbaca tanpa auto-link PIC berdasarkan nama', () async {
