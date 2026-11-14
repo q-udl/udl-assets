@@ -233,8 +233,10 @@ extension _AssetV4Actions on _AssetScreenState {
     );
     if (confirmed == true && mounted) {
       try {
+        final safeAnchor = anchorContext != null && anchorContext.mounted
+          ? anchorContext : null;
         final selected = await AssetPhotoPicker.choose(context,
-          anchorContext: anchorContext);
+          anchorContext: safeAnchor);
         if (selected != null && mounted) {
           await store.addPhoto(a, selected.bytes, selected.fileName, kind,
             note: note.text);
