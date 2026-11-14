@@ -27,6 +27,7 @@ extension _AssignedAssetsScreens on _AssetScreenState {
         children: [
           LayoutBuilder(builder: (ctx, box) {
             final search = TextField(
+              controller: _assignmentSearchController,
               decoration: const InputDecoration(
                 prefixIcon: Icon(Icons.search),
                 hintText: 'Cari karyawan, referensi BA, kode aset...',
