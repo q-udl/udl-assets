@@ -23,6 +23,7 @@ class _V5ReturnFormState extends State<V5ReturnForm> {
   final notes = TextEditingController();
   final receivedBy = TextEditingController();
   late String location;
+  String receivingAreaId = '', receivingSpotId = '';
   bool saving = false;
   String? error;
 
@@ -86,6 +87,9 @@ class _V5ReturnFormState extends State<V5ReturnForm> {
         record: widget.assignment,
         inspections: inspections,
         receivingLocation: location,
+        receivingPlacement: AssetPlacement(
+          widget.store.siteByName(location)?.id ?? '',
+          areaId: receivingAreaId, spotId: receivingSpotId),
         receivedByName: receivedBy.text,
         notes: notes.text,
       );
@@ -235,10 +239,13 @@ class _V5ReturnFormState extends State<V5ReturnForm> {
               isExpanded: true,
               decoration: const InputDecoration(
                 labelText: 'Lokasi aset diterima kembali *'),
-              items: widget.store.locations.map((value) =>
-                DropdownMenuItem(value: value, child: Text(value))).toList(),
-              onChanged: (value) { widget.onDirty?.call(); setState(() =>
-                location = value ?? location); },
+              items: widget.store.activeSites.map((site) =>
+                DropdownMenuItem(value: site.name, child: Text(site.name))).toList(),
+              onChanged: (value) { widget.onDirty?.call(); setState(() {
+                location = value ?? location;
+                receivingAreaId = '';
+                receivingSpotId = '';
+              }); },
             );
             final officer = TextField(
               controller: receivedBy,
@@ -253,6 +260,49 @@ class _V5ReturnFormState extends State<V5ReturnForm> {
               const SizedBox(width: 13),
               Expanded(child: officer),
             ]);
+          }),
+          const SizedBox(height: 13),
+          LayoutBuilder(builder: (ctx, box) {
+            final area = DropdownButtonFormField<String>(
+              key: ValueKey('return-area-' + location),
+              initialValue: receivingAreaId,
+              isExpanded: true,
+              decoration: const InputDecoration(labelText: 'Area (opsional)'),
+              items: [
+                const DropdownMenuItem(value: '', child: Text('Belum ditentukan')),
+                for (final a in (widget.store.siteByName(location)?.areas
+                  .where((a)=>a.active) ?? <AssetArea>[]))
+                  DropdownMenuItem(value: a.id, child: Text(a.name)),
+              ],
+              onChanged: (value) { widget.onDirty?.call(); setState(() {
+                receivingAreaId = value ?? '';
+                receivingSpotId = '';
+              }); },
+            );
+            final spot = DropdownButtonFormField<String>(
+              key: ValueKey('return-spot-' + receivingAreaId),
+              initialValue: receivingSpotId,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                labelText: 'Titik Penempatan (opsional)'),
+              items: [
+                const DropdownMenuItem(value: '', child: Text('Belum ditentukan')),
+                for (final a in (widget.store.siteByName(location)?.areas
+                  ?? <AssetArea>[]))
+                  if (a.id == receivingAreaId)
+                    for (final p in a.spots.where((p)=>p.active))
+                      DropdownMenuItem(value: p.id, child: Text(p.name)),
+              ],
+              onChanged: (value) { widget.onDirty?.call();
+                setState(() => receivingSpotId = value ?? ''); },
+            );
+            if (box.maxWidth < 620) {
+              return Column(children: [
+                area, const SizedBox(height: 12), spot]);
+            }
+            return Row(children: [
+              Expanded(child: area), const SizedBox(width: 13),
+              Expanded(child: spot)]);
           }),
           const SizedBox(height: 13),
           TextField(
