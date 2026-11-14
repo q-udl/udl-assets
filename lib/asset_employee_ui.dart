@@ -10,6 +10,11 @@ extension _AssetEmployeeScreens on _AssetScreenState {
         (v5EmployeeFilter == 'Semua' ||
           (v5EmployeeFilter == 'Aktif' ? e.active : !e.active));
     }).toList()..sort((a,b) => a.name.compareTo(b.name));
+    final pages = list.isEmpty ? 1 :
+      ((list.length - 1) ~/ v5EmployeePerPage) + 1;
+    if (v5EmployeePage >= pages) v5EmployeePage = pages - 1;
+    final visible = list.skip(v5EmployeePage * v5EmployeePerPage)
+      .take(v5EmployeePerPage).toList();
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       surface(child: Column(crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -24,10 +29,12 @@ extension _AssetEmployeeScreens on _AssetScreenState {
                 prefixIcon: Icon(Icons.search),
                 hintText: 'Cari nama, unit, departemen, jabatan...'),
               onChanged: (value) => v4Change(
-                () => v5EmployeeSearch = value));
+                () { v5EmployeeSearch = value; v5EmployeePage = 0; }));
             final status = filterDropdown(v5EmployeeFilter,
               ['Semua','Aktif','Tidak Aktif'],
-              (value) => v4Change(() => v5EmployeeFilter = value),
+              (value) => v4Change(() {
+                v5EmployeeFilter = value; v5EmployeePage = 0;
+              }),
               width: 185);
             if (box.maxWidth >= 740) {
               return Row(children: [
@@ -59,7 +66,7 @@ extension _AssetEmployeeScreens on _AssetScreenState {
           else LayoutBuilder(builder: (ctx, box) {
             if (box.maxWidth < 850) {
               return Column(children: [
-                for (final e in list) ListTile(
+                for (final e in visible) ListTile(
                   leading: const CircleAvatar(
                     child: Icon(Icons.person_outline)),
                   title: Text(e.name),
@@ -92,7 +99,7 @@ extension _AssetEmployeeScreens on _AssetScreenState {
                       fontSize: 10.5, fontWeight: FontWeight.w800,
                       color: muted))),
                   ]),
-                for (final employee in list)
+                for (final employee in visible)
                   TableRow(
                   decoration: BoxDecoration(
                     color: _hoveredTableRow == 'employee:' + employee.id
@@ -127,6 +134,22 @@ extension _AssetEmployeeScreens on _AssetScreenState {
               ],
             );
           }),
+          if (list.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            responsiveAssetPager(
+              description: 'Menampilkan ' + (v5EmployeePage * v5EmployeePerPage + 1).toString() +
+                '–' + (v5EmployeePage * v5EmployeePerPage + visible.length).toString() +
+                ' dari ' + list.length.toString() + ' karyawan',
+              perPage: v5EmployeePerPage,
+              onPerPage: (value) => v4Change(() {
+                v5EmployeePerPage = value; v5EmployeePage = 0;
+              }),
+              onPrevious: v5EmployeePage > 0 ?
+                () => v4Change(() => v5EmployeePage--) : null,
+              onNext: v5EmployeePage < pages - 1 ?
+                () => v4Change(() => v5EmployeePage++) : null,
+            ),
+          ],
         ],
       )),
     ]);
