@@ -187,6 +187,7 @@ extension _AssetFeaturePanels on _AssetScreenState {
     controller.dispose();
   }
 
+  // ignore: unused_element
   Widget taxonomyPage() {
     final totalSub = store.categories.fold<int>(
       0, (sum, c) => sum + c.subcategories.length);
