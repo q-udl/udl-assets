@@ -120,7 +120,7 @@ class AssetAssignment {
   final Map<String, dynamic> employeeSnapshot;
   final List<AssignedAssetLine> lines;
   String dueDate, notes, status, acceptedAt, cancellationReason, cancelledAt;
-  String handedOverByName;
+  String handedOverByName, handoverLocation, bastNumber;
 
   AssetAssignment({
     required this.id,
@@ -137,11 +137,28 @@ class AssetAssignment {
     this.cancellationReason = '',
     this.cancelledAt = '',
     this.handedOverByName = '',
+    this.handoverLocation = '',
+    this.bastNumber = '',
   });
 
   int get activeCount => lines.where((l) => l.state == 'Aktif').length;
   int get returnedCount => lines.where((l) => l.state == 'Dikembalikan').length;
   bool get isPending => status == 'Menunggu Serah Terima';
+  /// Old internal draft IDs remain byte-for-byte intact in backups, while
+  /// documents and UI use a neutral penugasan reference.
+  String get assignmentReference =>
+    draftReference.startsWith('DRAF-BAST-')
+      ? draftReference.substring('DRAF-BAST-'.length)
+      : draftReference;
+  bool get isHandoverConfirmed =>
+    (status == 'Aktif' || status == 'Selesai') &&
+    acceptedAt.trim().isNotEmpty;
+  /// Publishing requires confirmed custody and all verified-by-operator
+  /// document fields. It does NOT imply electronic signature verification.
+  bool get canPrintBast => isHandoverConfirmed &&
+    handedOverByName.trim().isNotEmpty &&
+    handoverLocation.trim().isNotEmpty &&
+    bastNumber.trim().isNotEmpty;
   bool get isOverdue {
     if (dueDate.isEmpty || activeCount == 0) return false;
     final due = DateTime.tryParse(dueDate);
@@ -160,6 +177,8 @@ class AssetAssignment {
     'cancellationReason': cancellationReason,
     'cancelledAt': cancelledAt,
     'handedOverByName': handedOverByName,
+    'handoverLocation': handoverLocation,
+    'bastNumber': bastNumber,
     'lines': lines.map((l) => l.toJson()).toList(),
   };
 
@@ -182,6 +201,8 @@ class AssetAssignment {
       x['rejectionReason']?.toString() ?? '',
     cancelledAt: x['cancelledAt']?.toString() ?? '',
     handedOverByName: x['handedOverByName']?.toString() ?? '',
+    handoverLocation: x['handoverLocation']?.toString() ?? '',
+    bastNumber: x['bastNumber']?.toString() ?? '',
   );
 }
 
