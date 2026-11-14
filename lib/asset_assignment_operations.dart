@@ -92,7 +92,9 @@ extension AssetAssignmentOperations on AssetStore {
       if (handoverLocation.trim().isEmpty) {
         throw const FormatException('Lokasi serah terima aktual wajib diisi.');
       }
-      _validateBastNumber(bastNumber, record.id);
+      if (bastNumber.trim().isNotEmpty) {
+        _validateBastNumber(bastNumber, record.id);
+      }
     }
     if (!accepted && reason.trim().isEmpty) {
       throw const FormatException('Alasan pembatalan penugasan wajib diisi.');
@@ -148,7 +150,8 @@ extension AssetAssignmentOperations on AssetStore {
         asset.assignedEmployeeId = employee.id;
         log(asset, 'Konfirmasi Serah Terima',
           record.assignmentReference + ' diserahterimakan kepada ' +
-          employee.name + ' · BAST ' + record.bastNumber,
+          employee.name + (record.bastNumber.isNotEmpty
+            ? ' · BAST ' + record.bastNumber : ' · Nomor BAST belum dicatat'),
           changes: {
             'Status': {'from': previous, 'to': asset.status},
             'PIC': {'from': '', 'to': employee.name},
