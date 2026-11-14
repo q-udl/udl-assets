@@ -29,7 +29,7 @@ extension _AssignedAssetsDetail on _AssetScreenState {
           outlineButton('Cetak / Simpan PDF Draf BAST',
             Icons.picture_as_pdf_outlined, () async {
             try {
-              await AssetBastPdf.printHandover(batch);
+              await AssetBastPdf.printHandover(batch, store: store);
             } catch (e) {
               notify('PDF gagal dibuat: ' + e.toString());
             }
@@ -170,7 +170,7 @@ extension _AssignedAssetsDetail on _AssetScreenState {
           trailing: const Icon(Icons.picture_as_pdf_outlined, color: blue),
           onTap: () async {
             try {
-              await AssetBastPdf.printReturn(batch, receipt);
+              await AssetBastPdf.printReturn(batch, receipt, store: store);
             } catch (e) {
               notify('PDF gagal dibuat: ' + e.toString());
             }
