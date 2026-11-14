@@ -120,7 +120,8 @@ class AssetAssignment {
   final Map<String, dynamic> employeeSnapshot;
   final List<AssignedAssetLine> lines;
   String dueDate, notes, status, acceptedAt, cancellationReason, cancelledAt;
-  String handedOverByName, handoverLocation, bastNumber;
+  String handedOverByName, handedOverByJobTitle, handedOverByUnit;
+  String handoverLocation, bastNumber;
 
   AssetAssignment({
     required this.id,
@@ -137,6 +138,8 @@ class AssetAssignment {
     this.cancellationReason = '',
     this.cancelledAt = '',
     this.handedOverByName = '',
+    this.handedOverByJobTitle = '',
+    this.handedOverByUnit = '',
     this.handoverLocation = '',
     this.bastNumber = '',
   });
@@ -177,6 +180,8 @@ class AssetAssignment {
     'cancellationReason': cancellationReason,
     'cancelledAt': cancelledAt,
     'handedOverByName': handedOverByName,
+    'handedOverByJobTitle': handedOverByJobTitle,
+    'handedOverByUnit': handedOverByUnit,
     'handoverLocation': handoverLocation,
     'bastNumber': bastNumber,
     'lines': lines.map((l) => l.toJson()).toList(),
@@ -201,6 +206,8 @@ class AssetAssignment {
       x['rejectionReason']?.toString() ?? '',
     cancelledAt: x['cancelledAt']?.toString() ?? '',
     handedOverByName: x['handedOverByName']?.toString() ?? '',
+    handedOverByJobTitle: x['handedOverByJobTitle']?.toString() ?? '',
+    handedOverByUnit: x['handedOverByUnit']?.toString() ?? '',
     handoverLocation: x['handoverLocation']?.toString() ?? '',
     bastNumber: x['bastNumber']?.toString() ?? '',
   );
