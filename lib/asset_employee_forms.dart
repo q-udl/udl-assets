@@ -131,11 +131,13 @@ extension _AssetEmployeeForms on _AssetScreenState {
         l.state == 'Menunggu Penerimaan').length;
     final reason = TextEditingController();
     var error = '';
+    bool hasChanges() => reason.text.isNotEmpty;
     final desired = !employee.active;
     final confirmed = await v4ShowModal<bool>(
       title: desired ? 'Aktifkan Karyawan' : 'Nonaktifkan Karyawan',
       subtitle: employee.name + ' · ' + employee.code,
       maxWidth: 520,
+      isDirty: hasChanges,
       body: (ctx, update) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -155,8 +157,8 @@ extension _AssetEmployeeForms on _AssetScreenState {
         ],
       ),
       actions: (ctx, update) => [
-        OutlinedButton(onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Batal')),
+        OutlinedButton(onPressed: () => assetRequestModalClose(
+          ctx, isDirty: hasChanges), child: const Text('Batal')),
         FilledButton(onPressed: () {
           if (reason.text.trim().isEmpty) {
             update(() => error = 'Alasan wajib diisi.');
