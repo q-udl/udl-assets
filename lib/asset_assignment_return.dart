@@ -62,7 +62,7 @@ class _V5ReturnFormState extends State<V5ReturnForm> {
   }
 
   Future<void> save() async {
-    if (saving) return;
+    if (saving) { return; }
     if (selected.isEmpty) {
       setState(() => error = 'Pilih minimal satu aset yang dikembalikan.');
       return;
