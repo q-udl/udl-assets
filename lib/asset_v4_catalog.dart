@@ -10,6 +10,8 @@ extension _AssetV4Catalog on _AssetScreenState {
         (statusFilter == 'Semua status' || a.status == statusFilter) &&
         (categoryFilter == 'Semua kategori' || a.category == categoryFilter) &&
         (v4LocationFilter == 'Semua lokasi' || a.location == v4LocationFilter) &&
+        (v4LocationAreaFilter.isEmpty || a.locationAreaId == v4LocationAreaFilter) &&
+        (v4LocationSpotFilter.isEmpty || a.locationSpotId == v4LocationSpotFilter) &&
         (v4ConditionFilter == 'Semua kondisi' || a.condition == v4ConditionFilter) &&
         (!v4NoPic || a.holder.trim().isEmpty) &&
         (!v4NoPhoto || store.photosFor(a.id).isEmpty) &&
@@ -95,6 +97,17 @@ extension _AssetV4Catalog on _AssetScreenState {
                 spacing: 8, runSpacing: 5,
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
+                  if (v4LocationAreaFilter.isNotEmpty ||
+                      v4LocationSpotFilter.isNotEmpty)
+                    InputChip(
+                      label: Text('Penempatan terpilih: ' +
+                        (v4LocationSpotFilter.isNotEmpty
+                          ? 'Titik Penempatan' : 'Area')),
+                      onDeleted: () => v4Change(() {
+                        v4LocationAreaFilter = '';
+                        v4LocationSpotFilter = '';
+                        v4CatalogPage = 0;
+                      })),
                   FilterChip(
                     label: const Text('Belum ada PIC'),
                     selected: v4NoPic,
