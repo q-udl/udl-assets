@@ -308,6 +308,9 @@ class _V4RegistrationPageState extends State<V4RegistrationPage> {
           const SizedBox(height:6),
           const Text('Setiap unit memperoleh kode permanen berbeda. Nomor seri dan foto dicatat per unit.',
             style:TextStyle(fontSize:11,color:Color(0xFF718199))),
+          const SizedBox(height: 6),
+          const Text('Charger, adaptor, case HP, dan barang lain yang perlu dilacak mandiri didaftarkan sebagai aset dengan kode tersendiri. Item kecil tanpa kode aset cukup dicatat saat penugasan sebagai Item Penyerta Non-Aset.',
+            style:TextStyle(fontSize:11,color:Color(0xFF718199))),
         ]))),
       const SizedBox(height:12),
       if (!mobile || mobileStep == 3)
