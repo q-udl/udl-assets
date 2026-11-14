@@ -100,23 +100,7 @@ extension _AssetViewNavigation on _AssetScreenState {
 
   Future<bool> _mayLeaveUnsavedForm() async {
     if (!_formDirty || ![6,9,10].contains(page)) return true;
-    final response = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Tinggalkan formulir?'),
-        content: const Text('Ada perubahan yang belum disimpan. '
-          'Jika kembali atau membuka halaman lain, isian akan hilang.'),
-        actions: [
-          OutlinedButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Tetap di Formulir')),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Tinggalkan')),
-        ],
-      ),
-    );
-    return response == true;
+    return assetAllowDiscard(context, isDirty: true);
   }
 
   void markFormChanged() {
