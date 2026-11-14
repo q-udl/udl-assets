@@ -351,7 +351,10 @@ class AssetBastPdf {
           children: [
             pw.Expanded(child: party('Penyerah', [
               'Nama: ' + text(record.handedOverByName),
-              'Unit: UD. LUTHFI',
+              if (record.handedOverByJobTitle.trim().isNotEmpty)
+                'Jabatan: ' + record.handedOverByJobTitle,
+              if (record.handedOverByUnit.trim().isNotEmpty)
+                'Unit: ' + record.handedOverByUnit,
             ])),
             pw.SizedBox(width: 24),
             pw.Expanded(child: party('Penerima', [
