@@ -412,6 +412,8 @@ extension _AssignedAssetsDetail on _AssetScreenState {
     final number = TextEditingController(text: batch.bastNumber);
     final location = TextEditingController(text: batch.handoverLocation);
     final penyerah = TextEditingController(text: batch.handedOverByName);
+    final job = TextEditingController(text: batch.handedOverByJobTitle);
+    final unit = TextEditingController(text: batch.handedOverByUnit);
     Future<dynamic>? fullyClosed;
     var error = '';
     final approved = await v4ShowModal<bool>(
@@ -420,7 +422,9 @@ extension _AssignedAssetsDetail on _AssetScreenState {
       maxWidth: 590,
       isDirty: () => number.text != batch.bastNumber ||
         location.text != batch.handoverLocation ||
-        penyerah.text != batch.handedOverByName,
+        penyerah.text != batch.handedOverByName ||
+        job.text != batch.handedOverByJobTitle ||
+        unit.text != batch.handedOverByUnit,
       body: (ctx, update) {
         fullyClosed ??= ModalRoute.of(ctx)?.completed;
         return Column(
@@ -449,6 +453,17 @@ extension _AssignedAssetsDetail on _AssetScreenState {
               controller: penyerah,
               readOnly: batch.handedOverByName.isNotEmpty,
               decoration: v4ModalDecoration('Penyerah (nama petugas) *')),
+            const SizedBox(height: 12),
+            v4ModalPair(
+              TextField(
+                controller: job,
+                readOnly: batch.handedOverByJobTitle.isNotEmpty,
+                decoration: v4ModalDecoration('Jabatan Penyerah (opsional)')),
+              TextField(
+                controller: unit,
+                readOnly: batch.handedOverByUnit.isNotEmpty,
+                decoration: v4ModalDecoration('Unit Penyerah (opsional)')),
+            ),
             if (error.isNotEmpty) ...[
               const SizedBox(height: 10),
               v4ModalError(error),
@@ -461,7 +476,9 @@ extension _AssignedAssetsDetail on _AssetScreenState {
           onPressed: () => assetRequestModalClose(ctx,
             isDirty: () => number.text != batch.bastNumber ||
               location.text != batch.handoverLocation ||
-              penyerah.text != batch.handedOverByName),
+              penyerah.text != batch.handedOverByName ||
+              job.text != batch.handedOverByJobTitle ||
+              unit.text != batch.handedOverByUnit),
           child: const Text('Batal')),
         FilledButton.icon(
           icon: const Icon(Icons.save_outlined, size: 17),
@@ -482,7 +499,9 @@ extension _AssignedAssetsDetail on _AssetScreenState {
         await store.completeBastMetadata(batch,
           bastNumber: number.text,
           handoverLocation: location.text,
-          handedOverByName: penyerah.text);
+          handedOverByName: penyerah.text,
+          handedOverByJobTitle: job.text,
+          handedOverByUnit: unit.text);
         repaint();
         notify('Data BAST lengkap; dokumen dapat dilihat dan dicetak.');
       } catch (e) {
@@ -493,6 +512,8 @@ extension _AssignedAssetsDetail on _AssetScreenState {
     number.dispose();
     location.dispose();
     penyerah.dispose();
+    job.dispose();
+    unit.dispose();
   }
 
   Widget v5CustodyForAsset(AssetRecord asset) {
