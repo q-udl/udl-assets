@@ -4,6 +4,7 @@ part of 'main.dart';
 class _AssetScreenState extends State<AssetScreen> {
   final GlobalKey<ScaffoldState> _shellKey = GlobalKey<ScaffoldState>();
   final TextEditingController _assetSearchController = TextEditingController();
+  final TextEditingController _historySearchController = TextEditingController();
   bool _sidebarCollapsed = false;
 
   @override
@@ -31,6 +32,7 @@ class _AssetScreenState extends State<AssetScreen> {
   @override
   void dispose() {
     _assetSearchController.dispose();
+    _historySearchController.dispose();
     super.dispose();
   }
 
