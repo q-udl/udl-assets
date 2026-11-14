@@ -226,6 +226,22 @@ class AssetStore extends ChangeNotifier {
     return null;
   }
 
+  Future<void> revokeQrToken(AssetRecord asset) async {
+    if (!assets.any((a) => a.id == asset.id)) {
+      throw const FormatException('Aset tidak ditemukan.');
+    }
+    final before = backup();
+    try {
+      asset.qrRevoked = true;
+      log(asset, 'Pencabutan QR',
+        'Token QR dicabut dan tidak bisa digunakan untuk pemindaian.');
+      await persist();
+    } catch (_) {
+      restore(before);
+      rethrow;
+    }
+  }
+
   Future<void> rotateQrToken(AssetRecord asset) async {
     if (!assets.any((a) => a.id == asset.id)) {
       throw const FormatException('Aset tidak ditemukan.');
@@ -423,7 +439,8 @@ class AssetStore extends ChangeNotifier {
       restoredAssignments, restoredReturns);
     final codes = restoredAssets.map((v) => v.code).toList();
     final ids = restoredAssets.map((v) => v.id).toSet();
-    if (next.toInt() < 1 || codes.toSet().length != codes.length ||
+    if (next.toInt() < 1 || ids.length != restoredAssets.length ||
+        codes.toSet().length != codes.length ||
         codes.any((v) => !RegExp(r'^UDL-AST-\d{6,}$').hasMatch(v))) {
       throw const FormatException('Kode aset atau nomor urut tidak valid.');
     }
@@ -450,6 +467,15 @@ class AssetStore extends ChangeNotifier {
         restoredPhotos.fold<int>(0, (sum, v) => sum + v.base64Data.length) >
           maxAllEncodedBytes) {
       throw const FormatException('Referensi/ukuran foto backup tidak valid.');
+    }
+    // Old backups did not carry QR identities. Issue new random tokens
+    // without altering their permanent, human-readable asset codes.
+    final qrTokens = <String>{};
+    for (final asset in restoredAssets) {
+      if (asset.qrToken.isEmpty) asset.qrToken = newAssetQrToken();
+      if (!qrTokens.add(asset.qrToken)) {
+        throw const FormatException('Token QR aset pada backup tidak unik.');
+      }
     }
     assets = restoredAssets; events = restoredEvents;
     photos = restoredPhotos;
