@@ -57,6 +57,11 @@ extension AssetEmployeeOperations on AssetStore {
         batches.map((b) => b.draftReference).toSet().length != batches.length) {
       throw const FormatException('Referensi penugasan tidak unik.');
     }
+    final bastNumbers = batches.where((b) => b.bastNumber.trim().isNotEmpty)
+      .map((b) => b.bastNumber.trim().toLowerCase()).toList();
+    if (bastNumbers.toSet().length != bastNumbers.length) {
+      throw const FormatException('Nomor BAST pada backup tidak unik.');
+    }
     final activeAssetIds = <String>{};
     for (final batch in batches) {
       if (!staffIds.contains(batch.employeeId) || batch.lines.isEmpty ||
