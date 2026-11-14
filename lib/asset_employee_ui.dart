@@ -13,11 +13,9 @@ extension _AssetEmployeeScreens on _AssetScreenState {
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       surface(child: Column(crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          sectionHeader('Master Karyawan',
+          sectionHeader('Daftar Karyawan',
             subtitle: store.employees.length.toString() +
-              ' karyawan · referensi untuk Assigned Assets',
-            trailing: primaryButton('Tambah Karyawan',
-              Icons.person_add_alt_1_outlined, () => v5EditEmployee())),
+              ' karyawan · referensi untuk Assigned Assets'),
           const SizedBox(height: 15),
           LayoutBuilder(builder: (ctx, box) {
             final search = TextField(
