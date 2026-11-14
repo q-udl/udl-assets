@@ -308,10 +308,10 @@ extension _AssetFeaturePanels on _AssetScreenState {
     final reason = TextEditingController();
     final key = GlobalKey<FormState>();
     final initialCategory = category;
-    final initialSub = sub;
+    final initialSubcategoryName = sub;
     final initialType = type;
     bool hasChanges() => category != initialCategory ||
-      sub != initialSub || type != initialType ||
+      sub != initialSubcategoryName || type != initialType ||
       reason.text.isNotEmpty;
     final ok = await v4ShowModal<bool>(
       title: 'Reklasifikasi Aset',
