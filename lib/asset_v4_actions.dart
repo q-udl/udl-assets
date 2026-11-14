@@ -1,6 +1,6 @@
 part of 'main.dart';
 
-extension AssetV4Actions on _AssetScreenState {
+extension _AssetV4Actions on _AssetScreenState {
   Future<void> v4Transfer(AssetRecord a) async {
     var destination=store.locations.contains(a.location)?a.location:store.locations.first;
     final receiver=TextEditingController(text:a.holder),reason=TextEditingController();
