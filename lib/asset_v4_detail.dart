@@ -13,44 +13,17 @@ extension _AssetV4Detail on _AssetScreenState {
         SelectableText(a.code,style:const TextStyle(color:blue,fontWeight:FontWeight.bold)),
         const SizedBox(height:9),
         Wrap(spacing:8,runSpacing:8,children:[
-          badge(a.status,compact:true),
+          badge(a.lifecycle == 'Aktif' ? a.status : a.lifecycle,compact:true),
           Chip(label:Text('Kondisi: '+a.condition)),
           if(photos.isEmpty)const Chip(label:Text('Foto belum lengkap')),
         ]),
         const SizedBox(height:10),
         Wrap(spacing:8,runSpacing:8,children:[
-          if(a.status!='Dihapuskan')...[
+          if(a.lifecycle=='Aktif' && a.status!='Dihapuskan')...[
             primaryButton('Mutasi Aset',Icons.swap_horiz_rounded,()=>v4Transfer(a)),
             outlineButton('Ubah Informasi',Icons.edit_outlined,()=>v4EditIdentity(a)),
             outlineButton('Ubah Kondisi',Icons.build_outlined,()=>v4Condition(a)),
             outlineButton('Ubah Status',Icons.flag_outlined,()=>v4Status(a)),
-            PopupMenuButton<String>(
-              tooltip: 'Tindakan lainnya',
-              onSelected: (value) {
-                if (value == 'dispose') v4DisposeAsset(a);
-              },
-              itemBuilder: (ctx) => const [
-                PopupMenuItem(value: 'dispose',
-                  child: Row(children: [
-                    Icon(Icons.delete_outline, color: danger),
-                    SizedBox(width: 9),
-                    Text('Hapuskan Aset', style: TextStyle(color: danger)),
-                  ])),
-              ],
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-                decoration: BoxDecoration(
-                  border: Border.all(color: border),
-                  borderRadius: BorderRadius.circular(10),
-                  color: Colors.white,
-                ),
-                child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                  Icon(Icons.more_horiz, color: blue, size: 18),
-                  SizedBox(width: 6),
-                  Text('Tindakan Lainnya', style: TextStyle(color: blue)),
-                ]),
-              ),
-            ),
           ],
           outlineButton('Lihat QR',Icons.qr_code_2,()=>v4QrDialog(a)),
         ]),
@@ -79,6 +52,8 @@ extension _AssetV4Detail on _AssetScreenState {
       const SizedBox(height:14),
       v5CustodyForAsset(a),
       const SizedBox(height:14),
+      v6LifecycleCard(a),
+      const SizedBox(height:14),
       surface(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
         sectionHeader('Riwayat Aset',subtitle:'Peristiwa terkait '+a.code),
         const SizedBox(height:8),
@@ -97,7 +72,7 @@ extension _AssetV4Detail on _AssetScreenState {
     crossAxisAlignment:CrossAxisAlignment.start,children:[
     sectionHeader('Identitas & Penempatan'),
     const SizedBox(height:12),
-    detailValue('Lokasi saat ini',a.location),
+    detailValue('Lokasi saat ini',store.locationPath(a)),
     detailValue('Penanggung jawab',a.holder.isEmpty?'Belum ditetapkan':a.holder),
     detailValue('Kategori',a.category),
     detailValue('Subkategori',a.subcategory),
@@ -109,7 +84,7 @@ extension _AssetV4Detail on _AssetScreenState {
     detailValue('Nilai perolehan',
       a.acquisitionCost==null?'Belum diketahui':rupiah(a.acquisitionCost!)),
     const SizedBox(height:12),
-    if(a.status!='Dihapuskan')outlineButton(
+    if(a.lifecycle=='Aktif' && a.status!='Dihapuskan')outlineButton(
       'Ubah Klasifikasi',Icons.account_tree_outlined,()=>reclassifyAsset(a)),
   ]));
 
@@ -469,67 +444,4 @@ extension _AssetV4Detail on _AssetScreenState {
     reason.dispose();
   }
 
-  Future<void> v4DisposeAsset(AssetRecord a) async {
-    final reason = TextEditingController();
-    final confirmation = TextEditingController();
-    var error = '';
-    final approved = await v4ShowModal<bool>(
-      title: 'Hapuskan Aset',
-      subtitle: a.name + ' · ' + a.code,
-      maxWidth: 570,
-      body: (ctx, update) => Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          v4ModalError('Tindakan ini mengakhiri penggunaan aset. '
-            'Kode tetap permanen dan tidak dapat dipakai ulang.'),
-          const SizedBox(height: 15),
-          TextField(controller: reason, maxLines: 3,
-            decoration: v4ModalDecoration('Alasan penghapusan *')),
-          const SizedBox(height: 15),
-          TextField(
-            controller: confirmation,
-            decoration: v4ModalDecoration(
-              'Ketik kode aset untuk mengonfirmasi *',
-              hint: a.code),
-          ),
-          const SizedBox(height: 8),
-          const Text('Pratinjau lokal belum memiliki autentikasi '
-            'atau persetujuan berjenjang.',
-            style: TextStyle(color: muted, fontSize: 12)),
-          if (error.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            v4ModalError(error),
-          ],
-        ],
-      ),
-      actions: (ctx, update) => [
-        OutlinedButton(onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Batal')),
-        FilledButton(
-          style: FilledButton.styleFrom(backgroundColor: danger),
-          onPressed: () {
-            if (reason.text.trim().isEmpty) {
-              update(() => error = 'Alasan penghapusan wajib diisi.');
-            } else if (confirmation.text.trim() != a.code) {
-              update(() => error = 'Kode konfirmasi tidak sesuai.');
-            } else {
-              Navigator.pop(ctx, true);
-            }
-          },
-          child: const Text('Hapuskan Aset'),
-        ),
-      ],
-    );
-    if (approved == true) {
-      try {
-        await store.editStatus(a, 'Dihapuskan', reason.text);
-        repaint();
-        notify('Aset berstatus Dihapuskan; riwayat tetap tersedia.');
-      } catch (e) {
-        notify(e.toString());
-      }
-    }
-    reason.dispose();
-    confirmation.dispose();
-  }
 }
