@@ -133,7 +133,7 @@ class _V5ReturnFormState extends State<V5ReturnForm> {
           color: const Color(0xFFEEF5FC),
           borderRadius: BorderRadius.circular(12)),
         child: Text(
-          'Penugasan: ' + widget.assignment.draftReference +
+          'Penugasan: ' + widget.assignment.assignmentReference +
           ' · ' + (widget.assignment.employeeSnapshot['name']?.toString() ?? '-') +
           '. Pilih hanya aset yang benar-benar dikembalikan. '
           'Aset lainnya tetap menjadi tanggung jawab karyawan.',
