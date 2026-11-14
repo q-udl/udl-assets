@@ -20,6 +20,26 @@ class _V4RegistrationPageState extends State<V4RegistrationPage> {
   String pendingName='';
   bool costUnknown=true,dateUnknown=true,saving=false;
   int mobileStep=0;
+  final _stepTitleKey = GlobalKey();
+  bool get hasUnsavedChanges =>
+    [name, brand, model, serial, holder, cost, date]
+      .any((v) => v.text.trim().isNotEmpty) ||
+    quantity.text.trim() != '1' || category != null || sub != null ||
+    kind != null || location != null || status != null ||
+    condition != null || areaId.isNotEmpty || spotId.isNotEmpty ||
+    pendingPhoto != null || !costUnknown || !dateUnknown;
+
+  void _scrollToCurrentStep() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final anchor = _stepTitleKey.currentContext;
+      if (!mounted || anchor == null) return;
+      Scrollable.ensureVisible(anchor,
+        duration: const Duration(milliseconds: 240),
+        curve: Curves.easeOut,
+        alignment: 0.06);
+    });
+  }
+
   @override void dispose(){
     for(final c in [name,brand,model,serial,holder,cost,date,quantity]){c.dispose();}
     super.dispose();
@@ -113,6 +133,7 @@ class _V4RegistrationPageState extends State<V4RegistrationPage> {
     }
     FocusScope.of(context).unfocus();
     setState(() => mobileStep++);
+    _scrollToCurrentStep();
   }
 
   Future<void> save()async{
@@ -186,6 +207,7 @@ class _V4RegistrationPageState extends State<V4RegistrationPage> {
       if (mobile) ...[
         Text('Langkah ' + (mobileStep + 1).toString() + ' dari 4 · ' +
           ['Identitas Aset','Perolehan Aset','Penempatan Awal','Dokumentasi Foto'][mobileStep],
+          key: _stepTitleKey,
           style:const TextStyle(color:ink,fontWeight:FontWeight.w700)),
         const SizedBox(height:10),
         LinearProgressIndicator(value:(mobileStep + 1)/4,
@@ -315,9 +337,10 @@ class _V4RegistrationPageState extends State<V4RegistrationPage> {
           if (mobileStep > 0) ...[
             OutlinedButton.icon(
               key:const ValueKey('rv26-prev-step'),
-              onPressed:saving?null:()=>setState(()=>mobileStep--),
+              onPressed:saving?null:(){ setState(()=>mobileStep--);
+                _scrollToCurrentStep(); },
               icon:const Icon(Icons.arrow_back,size:18),
-              label:const Text('Kembali')),
+              label:const Text('Sebelumnya')),
             const SizedBox(width:8),
           ],
           Expanded(child:FilledButton.icon(
