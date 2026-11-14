@@ -229,6 +229,5 @@ class AssetPhotoPicker {
       if (verdict == 1) return picked;
       if (verdict != 2) return null;
     }
-    return null;
   }
 }
