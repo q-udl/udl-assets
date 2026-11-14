@@ -110,13 +110,18 @@ class AssetPhoto {
 class AssetTransfer {
   final String id, assetId, fromLocation, toLocation, fromHolder, toHolder, reason, requestedAt;
   String state, respondedAt, note;
+  String fromAreaId, fromSpotId, toAreaId, toSpotId;
   AssetTransfer(this.id, this.assetId, this.fromLocation, this.toLocation,
     this.fromHolder, this.toHolder, this.reason, this.requestedAt,
-    {this.state = 'Menunggu Penerimaan', this.respondedAt = '', this.note = ''});
+    {this.state = 'Menunggu Penerimaan', this.respondedAt = '',
+    this.note = '', this.fromAreaId = '', this.fromSpotId = '',
+    this.toAreaId = '', this.toSpotId = ''});
   Map<String, dynamic> toJson() => {
     'id': id, 'assetId': assetId, 'fromLocation': fromLocation, 'toLocation': toLocation,
     'fromHolder': fromHolder, 'toHolder': toHolder, 'reason': reason,
-    'requestedAt': requestedAt, 'state': state, 'respondedAt': respondedAt, 'note': note};
+    'requestedAt': requestedAt, 'state': state, 'respondedAt': respondedAt,
+    'note': note, 'fromAreaId': fromAreaId,
+    'fromSpotId': fromSpotId, 'toAreaId': toAreaId, 'toSpotId': toSpotId};
   factory AssetTransfer.fromJson(Map<String, dynamic> x) => AssetTransfer(
     x['id']?.toString() ?? uuid.v4(), x['assetId']?.toString() ?? '',
     x['fromLocation']?.toString() ?? '', x['toLocation']?.toString() ?? '',
@@ -124,7 +129,11 @@ class AssetTransfer {
     x['reason']?.toString() ?? '', x['requestedAt']?.toString() ?? '',
     state: x['state']?.toString() ?? 'Menunggu Penerimaan',
     respondedAt: x['respondedAt']?.toString() ?? '',
-    note: x['note']?.toString() ?? '');
+    note: x['note']?.toString() ?? '',
+    fromAreaId: x['fromAreaId']?.toString() ?? '',
+    fromSpotId: x['fromSpotId']?.toString() ?? '',
+    toAreaId: x['toAreaId']?.toString() ?? '',
+    toSpotId: x['toSpotId']?.toString() ?? '');
 }
 
 class AssetStore extends ChangeNotifier {
