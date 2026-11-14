@@ -4,9 +4,11 @@ class V5AssignmentForm extends StatefulWidget {
   final AssetStore store;
   final void Function(AssetAssignment) onCreated;
   final VoidCallback onOpenEmployees;
+  final VoidCallback? onDirty;
   const V5AssignmentForm({
     super.key, required this.store,
     required this.onCreated, required this.onOpenEmployees,
+    this.onDirty,
   });
 
   @override
@@ -23,6 +25,13 @@ class _V5AssignmentFormState extends State<V5AssignmentForm> {
   final accessories = <String, String>{};
   bool saving = false;
   String? error;
+
+  @override
+  void initState() {
+    super.initState();
+    due.addListener(() => widget.onDirty?.call());
+    notes.addListener(() => widget.onDirty?.call());
+  }
 
   @override
   void dispose() {
@@ -120,8 +129,8 @@ class _V5AssignmentFormState extends State<V5AssignmentForm> {
                       child: Text(e.name + ' · ' + e.code,
                         maxLines: 1, overflow: TextOverflow.ellipsis)),
                 ],
-                onChanged: (value) =>
-                  setState(() => employeeId = value),
+                onChanged: (value) { widget.onDirty?.call();
+                  setState(() => employeeId = value); },
               ),
               const SizedBox(height: 14),
               LayoutBuilder(builder: (ctx, box) {
@@ -132,9 +141,9 @@ class _V5AssignmentFormState extends State<V5AssignmentForm> {
                     labelText: 'Jenis penugasan *'),
                   items: ['Berkelanjutan','Sementara'].map((value) =>
                     DropdownMenuItem(value: value, child: Text(value))).toList(),
-                  onChanged: (value) => setState(() {
+                  onChanged: (value) { widget.onDirty?.call(); setState(() {
                     kind = value ?? kind;
-                  }));
+                  }); });
                 final date = TextField(
                   controller: due,
                   enabled: kind == 'Sementara',
@@ -196,14 +205,14 @@ class _V5AssignmentFormState extends State<V5AssignmentForm> {
                   overflow: TextOverflow.ellipsis),
                 subtitle: Text(a.code + ' · ' + a.condition +
                   ' · ' + a.location),
-                onChanged: (value) => setState(() {
+                onChanged: (value) { widget.onDirty?.call(); setState(() {
                   if (value == true) {
                     selectedIds.add(a.id);
                   } else {
                     selectedIds.remove(a.id);
                     accessories.remove(a.id);
                   }
-                }),
+                }); },
               ),
               if (selectedIds.contains(a.id))
                 Padding(
@@ -215,8 +224,8 @@ class _V5AssignmentFormState extends State<V5AssignmentForm> {
                     decoration: const InputDecoration(
                       labelText: 'Kelengkapan yang diserahkan',
                       hintText: 'Contoh: charger, tas, kabel'),
-                    onChanged: (value) =>
-                      accessories[a.id] = value,
+                    onChanged: (value) { widget.onDirty?.call();
+                      accessories[a.id] = value; },
                   ),
                 ),
               const Divider(height: 1, color: border),
