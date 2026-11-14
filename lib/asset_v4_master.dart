@@ -182,19 +182,5 @@ extension _AssetV4Master on _AssetScreenState {
     ]);
   }
 
-  Widget v4Locations() => surface(child:Column(
-    crossAxisAlignment:CrossAxisAlignment.start,children:[
-    sectionHeader('Master Lokasi',
-      subtitle:'Lokasi terstandar; data aset lama tetap dipertahankan'),
-    const SizedBox(height:12),
-    outlineButton('Tambah Lokasi',Icons.add_location_alt_outlined,
-      ()=>v4MasterPrompt('Tambah Lokasi','',store.addLocation)),
-    const SizedBox(height:14),
-    for(final location in store.locations) ListTile(
-      leading:const Icon(Icons.place_outlined),
-      title:Text(location),
-      subtitle:Text(store.assets.where((a)=>a.location==location).length.toString()+' aset'),
-      onTap:()=>openAssetListFromMaster(location: location),
-      trailing:const Icon(Icons.chevron_right)),
-  ]));
+  Widget v4Locations() => v6Locations();
 }
