@@ -46,7 +46,7 @@ void main() {
       employeeId: employee.id, kind: 'Berkelanjutan',
       assetIds: [assets[0].id], accessories: {});
     await expectLater(store.confirmAssignment(first, true, '',
-      handedOverByName: 'Rochmad',
+      handedOverByName: '',
       handoverLocation: 'Gudang Pusat',
       proofPhotos: {assets[0].id: proof()}), throwsFormatException);
     expect(first.isPending, isTrue);
@@ -85,6 +85,23 @@ void main() {
     expect(second.isPending, isTrue);
     expect(store.evidenceFor(
       'assignment_handover', second.id, assets[1].id), isEmpty);
+
+    // Physical custody must remain possible when DMS has not yet supplied
+    // an official BAST number. The print action stays hidden until completed.
+    await store.confirmAssignment(second, true, '',
+      handedOverByName: 'Rochmad',
+      handoverLocation: 'Gudang Pusat',
+      proofPhotos: {assets[1].id: proof()});
+    expect(second.isHandoverConfirmed, isTrue);
+    expect(second.canPrintBast, isFalse);
+    await expectLater(AssetBastPdf.handover(second),
+      throwsFormatException);
+    await store.completeBastMetadata(second,
+      bastNumber: 'BAST-TEST-0002',
+      handedOverByName: 'Rochmad',
+      handoverLocation: 'Gudang Pusat');
+    expect(second.canPrintBast, isTrue);
+    expect((await AssetBastPdf.handover(second)).isNotEmpty, isTrue);
   });
 
   test('Confirmed historical handover can complete missing metadata only once',
