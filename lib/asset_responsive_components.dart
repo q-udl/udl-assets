@@ -38,11 +38,19 @@ Widget responsiveAssetPager({
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       count,
       const SizedBox(height: 5),
-      Row(children: [
-        const Text('Per halaman', style: TextStyle(fontSize: 11, color: muted)),
-        const Spacer(),
-        dropdown, prev, next,
-      ]),
+      Wrap(
+        alignment: WrapAlignment.end,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 6,
+        runSpacing: 4,
+        children: [
+          const Text('Per halaman',
+            style: TextStyle(fontSize: 11, color: muted)),
+          dropdown,
+          prev,
+          next,
+        ],
+      ),
     ]);
   }
   return Row(children: [
