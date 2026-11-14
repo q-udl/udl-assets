@@ -38,10 +38,10 @@ void main() {
     expect(find.text('Belum ada foto aset'), findsOneWidget);
   });
 
-  testWidgets('Menampilkan halaman ringkasan aplikasi', (tester) async {
+  testWidgets('Halaman awal adalah Daftar Aset', (tester) async {
     await tester.pumpWidget(const AssetApp());
     await tester.pumpAndSettle();
-    expect(find.text('Ringkasan Aset'), findsOneWidget);
-    expect(find.text('Total aset aktif'), findsOneWidget);
+    expect(find.text('Daftar Aset'), findsWidgets);
+    expect(find.text('Ringkasan Aset'), findsNothing);
   });
 }
