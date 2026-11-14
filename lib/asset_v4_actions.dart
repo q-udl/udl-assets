@@ -2,8 +2,11 @@ part of 'main.dart';
 
 extension _AssetV4Actions on _AssetScreenState {
   Future<void> v4Transfer(AssetRecord a) async {
-    var destination = store.locations.contains(a.location)
-      ? a.location : store.locations.first;
+    var destination = store.activeSites.any((s) => s.name == a.location)
+      ? a.location : (store.activeSites.isEmpty
+        ? a.location : store.activeSites.first.name);
+    var destinationArea = destination == a.location ? a.locationAreaId : '';
+    var destinationSpot = destination == a.location ? a.locationSpotId : '';
     final receiver = TextEditingController(text: a.holder);
     final reason = TextEditingController();
     var error = '';
@@ -20,7 +23,7 @@ extension _AssetV4Actions on _AssetScreenState {
               const Text('Penempatan Saat Ini', style: TextStyle(
                 fontWeight: FontWeight.w800, color: ink)),
               const SizedBox(height: 12),
-              v4ReadonlyField('Lokasi asal', a.location),
+              v4ReadonlyField('Lokasi asal', store.locationPath(a)),
               const SizedBox(height: 12),
               v4ReadonlyField('Penanggung jawab sebelumnya', a.holder),
             ]),
@@ -35,12 +38,52 @@ extension _AssetV4Actions on _AssetScreenState {
                 isExpanded: true,
                 dropdownColor: Colors.white,
                 decoration: v4ModalDecoration('Lokasi tujuan *'),
-                items: store.locations.map((value) => DropdownMenuItem(
-                  value: value, child: Text(value))).toList(),
+                items: store.activeSites.map((site) => DropdownMenuItem(
+                  value: site.name, child: Text(site.name))).toList(),
                 onChanged: (value) => update(() {
                   destination = value ?? destination;
+                  destinationArea = '';
+                  destinationSpot = '';
                   error = '';
                 }),
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                key: ValueKey('transfer-area-' + destination),
+                initialValue: destinationArea,
+                isExpanded: true,
+                decoration: v4ModalDecoration('Area (opsional)'),
+                items: [
+                  const DropdownMenuItem(value: '',
+                    child: Text('Belum ditentukan')),
+                  for (final area in (store.siteByName(destination)
+                    ?.areas.where((a) => a.active) ?? <AssetArea>[]))
+                    DropdownMenuItem(value: area.id,
+                      child: Text(area.name)),
+                ],
+                onChanged: (value) => update(() {
+                  destinationArea = value ?? '';
+                  destinationSpot = '';
+                }),
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                key: ValueKey('transfer-spot-' + destinationArea),
+                initialValue: destinationSpot,
+                isExpanded: true,
+                decoration: v4ModalDecoration('Titik Penempatan (opsional)'),
+                items: [
+                  const DropdownMenuItem(value: '',
+                    child: Text('Belum ditentukan')),
+                  for (final area in (store.siteByName(destination)
+                    ?.areas ?? <AssetArea>[]))
+                    if (area.id == destinationArea)
+                      for (final spot in area.spots.where((p) => p.active))
+                        DropdownMenuItem(value: spot.id,
+                          child: Text(spot.name)),
+                ],
+                onChanged: (value) =>
+                  update(() => destinationSpot = value ?? ''),
               ),
               const SizedBox(height: 12),
               TextField(controller: receiver,
@@ -70,6 +113,8 @@ extension _AssetV4Actions on _AssetScreenState {
             if (reason.text.trim().isEmpty) {
               update(() => error = 'Alasan mutasi wajib diisi.');
             } else if (destination == a.location &&
+                destinationArea == a.locationAreaId &&
+                destinationSpot == a.locationSpotId &&
                 receiver.text.trim() == a.holder) {
               update(() => error =
                 'Pilih lokasi atau penanggung jawab yang berbeda.');
@@ -84,7 +129,10 @@ extension _AssetV4Actions on _AssetScreenState {
     if (ok == true) {
       try {
         await store.proposeTransfer(
-          a, destination, receiver.text, reason.text);
+          a, destination, receiver.text, reason.text,
+          placement: AssetPlacement(
+            store.siteByName(destination)?.id ?? '',
+            areaId: destinationArea, spotId: destinationSpot));
         repaint();
         notify('Mutasi tercatat menunggu serah terima simulasi.');
       } catch (e) {
