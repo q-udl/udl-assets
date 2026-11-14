@@ -318,15 +318,19 @@ class _V5ReturnFormState extends State<V5ReturnForm> {
         Text(error!, style: const TextStyle(color: danger)),
       ],
       const SizedBox(height: 16),
-      Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-        FilledButton.icon(
-          key: const ValueKey('return-submit'),
-          onPressed: saving ? null : save,
-          icon: const Icon(Icons.assignment_return_outlined),
-          label: Text(saving ? 'Mencatat...' :
-            'Catat Pengembalian & Draf BA'),
+      LayoutBuilder(builder:(ctx,box)=>Align(
+        alignment:Alignment.centerRight,
+        child:SizedBox(
+          width:box.maxWidth<530?box.maxWidth:null,
+          child:FilledButton.icon(
+            key:const ValueKey('return-submit'),
+            onPressed:saving?null:save,
+            icon:const Icon(Icons.assignment_return_outlined),
+            label:Text(saving?'Mencatat...':'Catat Pengembalian & Draf BA',
+              textAlign:TextAlign.center),
+          ),
         ),
-      ]),
+      )),
     ]);
   }
 }
