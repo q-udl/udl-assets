@@ -73,10 +73,10 @@ void main() {
     expect(utf8.decode(returned.take(5).toList()), '%PDF-');
 
     final single = (await store.registerUnits(
-      quantity: 1, name: 'Printer Operasional',
+      quantity: 1, name: 'Kursi Kerja Tunggal',
       category: 'Furnitur', subcategory: 'Kursi',
       assetType: 'Kursi Kerja', brand: 'Lokal', model: '',
-      serial: 'PR-UNIT-01', location: 'Gudang Pusat', holder: '',
+      serial: 'KR-UNIT-01', location: 'Gudang Pusat', holder: '',
       status: 'Tersedia', condition: 'Baik', cost: null,
       acquisitionDate: '')).single;
     final one = await store.createAssignment(
