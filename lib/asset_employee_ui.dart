@@ -194,7 +194,7 @@ extension _AssetEmployeeScreens on _AssetScreenState {
           detailValue('Departemen', employee.department),
           detailValue('Jabatan', employee.jobTitle),
           detailValue('Lokasi Kerja', employee.workLocation),
-          detailValue('Tanggal Mulai',
+          detailValue('Tanggal Bergabung',
             employee.startDate.isEmpty ? 'Belum diisi' : employee.startDate),
         ]));
         final custody = surface(child: Column(
