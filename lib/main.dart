@@ -39,6 +39,7 @@ part 'asset_v4_catalog.dart';
 part 'asset_v4_master.dart';
 part 'asset_v4_history.dart';
 part 'asset_photo_picker.dart';
+part 'asset_responsive_components.dart';
 part 'asset_v4_registration.dart';
 part 'asset_v4_detail.dart';
 part 'asset_v4_modal.dart';
