@@ -19,6 +19,7 @@ class _AssetScreenState extends State<AssetScreen> {
   AssetRecord? selected;
   String? viewedPhotoId;
   void repaint() => setState(() {});
+  void v4Change(VoidCallback callback) => setState(callback);
 
   AssetStore get store => widget.store;
 
