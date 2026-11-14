@@ -5,6 +5,10 @@ class AssetRecord {
   String model = '', acquisitionDate = '';
   String categoryId = '', subcategoryId = '', typeId = '';
   String assignedEmployeeId = '';
+  String locationSiteId = '', locationAreaId = '', locationSpotId = '';
+  String lifecycle = 'Aktif';
+  String releaseType = '', releaseDate = '', releaseReference = '',
+    releaseReason = '', releaseHandledBy = '';
   int? acquisitionCost;
   int cost;
   AssetRecord(this.id, this.code, this.name, this.category, this.brand, this.serial,
@@ -18,6 +22,12 @@ class AssetRecord {
     'model': model, 'acquisitionDate': acquisitionDate, 'acquisitionCost': acquisitionCost,
     'categoryId': categoryId, 'subcategoryId': subcategoryId, 'typeId': typeId,
     'assignedEmployeeId': assignedEmployeeId,
+    'locationSiteId': locationSiteId,
+    'locationAreaId': locationAreaId, 'locationSpotId': locationSpotId,
+    'lifecycle': lifecycle,
+    'releaseType': releaseType, 'releaseDate': releaseDate,
+    'releaseReference': releaseReference,
+    'releaseReason': releaseReason, 'releaseHandledBy': releaseHandledBy,
   };
   factory AssetRecord.fromJson(Map<String, dynamic> m) {
     final old = m['category']?.toString() ?? '';
@@ -40,6 +50,16 @@ class AssetRecord {
     a.subcategoryId = m['subcategoryId']?.toString() ?? '';
     a.typeId = m['typeId']?.toString() ?? '';
     a.assignedEmployeeId = m['assignedEmployeeId']?.toString() ?? '';
+    a.locationSiteId = m['locationSiteId']?.toString() ?? '';
+    a.locationAreaId = m['locationAreaId']?.toString() ?? '';
+    a.locationSpotId = m['locationSpotId']?.toString() ?? '';
+    a.lifecycle = m['lifecycle']?.toString() ??
+      (a.status == 'Dihapuskan' ? 'Dilepas' : 'Aktif');
+    a.releaseType = m['releaseType']?.toString() ?? '';
+    a.releaseDate = m['releaseDate']?.toString() ?? '';
+    a.releaseReference = m['releaseReference']?.toString() ?? '';
+    a.releaseReason = m['releaseReason']?.toString() ?? '';
+    a.releaseHandledBy = m['releaseHandledBy']?.toString() ?? '';
     return a;
   }
 }
@@ -120,6 +140,8 @@ class AssetStore extends ChangeNotifier {
   int nextAssignmentNumber = 1;
   int nextReturnNumber = 1;
   List<String> locations = ['Kantor Pusat', 'Gudang Pusat', 'Outlet Jepara'];
+  List<AssetSite> locationSites = [];
+  int nextLocationNumber = 1;
   int nextNumber = 1;
   bool loaded = false;
   String? loadError;
@@ -195,6 +217,7 @@ class AssetStore extends ChangeNotifier {
     ];
     assignments = []; returnReceipts = [];
     nextEmployeeNumber = 1; nextAssignmentNumber = 1; nextReturnNumber = 1;
+    migrateLocationMaster(const {});
     loadError = null; notifyListeners();
   }
   AssetCategory? categoryByName(String name) {
@@ -281,6 +304,11 @@ class AssetStore extends ChangeNotifier {
       .map((v) => v.toString()).toList();
     locations = {...locations, 'Kantor Pusat', 'Gudang Pusat', 'Outlet Jepara',
       ...assets.map((a) => a.location)}.toList();
+    migrateLocationMaster(value);
+    if (assets.any((v) => !['Aktif','Tidak Aktif','Dilepas']
+        .contains(v.lifecycle))) {
+      throw const FormatException('Status siklus hidup aset tidak valid.');
+    }
     for (final a in assets) {
       final c = categoryByName(a.category);
       if (c == null) continue;
@@ -302,7 +330,9 @@ class AssetStore extends ChangeNotifier {
   }
 
   String backup() => const JsonEncoder.withIndent('  ').convert({
-    'version': 4, 'nextNumber': nextNumber,
+    'version': 5, 'nextNumber': nextNumber,
+    'locationSites': locationSites.map((s) => s.toJson()).toList(),
+    'nextLocationNumber': nextLocationNumber,
     'nextEmployeeNumber': nextEmployeeNumber,
     'nextAssignmentNumber': nextAssignmentNumber,
     'nextReturnNumber': nextReturnNumber,
