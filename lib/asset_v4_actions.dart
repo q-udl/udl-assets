@@ -105,7 +105,7 @@ extension _AssetV4Actions on _AssetScreenState {
               hint: 'Jelaskan tujuan perpindahan aset')),
           const SizedBox(height: 12),
           const Text('Mutasi belum berlaku sampai serah terima '
-            'dikonfirmasi melalui simulasi lokal.',
+            'dicatat melalui konfirmasi serah terima.',
             style: TextStyle(color: muted, fontSize: 12)),
           if (error.isNotEmpty) ...[
             const SizedBox(height: 12), v4ModalError(error),
@@ -143,7 +143,7 @@ extension _AssetV4Actions on _AssetScreenState {
             store.siteByName(destination)?.id ?? '',
             areaId: destinationArea, spotId: destinationSpot));
         repaint();
-        notify('Mutasi tercatat menunggu serah terima simulasi.');
+        notify('Mutasi tercatat menunggu konfirmasi serah terima.');
       } catch (e) {
         notify('Mutasi gagal: ' + e.toString());
       }
@@ -205,7 +205,7 @@ extension _AssetV4Actions on _AssetScreenState {
           ),
           const SizedBox(height: 12),
           const Text('Konfirmasi ini dilakukan oleh operator dalam '
-            'pratinjau lokal. Belum merupakan tanda tangan atau '
+            'aplikasi ini. Belum merupakan tanda tangan atau '
             'persetujuan penerima yang terverifikasi.',
             style: TextStyle(color: muted, fontSize: 12)),
           if (error.isNotEmpty) ...[
@@ -234,7 +234,7 @@ extension _AssetV4Actions on _AssetScreenState {
               Navigator.pop(ctx, true);
             }
           },
-          child: const Text('Terima (Simulasi)')),
+          child: const Text('Terima Mutasi')),
       ],
     );
     if (response != null) {
@@ -242,8 +242,8 @@ extension _AssetV4Actions on _AssetScreenState {
         await store.confirmTransfer(transfer, response, note.text,
           proofPhoto: response ? proofPhoto : null);
         repaint();
-        notify(response ? 'Serah terima simulasi diterima dengan bukti foto.' :
-          'Serah terima simulasi ditolak.');
+        notify(response ? 'Serah terima diterima dan foto bukti tersimpan.' :
+          'Serah terima ditolak.');
       } catch (e) {
         notify(e.toString());
       }
