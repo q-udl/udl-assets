@@ -1,6 +1,6 @@
 part of 'main.dart';
 
-extension AssetV4Master on _AssetScreenState {
+extension _AssetV4Master on _AssetScreenState {
   Future<void> v4MasterPrompt(String title, String initial,
       Future<void> Function(String) onSave) async {
     final controller = TextEditingController(text:initial);
@@ -60,7 +60,7 @@ extension AssetV4Master on _AssetScreenState {
           subtitle:Text(c.code+' · '+
             store.assets.where((a)=>a.categoryId==c.code || a.category==c.name).length.toString()+
             ' aset'+(c.active ? '' : ' · Nonaktif')),
-          onTap:()=>setState(() {v4CategoryCode=c.code;v4SubcategoryId='';}),
+          onTap:()=>v4Change(() {v4CategoryCode=c.code;v4SubcategoryId='';}),
           trailing:PopupMenuButton<String>(
             onSelected:(action) {
               if(action=='rename') {
@@ -84,7 +84,7 @@ extension AssetV4Master on _AssetScreenState {
           subtitle:Text(store.assets.where((a)=>a.categoryId==current.code &&
             (a.subcategoryId==s.id || a.subcategory==s.name)).length.toString()+
             ' aset'+(s.active ? '' : ' · Nonaktif')),
-          onTap:()=>setState(()=>v4SubcategoryId=s.id),
+          onTap:()=>v4Change(()=>v4SubcategoryId=s.id),
           trailing:PopupMenuButton<String>(
             onSelected:(action) {
               if(action=='rename') {
@@ -109,7 +109,7 @@ extension AssetV4Master on _AssetScreenState {
           subtitle:Text(store.assets.where((a)=>a.categoryId==current.code &&
             a.subcategoryId==chosen.id && a.assetType==t).length.toString()+
             ' aset'+(chosen.typeIsActive(t) ? '' : ' · Nonaktif')),
-          onTap:()=>setState(() {
+          onTap:()=>v4Change(() {
             page=1;selected=null;categoryFilter=current.name;
             query=t;v4CatalogPage=0;
           }),
@@ -137,7 +137,7 @@ extension AssetV4Master on _AssetScreenState {
         const SizedBox(height:12),
         TextField(decoration:const InputDecoration(
           hintText:'Cari klasifikasi...',prefixIcon:Icon(Icons.search)),
-          onChanged:(v)=>setState(()=>v4TaxonomySearch=v)),
+          onChanged:(v)=>v4Change(()=>v4TaxonomySearch=v)),
         const SizedBox(height:8),
         Text(store.categories.length.toString()+
           ' kategori · klasifikasi nonaktif tidak tersedia untuk registrasi baru',
@@ -170,7 +170,7 @@ extension AssetV4Master on _AssetScreenState {
       leading:const Icon(Icons.place_outlined),
       title:Text(location),
       subtitle:Text(store.assets.where((a)=>a.location==location).length.toString()+' aset'),
-      onTap:()=>setState(() {
+      onTap:()=>v4Change(() {
         page=1;selected=null;v4LocationFilter=location;v4CatalogPage=0;
       }),
       trailing:const Icon(Icons.chevron_right)),
