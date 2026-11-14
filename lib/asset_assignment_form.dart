@@ -55,6 +55,17 @@ class _V5AssignmentFormState extends State<V5AssignmentForm> {
       setState(() => error = 'Isi tanggal kembali untuk penugasan sementara.');
       return;
     }
+    final assignee = widget.store.employeeById(employeeId!);
+    final confirmed = await assetConfirmDialog(
+      context,
+      title: 'Tinjau Penugasan Aset',
+      message: 'Penerima: ' + (assignee?.name ?? '-') +
+        '\\nJumlah aset: ' + selectedIds.length.toString() +
+        '\\nJenis: ' + kind +
+        '\\nPastikan identitas penerima dan aset sudah sesuai. '
+        'Pembuatan draf belum membuktikan serah terima fisik.',
+      confirmLabel: 'Buat Draf Penugasan');
+    if (!confirmed || !mounted) return;
     setState(() => saving = true);
     try {
       final batch = await widget.store.createAssignment(
@@ -205,8 +216,16 @@ class _V5AssignmentFormState extends State<V5AssignmentForm> {
                 controlAffinity: ListTileControlAffinity.leading,
                 contentPadding: EdgeInsets.zero,
                 value: selectedIds.contains(a.id),
-                title: Text(a.name, maxLines: 1,
+                title: Text(a.name, maxLines: 2,
                   overflow: TextOverflow.ellipsis),
+                secondary: ClipRRect(
+                  borderRadius: BorderRadius.circular(9),
+                  child: SizedBox(width: 52, height: 52,
+                    child: widget.store.primaryPhotoFor(a.id) case final photo?
+                      ? Image.memory(photo.bytes, fit: BoxFit.cover)
+                      : const ColoredBox(color: Color(0xFFF1F5FA),
+                          child: Icon(Icons.inventory_2_outlined,
+                            color: blue, size: 23)))),
                 subtitle: Text(a.code + ' · ' + a.condition +
                   ' · ' + a.location),
                 onChanged: (value) { widget.onDirty?.call(); setState(() {
