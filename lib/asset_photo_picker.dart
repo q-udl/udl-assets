@@ -293,7 +293,6 @@ class AssetPhotoPicker {
           if (decision == 1) return file;
           if (decision != 2) return null;
         }
-        return null;
       }
       return outcome.photo;
     }
