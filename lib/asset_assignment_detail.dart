@@ -184,11 +184,13 @@ extension _AssignedAssetsDetail on _AssetScreenState {
       AssetAssignment batch, bool accepted) async {
     final reason = TextEditingController();
     var error = '';
+    bool hasChanges() => reason.text.isNotEmpty;
     final approved = await v4ShowModal<bool>(
       title: accepted ? 'Terima Penugasan (Simulasi)' :
         'Tolak Penugasan (Simulasi)',
       subtitle: batch.draftReference,
       maxWidth: 590,
+      isDirty: hasChanges,
       body: (ctx, update) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         const Text('Tindakan ini dioperasikan tanpa akun penerima. '
@@ -209,8 +211,8 @@ extension _AssignedAssetsDetail on _AssetScreenState {
         ],
       ]),
       actions: (ctx, update) => [
-        OutlinedButton(onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Batal')),
+        OutlinedButton(onPressed: () => assetRequestModalClose(
+          ctx, isDirty: hasChanges), child: const Text('Batal')),
         FilledButton(onPressed: () {
           if (!accepted && reason.text.trim().isEmpty) {
             update(() => error = 'Alasan penolakan wajib diisi.');
