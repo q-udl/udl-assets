@@ -198,12 +198,15 @@ class AssetReturnReceipt {
   final String id, draftReference, assignmentId, createdAt;
   final Map<String, dynamic> employeeSnapshot;
   final List<AssetReturnLine> lines;
-  final String notes, receivingLocation, receivedByName;
+  final String notes, receivingLocation, receivingLocationPath, receivedByName;
+  final String receivingAreaId, receivingSpotId;
   AssetReturnReceipt({
     required this.id, required this.draftReference,
     required this.assignmentId, required this.employeeSnapshot,
     required this.createdAt, required this.lines, this.notes = '',
     required this.receivingLocation, this.receivedByName = '',
+    this.receivingLocationPath = '',
+    this.receivingAreaId = '', this.receivingSpotId = '',
   });
 
   Map<String, dynamic> toJson() => {
@@ -212,6 +215,8 @@ class AssetReturnReceipt {
     'employeeSnapshot': employeeSnapshot,
     'createdAt': createdAt, 'notes': notes,
     'receivingLocation': receivingLocation, 'receivedByName': receivedByName,
+    'receivingLocationPath': receivingLocationPath,
+    'receivingAreaId': receivingAreaId, 'receivingSpotId': receivingSpotId,
     'lines': lines.map((l) => l.toJson()).toList(),
   };
 
@@ -229,6 +234,9 @@ class AssetReturnReceipt {
           Map<String, dynamic>.from(v as Map))).toList(),
       notes: x['notes']?.toString() ?? '',
       receivingLocation: x['receivingLocation']?.toString() ?? '',
+      receivingLocationPath: x['receivingLocationPath']?.toString() ?? '',
+      receivingAreaId: x['receivingAreaId']?.toString() ?? '',
+      receivingSpotId: x['receivingSpotId']?.toString() ?? '',
       receivedByName: x['receivedByName']?.toString() ?? '',
     );
 }
