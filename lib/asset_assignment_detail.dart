@@ -300,10 +300,11 @@ extension _AssignedAssetsDetail on _AssetScreenState {
             decoration: v4ModalDecoration('Lokasi serah terima aktual *')),
           const SizedBox(height: 10),
           TextField(controller: bastNumber,
-            decoration: v4ModalDecoration('Nomor BAST (sesuai DMS) *')),
+            decoration: v4ModalDecoration('Nomor BAST dari DMS (opsional)')),
           const SizedBox(height: 5),
-          const Text('Nomor resmi diisi dari DMS perusahaan, '
-            'belum diterbitkan otomatis oleh UDL Assets.',
+          const Text('Nomor BAST dapat diisi sekarang atau '
+            'dilengkapi setelah serah terima. BAST belum dapat '
+            'dicetak sebelum nomornya dicatat dari DMS.',
             style: TextStyle(color: muted, fontSize: 11)),
           const SizedBox(height: 10),
         ],
@@ -363,8 +364,6 @@ extension _AssignedAssetsDetail on _AssetScreenState {
               update(() => error = 'Nama pihak yang menyerahkan wajib diisi.');
             } else if (accepted && handoverAt.text.trim().isEmpty) {
               update(() => error = 'Lokasi serah terima wajib diisi.');
-            } else if (accepted && bastNumber.text.trim().isEmpty) {
-              update(() => error = 'Nomor BAST dari DMS wajib diisi.');
             } else if (accepted &&
                 batch.lines.any((l) => !proofPhotos.containsKey(l.assetId))) {
               update(() => error =
@@ -392,7 +391,9 @@ extension _AssignedAssetsDetail on _AssetScreenState {
         }
         repaint();
         notify(accepted
-          ? 'Penugasan aktif; foto bukti tercatat pada BAST.'
+          ? (batch.canPrintBast
+              ? 'Serah terima tercatat; BAST siap dicetak.'
+              : 'Serah terima tercatat; lengkapi Nomor BAST untuk mencetak.')
           : 'Penugasan dibatalkan. Aset kembali tersedia.');
       } catch (e) {
         notify('Gagal memproses penugasan: ' + e.toString());
