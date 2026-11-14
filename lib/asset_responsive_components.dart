@@ -1,6 +1,6 @@
 part of 'main.dart';
 
-/// Shared pager: controls move below the count at phone widths.
+/// Shared pager with a compact phone layout and separate count line.
 Widget responsiveAssetPager({
   required String description,
   required int perPage,
@@ -10,29 +10,43 @@ Widget responsiveAssetPager({
 }) => LayoutBuilder(builder: (context, box) {
   final count = Text(description,
     style: const TextStyle(fontSize: 12, color: muted));
-  final controls = Row(mainAxisSize: MainAxisSize.min, children: [
-    DropdownButton<int>(
-      value: perPage,
-      items: [20, 40, 80].map((n) =>
-        DropdownMenuItem(value: n, child: Text(n.toString() + ' / halaman')))
-        .toList(),
-      onChanged: (v) { if (v != null) onPerPage(v); },
-    ),
+  final compact = box.maxWidth < 520;
+  final dropdown = DropdownButton<int>(
+    value: perPage,
+    isDense: compact,
+    iconSize: compact ? 18 : 24,
+    underline: compact ? const SizedBox.shrink() : null,
+    items: [20, 40, 80].map((n) => DropdownMenuItem(
+      value: n,
+      child: Text(compact ? n.toString() : n.toString() + ' / halaman'),
+    )).toList(),
+    onChanged: (v) { if (v != null) onPerPage(v); },
+  );
+  Widget navButton(String tooltip, VoidCallback? onPressed, IconData icon) =>
     IconButton(
-      tooltip: 'Halaman sebelumnya',
-      onPressed: onPrevious,
-      icon: const Icon(Icons.chevron_left_rounded)),
-    IconButton(
-      tooltip: 'Halaman berikutnya',
-      onPressed: onNext,
-      icon: const Icon(Icons.chevron_right_rounded)),
-  ]);
-  if (box.maxWidth < 520) {
+      tooltip: tooltip, onPressed: onPressed,
+      icon: Icon(icon, size: compact ? 20 : 24),
+      padding: compact ? EdgeInsets.zero : const EdgeInsets.all(8),
+      constraints: compact ?
+        const BoxConstraints(minWidth: 38, minHeight: 40) : null,
+    );
+  final prev = navButton('Halaman sebelumnya',
+    onPrevious, Icons.chevron_left_rounded);
+  final next = navButton('Halaman berikutnya',
+    onNext, Icons.chevron_right_rounded);
+  if (compact) {
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       count,
-      const SizedBox(height: 2),
-      Align(alignment: Alignment.centerRight, child: controls),
+      const SizedBox(height: 5),
+      Row(children: [
+        const Text('Per halaman', style: TextStyle(fontSize: 11, color: muted)),
+        const Spacer(),
+        dropdown, prev, next,
+      ]),
     ]);
   }
-  return Row(children: [Expanded(child: count), controls]);
+  return Row(children: [
+    Expanded(child: count),
+    dropdown, prev, next,
+  ]);
 });
