@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:udl_assets/main.dart';
@@ -134,6 +135,55 @@ void main() {
     final rewritten = AssetStore()..restore(restored.backup());
     expect(rewritten.assignments.single.bastNumber, 'BAST-ARCHIVE-0001');
     expect(rewritten.assignments.single.acceptedAt, acceptedAt);
+  });
+
+  testWidgets('BAST action is invisible before handover and shown after it',
+      (tester) async {
+    tester.view.physicalSize = const Size(1440, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final store = AssetStore();
+    await store.initialize();
+    final person = await store.addEmployee(
+      name: 'Rafi Pratama', unit: 'Distribusi',
+      department: 'Operasional', jobTitle: 'Staf Gudang',
+      workLocation: 'Gudang Pusat');
+    final item = store.assets.firstWhere(store.canAssignAsset);
+    final batch = await store.createAssignment(
+      employeeId: person.id, kind: 'Berkelanjutan',
+      assetIds: [item.id], accessories: {});
+
+    Future<void> openDetail() async {
+      await tester.tap(find.text('Assigned Assets').first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(batch.assignmentReference).first);
+      await tester.pumpAndSettle();
+    }
+
+    await tester.pumpWidget(MaterialApp(home: AssetScreen(store: store)));
+    await tester.pumpAndSettle();
+    await openDetail();
+    expect(find.text('Lihat / Cetak BAST'), findsNothing);
+    expect(find.text('Konfirmasi Serah Terima'), findsOneWidget);
+
+    // Rebuild a fresh screen so this test exercises persisted transaction
+    // state rather than a mocked button.
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+    await store.confirmAssignment(batch, true, '',
+      handedOverByName: 'Rochmad',
+      handoverLocation: 'Gudang Pusat',
+      bastNumber: 'BAST-WIDGET-0001',
+      proofPhotos: {item.id: proof()});
+    await tester.pumpWidget(MaterialApp(home: AssetScreen(store: store)));
+    await tester.pumpAndSettle();
+    await openDetail();
+    expect(find.text('Lihat / Cetak BAST'), findsOneWidget);
+    expect(find.text('Konfirmasi Serah Terima'), findsNothing);
+    expect(find.text('Nomor BAST'), findsOneWidget);
+    expect(find.text('BAST-WIDGET-0001'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   test('Legacy penugasan reference is normalized only for display', () async {
