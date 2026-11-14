@@ -226,6 +226,11 @@ extension _AssetV4Detail on _AssetScreenState {
             ),
           ),
           const SizedBox(height: 14),
+          if (a.qrRevoked) ...[
+            const Text('QR DICABUT — TIDAK AKTIF',
+              style: TextStyle(color: danger, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 10),
+          ],
           SelectableText(a.code,
             style: const TextStyle(color: ink, fontWeight: FontWeight.w800)),
           const SizedBox(height: 12),
@@ -236,6 +241,25 @@ extension _AssetV4Detail on _AssetScreenState {
         ],
       ),
       actions: (ctx, update) => [
+        if (!a.qrRevoked) OutlinedButton.icon(
+          onPressed: () async {
+            final confirmed = await assetConfirmDialog(ctx,
+              title: 'Cabut identitas QR?',
+              message: 'QR ini tidak lagi dapat digunakan untuk menemukan '
+                'aset. Kode Aset dan riwayat tidak berubah.',
+              confirmLabel: 'Cabut QR', destructive: true);
+            if (!confirmed || !ctx.mounted) return;
+            try {
+              await store.revokeQrToken(a);
+              if (ctx.mounted) update(() {});
+              notify('QR dicabut. Untuk memakai kembali, terbitkan QR baru.');
+            } catch (error) {
+              notify('Gagal mencabut QR: ' + error.toString());
+            }
+          },
+          icon: const Icon(Icons.block_rounded, size: 17),
+          label: const Text('Cabut QR'),
+        ),
         OutlinedButton.icon(
           onPressed: () async {
             final confirmed = await assetConfirmDialog(ctx,
