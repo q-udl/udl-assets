@@ -1,95 +1,135 @@
 part of 'main.dart';
 
-/// Consistent desktop/mobile modal chrome for all v0.4 operational actions.
-/// Header and footer stay visible; only the content scrolls.
+/// RV28 adaptive modal shell: header/footer stay reachable; only body scrolls.
+/// Outside clicks never discard data. Device Back / X prompt when isDirty.
 extension _AssetV4Modal on _AssetScreenState {
   Future<T?> v4ShowModal<T>({
     required String title,
     String? subtitle,
     double maxWidth = 520,
+    bool Function()? isDirty,
     required Widget Function(BuildContext, StateSetter) body,
     required List<Widget> Function(BuildContext, StateSetter) actions,
   }) {
     return showDialog<T>(
       context: context,
+      barrierDismissible: false,
       builder: (dialogContext) => StatefulBuilder(
         builder: (ctx, update) {
           final size = MediaQuery.sizeOf(ctx);
-          final width = size.width < maxWidth + 40
-              ? size.width - 32
-              : maxWidth;
-          return Dialog(
-            backgroundColor: Colors.white,
-            elevation: 12,
-            insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 22),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(18),
-              side: const BorderSide(color: Color(0xFFE3EAF2)),
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: SizedBox(
-              width: width,
-              child: ConstrainedBox(
-                constraints: BoxConstraints(maxHeight: size.height * 0.85),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 18, 13, 17),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Column(
+          final keyboard = MediaQuery.viewInsetsOf(ctx).bottom;
+          final mobile = size.width < 650;
+          final width = size.width < maxWidth + (mobile ? 24 : 40)
+              ? size.width - (mobile ? 24 : 32) : maxWidth;
+          final height = (size.height - keyboard -
+              (mobile ? 20 : 42)).clamp(150.0, size.height);
+          final buttons = actions(ctx, update);
+          return PopScope(
+            canPop: false,
+            onPopInvokedWithResult: (didPop, result) {
+              if (!didPop) {
+                assetRequestModalClose(ctx, isDirty: isDirty);
+              }
+            },
+            child: Dialog(
+              key: const ValueKey('rv28-adaptive-modal'),
+              backgroundColor: Colors.white,
+              surfaceTintColor: Colors.white,
+              elevation: 10,
+              insetPadding: EdgeInsets.symmetric(
+                horizontal: mobile ? 12 : 16,
+                vertical: mobile ? 10 : 22),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(mobile ? 16 : 18),
+                side: const BorderSide(color: Color(0xFFE3EAF2)),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: SizedBox(
+                width: width,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxHeight: height),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.fromLTRB(
+                          mobile ? 16 : 24, mobile ? 14 : 18,
+                          mobile ? 8 : 13, mobile ? 13 : 17),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(title, style: const TextStyle(
-                                  color: ink, fontSize: 20,
-                                  fontWeight: FontWeight.w800,
-                                )),
+                                Text(title, style: TextStyle(
+                                  color: ink, fontSize: mobile ? 18 : 20,
+                                  fontWeight: FontWeight.w800)),
                                 if (subtitle != null && subtitle.isNotEmpty) ...[
                                   const SizedBox(height: 5),
                                   Text(subtitle, style: const TextStyle(
-                                    color: muted, fontSize: 12.5,
-                                  )),
+                                    color: muted, fontSize: 12.5)),
                                 ],
                               ],
+                            )),
+                            IconButton(
+                              key: const ValueKey('rv28-modal-close'),
+                              tooltip: 'Tutup',
+                              icon: const Icon(Icons.close_rounded, size: 20),
+                              onPressed: () => assetRequestModalClose(
+                                ctx, isDirty: isDirty),
                             ),
-                          ),
-                          IconButton(
-                            tooltip: 'Tutup',
-                            icon: const Icon(Icons.close_rounded, size: 20),
-                            onPressed: () => Navigator.of(ctx).pop(),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Divider(height: 1, color: border),
-                    Flexible(
-                      fit: FlexFit.loose,
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
-                        child: Align(
-                          alignment: Alignment.topLeft,
-                          child: body(ctx, update),
+                          ],
                         ),
                       ),
-                    ),
-                    const Divider(height: 1, color: border),
-                    Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        size.width < 650 ? 12 : 20, 12,
-                        size.width < 650 ? 12 : 20, 14),
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        child: Wrap(
-                          spacing: 8, runSpacing: 8,
-                          alignment: WrapAlignment.end,
-                          children: actions(ctx, update),
+                      const Divider(height: 1, color: border),
+                      Flexible(
+                        fit: FlexFit.loose,
+                        child: SingleChildScrollView(
+                          key: const ValueKey('rv28-modal-scroll'),
+                          keyboardDismissBehavior:
+                            ScrollViewKeyboardDismissBehavior.onDrag,
+                          padding: EdgeInsets.fromLTRB(
+                            mobile ? 16 : 24, mobile ? 16 : 20,
+                            mobile ? 16 : 24, mobile ? 16 : 20),
+                          child: Align(
+                            alignment: Alignment.topLeft,
+                            child: body(ctx, update),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                      if (buttons.isNotEmpty) ...[
+                        const Divider(height: 1, color: border),
+                        Padding(
+                          padding: EdgeInsets.fromLTRB(
+                            mobile ? 12 : 20, 11,
+                            mobile ? 12 : 20, mobile ? 12 : 14),
+                          child: mobile
+                            ? Column(
+                                key: const ValueKey('rv28-modal-mobile-actions'),
+                                crossAxisAlignment:
+                                  CrossAxisAlignment.stretch,
+                                children: [
+                                  for (final action in buttons.reversed) ...[
+                                    SizedBox(
+                                      height: 48,
+                                      width: double.infinity,
+                                      child: action),
+                                    if (action != buttons.first)
+                                      const SizedBox(height: 8),
+                                  ],
+                                ],
+                              )
+                            : Align(
+                                alignment: Alignment.centerRight,
+                                child: Wrap(
+                                  spacing: 8, runSpacing: 8,
+                                  alignment: WrapAlignment.end,
+                                  children: buttons),
+                              ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
               ),
             ),
