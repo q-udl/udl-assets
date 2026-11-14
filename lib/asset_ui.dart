@@ -663,7 +663,8 @@ class _AssetScreenState extends State<AssetScreen> {
     final active = store.assets.where((a) => a.status != 'Dihapuskan').toList();
     final inUse = active.where((a) => a.status == 'Digunakan').length;
     final concern = active.where(needsAttention).length;
-    final cost = active.fold<int>(0, (sum, a) => sum + a.cost);
+    final knownValues = active.where((a) => a.acquisitionCost != null).toList();
+    final cost = knownValues.fold<int>(0, (sum, a) => sum + a.acquisitionCost!);
     return LayoutBuilder(builder: (context, box) {
       final n = box.maxWidth >= 1060 ? 4 : box.maxWidth >= 510 ? 2 : 1;
       final width = (box.maxWidth - (n - 1) * 14) / n;
@@ -674,7 +675,11 @@ class _AssetScreenState extends State<AssetScreen> {
           Icons.assignment_ind_outlined, green, width),
         metricCard('Perlu perhatian', concern.toString(), 'Hilang, rusak, atau diperbaiki',
           Icons.report_problem_outlined, amber, width),
-        metricCard('Nilai perolehan', compactMoney(cost), rupiah(cost) + ' · sebelum penyusutan',
+        metricCard('Nilai perolehan diketahui',
+          knownValues.isEmpty ? '—' : compactMoney(cost),
+          knownValues.isEmpty ? 'Nilai perolehan belum tercatat' :
+          rupiah(cost) + ' · ' + knownValues.length.toString() +
+          ' dari ' + active.length.toString() + ' aset',
           Icons.account_balance_wallet_outlined, const Color(0xFF6F66B5), width),
       ]);
     });
