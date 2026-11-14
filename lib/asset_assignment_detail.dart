@@ -125,33 +125,17 @@ extension _AssignedAssetsDetail on _AssetScreenState {
             ' unit memiliki kode dan riwayat terpisah'),
         const SizedBox(height: 12),
         for (final line in batch.lines)
-          ListTile(
-            contentPadding: const EdgeInsets.symmetric(vertical: 6),
-            leading: const Icon(Icons.inventory_2_outlined,
-              color: blue, size: 24),
-            title: Text(line.assetName,
-              style: const TextStyle(fontWeight: FontWeight.w700)),
-            subtitle: Text(line.assetCode + ' · ' +
-              line.handoverCondition + ' · ' +
-              (line.accessories.isEmpty
-                ? 'Kelengkapan tidak dicatat'
-                : line.accessories)),
-            trailing: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min, children: [
-              Text(line.state, style: TextStyle(
-                color: line.state == 'Aktif' ? _AssetScreenState.green : muted,
-                fontSize: 11, fontWeight: FontWeight.w700)),
-              const Icon(Icons.chevron_right_rounded, color: muted),
-            ]),
+          compactCustodyAssetRow(
+            name: line.assetName,
+            code: line.assetCode,
+            condition: line.handoverCondition,
+            accessories: line.accessories,
+            status: line.state,
+            photo: store.primaryPhotoFor(line.assetId),
             onTap: () {
               final asset = store.assignmentAsset(line.assetId);
-              if (asset != null) {
-                v4Change(() {
-                  selected = asset;
-                  page = 1;
-                });
-              }
+              if (asset == null) return;
+              v4Change(() { selected = asset; page = 1; });
             },
           ),
       ])),
@@ -192,19 +176,33 @@ extension _AssignedAssetsDetail on _AssetScreenState {
         if (receipts.isEmpty)
           const Text('Belum ada pengembalian yang tercatat.',
             style: TextStyle(color: muted))
-        else for (final receipt in receipts) ListTile(
-          leading: const Icon(Icons.description_outlined, color: blue),
-          title: Text(receipt.draftReference),
-          subtitle: Text(receipt.lines.length.toString() +
-            ' aset dikembalikan · ' + dateText(receipt.createdAt)),
-          trailing: const Icon(Icons.picture_as_pdf_outlined, color: blue),
-          onTap: () async {
-            try {
-              await AssetBastPdf.printReturn(batch, receipt, store: store);
-            } catch (e) {
-              notify('PDF gagal dibuat: ' + e.toString());
-            }
-          },
+        else for (final receipt in receipts) Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Row(children: [
+            const Icon(Icons.description_outlined, color: blue, size: 22),
+            const SizedBox(width: 11),
+            Expanded(child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(receipt.draftReference, maxLines: 2,
+                  style: const TextStyle(fontWeight: FontWeight.w700)),
+                Text(receipt.lines.length.toString() +
+                  ' aset · ' + dateText(receipt.createdAt),
+                  style: const TextStyle(color: muted, fontSize: 11)),
+              ],
+            )),
+            TextButton.icon(
+              icon: const Icon(Icons.picture_as_pdf_outlined, size: 17),
+              label: const Text('Lihat / Cetak PDF'),
+              onPressed: () async {
+                try {
+                  await AssetBastPdf.printReturn(batch, receipt, store: store);
+                } catch (error) {
+                  notify('PDF gagal dibuat: ' + error.toString());
+                }
+              },
+            ),
+          ]),
         ),
       ])),
     ]);
