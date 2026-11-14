@@ -110,9 +110,9 @@ class _V5AssignmentFormState extends State<V5AssignmentForm> {
             color: const Color(0xFFEEF5FC),
             borderRadius: BorderRadius.circular(12)),
           child: const Text(
-            'Satu penugasan dapat memuat beberapa aset. BAST dibuat '
-            'sebagai DRAF; penerimaan yang dicatat masih simulasi lokal. '
-            'Penugasan tidak langsung mengubah PIC sampai dikonfirmasi.',
+            'Satu penugasan dapat memuat beberapa aset. Dokumen BAST '
+            'hanya tersedia setelah serah terima dikonfirmasi. '
+            'Aset belum berpindah penguasaan selama menunggu serah terima.',
             style: TextStyle(color: ink, fontSize: 12)),
         ),
         const SizedBox(height: 13),
@@ -273,7 +273,7 @@ class _V5AssignmentFormState extends State<V5AssignmentForm> {
               key:const ValueKey('assignment-save'),
               onPressed:saving?null:save,
               icon:const Icon(Icons.assignment_ind_outlined),
-              label:Text(saving?'Menyimpan...':'Buat Penugasan & Draf BAST',
+              label:Text(saving?'Menyimpan...':'Buat Penugasan',
                 textAlign:TextAlign.center),
             ),
           ),
