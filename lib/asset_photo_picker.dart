@@ -398,19 +398,12 @@ class AssetPhotoPicker {
         picked = await _read(context, source);
       } catch (e) {
         if (!context.mounted) return null;
-        await showDialog<void>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('Foto Tidak Bisa Dipilih'),
-            content: Text(e is FormatException
-              ? e.message : 'Pemilihan foto gagal: $e'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('Tutup')),
-            ],
-          ),
-        );
+        await assetNoticeDialog(
+          context,
+          title: 'Foto Tidak Bisa Dipilih',
+          message: e is FormatException
+            ? e.message : 'Pemilihan foto gagal: $e',
+          isError: true);
         continue;
       }
       if (picked == null || !context.mounted) return null;
