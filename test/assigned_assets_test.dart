@@ -69,14 +69,17 @@ void main() {
         kind: 'Berkelanjutan',
         assetIds: [records[0].id], accessories: {}),
       throwsFormatException);
-    final ba = await AssetBastPdf.handover(batch);
-    expect(utf8.decode(ba.take(5).toList()), '%PDF-');
-    expect(ba.length, greaterThan(1700));
+    await expectLater(AssetBastPdf.handover(batch), throwsFormatException);
     await store.confirmAssignment(batch, true, '',
-      handedOverByName: 'Petugas GA', proofPhotos: {
+      handedOverByName: 'Petugas GA',
+      handoverLocation: 'Gudang Pusat', bastNumber: 'BAST-TEST-001',
+      proofPhotos: {
       for (final line in batch.lines) line.assetId: uatProof(),
     });
     expect(batch.status, 'Aktif');
+    final ba = await AssetBastPdf.handover(batch);
+    expect(utf8.decode(ba.take(5).toList()), '%PDF-');
+    expect(ba.length, greaterThan(1700));
     expect(records[0].assignedEmployeeId, person.id);
     expect(records[0].holder, person.name);
     final firstReceipt = await store.returnAssignedAssets(
@@ -156,12 +159,14 @@ void main() {
       employeeId: person.id, kind: 'Berkelanjutan',
       assetIds: [asset.id], accessories: {});
     expect(batch.lines.single.photoIds, hasLength(1));
-    final pdf = await AssetBastPdf.handover(batch, store: store);
-    expect(utf8.decode(pdf.take(5).toList()), '%PDF-');
+    await expectLater(AssetBastPdf.handover(batch, store: store),
+      throwsFormatException);
     await store.confirmAssignment(batch, true, '',
       handedOverByName: 'Petugas GA', proofPhotos: {
       for (final line in batch.lines) line.assetId: uatProof(),
     });
+    final pdf = await AssetBastPdf.handover(batch, store: store);
+    expect(utf8.decode(pdf.take(5).toList()), '%PDF-');
     await store.addPhoto(asset, bytes, 'kembali.png',
       'Dokumentasi Kondisi', note: 'Kondisi saat dikembalikan');
     final receipt = await store.returnAssignedAssets(
