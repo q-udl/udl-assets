@@ -104,7 +104,7 @@ extension _AssetV4Tables on _AssetScreenState {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(a.location, maxLines: 1,
+                  Text(store.locationPath(a), maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(color: ink, fontSize: 12,
                       fontWeight: FontWeight.w600)),
@@ -120,7 +120,7 @@ extension _AssetV4Tables on _AssetScreenState {
                   ['Rusak', 'Kurang Baik'].contains(a.condition) ?
                     danger : ink)),
                 tap: () => v4Change(() => selected = a)),
-              _v4Td(badge(a.status, compact: true),
+              _v4Td(badge(a.lifecycle == 'Aktif' ? a.status : a.lifecycle, compact: true),
                 tap: () => v4Change(() => selected = a)),
               _v4Td(PopupMenuButton<String>(
                 tooltip: 'Tindakan ' + a.code,
