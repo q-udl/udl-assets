@@ -35,7 +35,7 @@ void main() {
     final store = AssetStore();
     await store.initialize();
     final employee = await store.addEmployee(
-      code: 'UAT-RV29-001', name: 'Karyawan Bukti UAT',
+      name: 'Karyawan Bukti UAT',
       unit: 'Distribusi', department: 'Gudang',
       jobTitle: 'Staf Gudang', workLocation: 'Gudang Pusat');
     final units = await store.registerUnits(
@@ -60,7 +60,8 @@ void main() {
       }), throwsFormatException);
     expect(store.evidencePhotos, isEmpty);
 
-    await store.confirmAssignment(batch, true, '', proofPhotos: {
+    await store.confirmAssignment(batch, true, '',
+      handedOverByName: 'Petugas GA', proofPhotos: {
       for (final unit in units) unit.id: proof('serah-' + unit.code + '.png'),
     });
     expect(batch.status, 'Aktif');
@@ -91,6 +92,7 @@ void main() {
         batch.lines.first.id: const AssetReturnInput(condition: 'Rusak'),
       },
       receivingLocation: 'Gudang Pusat',
+      receivedByName: 'Petugas GA',
       proofPhotos: {units.first.id: proof('kembali-satu.png')});
     expect(returned.lines.single.proofPhotoIds, hasLength(1));
     expect(batch.activeCount, 1);
