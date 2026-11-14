@@ -49,9 +49,7 @@ extension AssetEmployeeOperations on AssetStore {
     final assetIds = records.map((a) => a.id).toSet();
     final staffIds = staff.map((e) => e.id).toSet();
     if (staffIds.length != staff.length ||
-        staff.map((e) => e.code.toLowerCase()).toSet().length != staff.length ||
-        staff.any((e) => e.id.isEmpty || e.code.trim().isEmpty ||
-          e.name.trim().isEmpty)) {
+        staff.any((e) => e.id.isEmpty || e.name.trim().isEmpty)) {
       throw const FormatException('Master karyawan backup tidak valid.');
     }
     final batchIds = batches.map((b) => b.id).toSet();
@@ -104,50 +102,27 @@ extension AssetEmployeeOperations on AssetStore {
   }
 
   Future<AssetEmployee> addEmployee({
-    String code = '', required String name,
+    required String name,
     required String unit, required String department,
     required String jobTitle, required String workLocation,
     String startDate = '',
   }) async {
-    var employeeCode = code.trim();
-    if (employeeCode.isEmpty) {
-      do {
-        employeeCode = 'KRY-' +
-          nextEmployeeNumber.toString().padLeft(6, '0');
-        if (employees.any((e) => e.code.toLowerCase() ==
-            employeeCode.toLowerCase())) {
-          nextEmployeeNumber++;
-          continue;
-        }
-        break;
-      } while (true);
-    }
-    if (employeeCode.length < 3 || name.trim().length < 3 ||
+    if (name.trim().length < 3 ||
         unit.trim().isEmpty || department.trim().isEmpty ||
         jobTitle.trim().isEmpty || !locations.contains(workLocation) ||
-        employees.any((e) => e.code.toLowerCase() ==
-          employeeCode.toLowerCase()) ||
         (startDate.isNotEmpty && DateTime.tryParse(startDate) == null)) {
       throw const FormatException('Data karyawan belum lengkap/unik.');
     }
     final now = DateTime.now().toIso8601String();
     final record = AssetEmployee(
-      id: uuid.v4(), code: employeeCode,
+      id: uuid.v4(),
       name: name.trim(), unit: unit.trim(),
       department: department.trim(), jobTitle: jobTitle.trim(),
       workLocation: workLocation, startDate: startDate,
       createdAt: now, updatedAt: now);
     employees.insert(0, record);
-    if (code.trim().isEmpty) {
-      nextEmployeeNumber++;
-    } else if (employeeCode.startsWith('KRY-')) {
-      final serial = int.tryParse(employeeCode.substring(4));
-      if (serial != null && serial >= nextEmployeeNumber) {
-        nextEmployeeNumber = serial + 1;
-      }
-    }
     events.insert(0, EventRecord('', 'Master Karyawan',
-      'Karyawan ' + record.name + ' (' + record.code + ') ditambahkan', now));
+      'Karyawan ' + record.name + ' ditambahkan', now));
     await persist();
     return record;
   }
@@ -198,7 +173,7 @@ extension AssetEmployeeOperations on AssetStore {
       }
     }
     events.insert(0, EventRecord('', 'Master Karyawan',
-      'Perubahan data ' + employee.code,
+      'Perubahan data ' + employee.name,
       DateTime.now().toIso8601String(), reason: reason, changes: changes));
     await persist();
   }
@@ -212,7 +187,7 @@ extension AssetEmployeeOperations on AssetStore {
     employee.active = active;
     employee.updatedAt = DateTime.now().toIso8601String();
     events.insert(0, EventRecord('', 'Master Karyawan',
-      (active ? 'Aktifkan ' : 'Nonaktifkan ') + employee.code,
+      (active ? 'Aktifkan ' : 'Nonaktifkan ') + employee.name,
       DateTime.now().toIso8601String(), reason: reason));
     await persist();
   }
