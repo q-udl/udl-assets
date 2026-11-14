@@ -18,15 +18,16 @@ class _V4RegistrationPageState extends State<V4RegistrationPage> {
   String areaId = '', spotId = '';
   Uint8List? pendingPhoto;
   String pendingName='';
-  bool costUnknown=false,saving=false;
+  bool costUnknown=true,dateUnknown=true,saving=false;
+  int mobileStep=0;
   @override void dispose(){
     for(final c in [name,brand,model,serial,holder,cost,date,quantity]){c.dispose();}
     super.dispose();
   }
 
   Widget field(TextEditingController c,String label,{bool required=false,
-      TextInputType? keyboard})=>TextFormField(
-    controller:c,keyboardType:keyboard,
+      TextInputType? keyboard, bool enabled=true})=>TextFormField(
+    controller:c,keyboardType:keyboard,enabled:enabled,
     onChanged: (_) => widget.onDirty?.call(),
     decoration:InputDecoration(labelText:label,
       filled:true,fillColor:const Color(0xFFF9FBFD)),
@@ -67,22 +68,66 @@ class _V4RegistrationPageState extends State<V4RegistrationPage> {
     return Row(children:[Expanded(child:a),const SizedBox(width:12),Expanded(child:b)]);
   }
 
-  Future<void> selectPhoto()async{
-    final x=await ImagePicker().pickImage(source:ImageSource.gallery,
-      maxWidth:960,maxHeight:960,imageQuality:65);
-    if(x==null) { return; }
-    final bytes=await x.readAsBytes();
-    if(bytes.length>AssetStore.maxPhotoBytes){
-      if(mounted) { ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content:Text('Foto melebihi 500 KB setelah kompresi.'))); }
+  Future<void> selectPhoto() async {
+    final selected = await AssetPhotoPicker.choose(context);
+    if (selected == null || !mounted) return;
+    widget.onDirty?.call();
+    setState(() { pendingPhoto = selected.bytes; pendingName = selected.fileName; });
+  }
+
+  String? stepError(int step) {
+    if (step == 0) {
+      if (name.text.trim().isEmpty || category == null || sub == null || kind == null) {
+        return 'Lengkapi nama, kategori, subkategori, dan jenis aset.';
+      }
+    } else if (step == 1) {
+      if (!dateUnknown && (date.text.trim().isEmpty ||
+          !validAssetAcquisitionDate(date.text))) {
+        return 'Isi tanggal YYYY-MM-DD valid atau centang belum diketahui.';
+      }
+      if (!costUnknown && (int.tryParse(cost.text.trim()) == null ||
+          int.parse(cost.text.trim()) < 0)) {
+        return 'Isi nilai perolehan angka tidak negatif atau centang belum diketahui.';
+      }
+    } else if (step == 2) {
+      final count = int.tryParse(quantity.text.trim());
+      if (location == null || status == null || condition == null ||
+          count == null || count < 1 || count > 100) {
+        return 'Pilih lokasi, status, kondisi, dan jumlah unit 1–100.';
+      }
+    } else if (step == 3) {
+      if ((int.tryParse(quantity.text.trim()) ?? 1) > 1 && pendingPhoto != null) {
+        return 'Foto dicatat per unit. Hapus foto pilihan atau ubah jumlah menjadi 1.';
+      }
+    }
+    return null;
+  }
+
+  void mobileNext() {
+    final message = stepError(mobileStep);
+    if (message != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      keyForm.currentState?.validate();
       return;
     }
-    widget.onDirty?.call();
-    setState((){pendingPhoto=bytes;pendingName=x.name;});
+    FocusScope.of(context).unfocus();
+    setState(() => mobileStep++);
   }
 
   Future<void> save()async{
-    if(!keyForm.currentState!.validate()) { return; }
+    if (saving) return;
+    for (var step = 0; step < 4; step++) {
+      final message = stepError(step);
+      if (message != null) {
+        if (MediaQuery.sizeOf(context).width < 650) {
+          setState(() => mobileStep = step);
+        }
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+        return;
+      }
+    }
+    if (MediaQuery.sizeOf(context).width >= 650 &&
+        !keyForm.currentState!.validate()) return;
     final qty=int.tryParse(quantity.text);
     if(qty==null || qty<1 || qty>100){
       ScaffoldMessenger.of(context).showSnackBar(
@@ -105,7 +150,7 @@ class _V4RegistrationPageState extends State<V4RegistrationPage> {
         subcategory:sub!,assetType:kind!,brand:brand.text,
         model:model.text,serial:serial.text,location:location!,
         holder:holder.text,status:status!,condition:condition!,
-        cost:value,acquisitionDate:date.text,
+        cost:value,acquisitionDate:dateUnknown ? '' : date.text.trim(),
          placement: AssetPlacement(widget.store.siteByName(location!)?.id ?? '',
            areaId: areaId, spotId: spotId));
       if(pendingPhoto!=null && created.length==1){
@@ -126,6 +171,7 @@ class _V4RegistrationPageState extends State<V4RegistrationPage> {
 
   @override Widget build(BuildContext context){
     final narrow=MediaQuery.sizeOf(context).width<920;
+    final mobile=MediaQuery.sizeOf(context).width<650;
     final validCategories=widget.store.categories.where((c)=>c.active &&
       c.subcategories.any((s)=>s.active && s.types.any(s.typeIsActive))).toList();
     final cat=category==null?null:widget.store.categoryByName(category!);
