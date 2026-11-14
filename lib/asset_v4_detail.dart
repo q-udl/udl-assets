@@ -117,132 +117,390 @@ extension _AssetV4Detail on _AssetScreenState {
         store.archivedPhotosFor(a.id).length.toString()+')')),
   ]));
 
-  Future<void> v4QrDialog(AssetRecord a) => showDialog<void>(
-    context:context,builder:(ctx)=>AlertDialog(
-    title:const Text('Identitas QR Aset'),
-    content:Column(mainAxisSize:MainAxisSize.min,children:[
-      QrImageView(data:a.code,size:190),
-      SelectableText(a.code),
-      const SizedBox(height:8),
-      const Text('QR lokal berisi kode aset, belum URL yang diautentikasi.',
-        style:TextStyle(fontSize:11)),
-    ]),
-    actions:[
-      TextButton(onPressed:()=>Navigator.pop(ctx),child:const Text('Tutup')),
-      TextButton(onPressed:(){
-        Clipboard.setData(ClipboardData(text:a.code));Navigator.pop(ctx);
-      },child:const Text('Salin Kode')),
-    ]));
+
+  Future<void> v4QrDialog(AssetRecord a) async {
+    await v4ShowModal<void>(
+      title: 'Identitas QR Aset',
+      subtitle: a.name + ' · ' + a.code,
+      maxWidth: 480,
+      body: (ctx, update) => Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Center(
+            child: Container(
+              width: 226,
+              height: 226,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border.all(color: border),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              // QR needs finite dimensions to render and receive pointer events
+              // correctly on Flutter Web and Windows Chrome.
+              child: SizedBox(
+                width: 200,
+                height: 200,
+                child: RepaintBoundary(
+                  child: QrImageView(
+                    data: a.code,
+                    size: 200,
+                    version: QrVersions.auto,
+                    padding: EdgeInsets.zero,
+                    backgroundColor: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          SelectableText(a.code,
+            style: const TextStyle(color: ink, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 12),
+          const Text('QR pratinjau lokal hanya memuat kode aset. '
+              'Belum terhubung ke sistem online.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 12, color: muted)),
+        ],
+      ),
+      actions: (ctx, update) => [
+        TextButton(onPressed: () => Navigator.pop(ctx),
+          child: const Text('Tutup')),
+        FilledButton.icon(
+          onPressed: () {
+            Clipboard.setData(ClipboardData(text: a.code));
+            Navigator.pop(ctx);
+            notify('Kode aset disalin.');
+          },
+          icon: const Icon(Icons.copy_outlined, size: 17),
+          label: const Text('Salin Kode'),
+        ),
+      ],
+    );
+  }
 
   Future<void> v4EditIdentity(AssetRecord a) async {
-    final name=TextEditingController(text:a.name),brand=TextEditingController(text:a.brand),
-      model=TextEditingController(text:a.model),serial=TextEditingController(text:a.serial),
-      cost=TextEditingController(text:a.acquisitionCost?.toString()??''),
-      reason=TextEditingController();
-    var unknown=a.acquisitionCost==null;
-    final ok=await showDialog<bool>(context:context,builder:(ctx)=>
-      StatefulBuilder(builder:(ctx,update)=>AlertDialog(
-        title:const Text('Ubah Informasi Aset'),
-        content:SizedBox(width:520,child:SingleChildScrollView(child:Column(
-          mainAxisSize:MainAxisSize.min,children:[
-          TextField(controller:name,decoration:const InputDecoration(labelText:'Nama aset *')),
-          const SizedBox(height:9),
-          TextField(controller:brand,decoration:const InputDecoration(labelText:'Merek')),
-          const SizedBox(height:9),
-          TextField(controller:model,decoration:const InputDecoration(labelText:'Model')),
-          const SizedBox(height:9),
-          TextField(controller:serial,decoration:const InputDecoration(labelText:'Nomor seri')),
-          const SizedBox(height:9),
-          TextField(controller:cost,keyboardType:TextInputType.number,
-            decoration:const InputDecoration(labelText:'Nilai perolehan')),
-          CheckboxListTile(value:unknown,title:const Text('Nilai belum diketahui'),
-            onChanged:(v)=>update(()=>unknown=v??false)),
-          TextField(controller:reason,maxLines:2,
-            decoration:const InputDecoration(labelText:'Alasan koreksi *')),
-        ]))),
-        actions:[
-          TextButton(onPressed:()=>Navigator.pop(ctx,false),child:const Text('Batal')),
-          FilledButton(onPressed:()=>Navigator.pop(ctx,true),child:const Text('Simpan')),
-        ])));
-    if(ok==true){
-      try{
-        final value=unknown?null:int.tryParse(cost.text);
-        if(!unknown&&value==null) { throw const FormatException('Nilai tidak valid.'); }
-        await store.editIdentity(a,name.text,brand.text,model.text,serial.text,
-          value,reason.text);
-        repaint();notify('Informasi aset diperbarui');
-      }catch(e){notify(e.toString());}
+    final name = TextEditingController(text: a.name);
+    final brand = TextEditingController(text: a.brand);
+    final model = TextEditingController(text: a.model);
+    final serial = TextEditingController(text: a.serial);
+    final cost = TextEditingController(text: a.acquisitionCost?.toString() ?? '');
+    final reason = TextEditingController();
+    var unknown = a.acquisitionCost == null;
+    var error = '';
+    final ok = await v4ShowModal<bool>(
+      title: 'Ubah Informasi Aset',
+      subtitle: a.name + ' · ' + a.code,
+      maxWidth: 720,
+      body: (ctx, update) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          v4ModalPair(
+            TextField(controller: name,
+              decoration: v4ModalDecoration('Nama aset *')),
+            TextField(controller: brand,
+              decoration: v4ModalDecoration('Merek')),
+          ),
+          const SizedBox(height: 15),
+          v4ModalPair(
+            TextField(controller: model,
+              decoration: v4ModalDecoration('Model / tipe')),
+            TextField(controller: serial,
+              decoration: v4ModalDecoration('Nomor seri')),
+          ),
+          const SizedBox(height: 15),
+          v4ModalPair(
+            TextField(controller: cost, enabled: !unknown,
+              keyboardType: TextInputType.number,
+              decoration: v4ModalDecoration('Nilai perolehan (Rp)')),
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              dense: true,
+              value: unknown,
+              title: const Text('Nilai belum diketahui',
+                style: TextStyle(fontSize: 13)),
+              onChanged: (value) => update(() {
+                unknown = value ?? false;
+                error = '';
+              }),
+            ),
+          ),
+          const SizedBox(height: 17),
+          TextField(
+            controller: reason,
+            maxLines: 3,
+            decoration: v4ModalDecoration('Alasan koreksi *',
+              hint: 'Jelaskan informasi yang dikoreksi'),
+          ),
+          if (error.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            v4ModalError(error),
+          ],
+        ],
+      ),
+      actions: (ctx, update) => [
+        OutlinedButton(onPressed: () => Navigator.pop(ctx, false),
+          child: const Text('Batal')),
+        FilledButton(onPressed: () {
+          final int? value = unknown ? null : int.tryParse(cost.text.trim());
+          if (name.text.trim().isEmpty || reason.text.trim().isEmpty) {
+            update(() => error = 'Nama aset dan alasan koreksi wajib diisi.');
+          } else if (!unknown && (value == null || value < 0)) {
+            update(() => error = 'Nilai perolehan harus angka tidak negatif.');
+          } else {
+            Navigator.pop(ctx, true);
+          }
+        }, child: const Text('Simpan Perubahan')),
+      ],
+    );
+    if (ok == true) {
+      try {
+        final value = unknown ? null : int.tryParse(cost.text.trim());
+        await store.editIdentity(a, name.text, brand.text, model.text,
+          serial.text, value, reason.text);
+        repaint();
+        notify('Informasi aset diperbarui.');
+      } catch (e) {
+        notify(e.toString());
+      }
     }
-    for(final c in [name,brand,model,serial,cost,reason]){c.dispose();}
+    for (final controller in [name, brand, model, serial, cost, reason]) {
+      controller.dispose();
+    }
   }
 
   Future<void> v4Condition(AssetRecord a) async {
-    var condition=a.condition;
-    final reason=TextEditingController();
-    final ok=await showDialog<bool>(context:context,builder:(ctx)=>
-      StatefulBuilder(builder:(ctx,update)=>AlertDialog(
-        title:const Text('Ubah Kondisi Aset'),
-        content:Column(mainAxisSize:MainAxisSize.min,children:[
-          Text('Sebelumnya: '+a.condition),
-          DropdownButton<String>(value:condition,isExpanded:true,
-            items:['Baru','Baik','Cukup','Kurang Baik','Rusak'].map((v)=>
-              DropdownMenuItem(value:v,child:Text(v))).toList(),
-            onChanged:(v)=>update(()=>condition=v??condition)),
-          TextField(controller:reason,maxLines:3,
-            decoration:const InputDecoration(labelText:'Alasan / hasil pemeriksaan *')),
-        ]),
-        actions:[
-          TextButton(onPressed:()=>Navigator.pop(ctx,false),child:const Text('Batal')),
-          FilledButton(onPressed:()=>Navigator.pop(ctx,true),child:const Text('Simpan')),
-        ])));
-    if(ok==true){
-      try{await store.editCondition(a,condition,reason.text);repaint();}
-      catch(e){notify(e.toString());}
+    var condition = a.condition;
+    final reason = TextEditingController();
+    var error = '';
+    final ok = await v4ShowModal<bool>(
+      title: 'Ubah Kondisi Aset',
+      subtitle: a.name + ' · ' + a.code,
+      maxWidth: 520,
+      body: (ctx, update) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          v4ModalPair(
+            v4ReadonlyField('Kondisi saat ini', a.condition),
+            DropdownButtonFormField<String>(
+              key: const ValueKey('condition-selector'),
+              initialValue: condition,
+              isExpanded: true,
+              menuMaxHeight: 260,
+              dropdownColor: Colors.white,
+              decoration: v4ModalDecoration('Kondisi baru *'),
+              items: ['Baru', 'Baik', 'Cukup', 'Kurang Baik', 'Rusak']
+                .map((value) => DropdownMenuItem(
+                  value: value, child: Text(value))).toList(),
+              onChanged: (value) => update(() {
+                condition = value ?? condition;
+                error = '';
+              }),
+            ),
+            breakpoint: 430,
+          ),
+          const SizedBox(height: 18),
+          TextField(controller: reason, maxLines: 3,
+            decoration: v4ModalDecoration('Alasan / hasil pemeriksaan *',
+              hint: 'Jelaskan kondisi yang ditemukan')),
+          if (error.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            v4ModalError(error),
+          ],
+        ],
+      ),
+      actions: (ctx, update) => [
+        OutlinedButton(onPressed: () => Navigator.pop(ctx, false),
+          child: const Text('Batal')),
+        FilledButton(onPressed: () {
+          if (reason.text.trim().isEmpty) {
+            update(() => error = 'Alasan atau hasil pemeriksaan wajib diisi.');
+          } else if (condition == a.condition) {
+            update(() => error = 'Pilih kondisi yang berbeda dari sebelumnya.');
+          } else {
+            Navigator.pop(ctx, true);
+          }
+        }, child: const Text('Simpan Perubahan')),
+      ],
+    );
+    if (ok == true) {
+      try {
+        await store.editCondition(a, condition, reason.text);
+        repaint();
+        notify('Kondisi aset diperbarui.');
+      } catch (e) {
+        notify(e.toString());
+      }
     }
     reason.dispose();
   }
 
   Future<void> v4Status(AssetRecord a) async {
-    var status=a.status;
-    final reason=TextEditingController();
-    final ok=await showDialog<bool>(context:context,builder:(ctx)=>
-      StatefulBuilder(builder:(ctx,update)=>AlertDialog(
-        title:const Text('Ubah Status Aset'),
-        content:Column(mainAxisSize:MainAxisSize.min,children:[
-          Text('Status saat ini: '+a.status),
-          DropdownButton<String>(value:status,isExpanded:true,
-            items:['Tersedia','Digunakan','Dalam Perbaikan','Hilang','Dihapuskan']
-              .map((v)=>DropdownMenuItem(value:v,child:Text(v))).toList(),
-            onChanged:(v)=>update(()=>status=v??status)),
-          if(status=='Dihapuskan'||status=='Hilang')const Padding(
-            padding:EdgeInsets.all(10),child:Text(
-              'Perubahan penting: konfirmasi tambahan diperlukan.',
-              style:TextStyle(color:danger))),
-          TextField(controller:reason,maxLines:3,
-            decoration:const InputDecoration(labelText:'Alasan perubahan *')),
-        ]),
-        actions:[
-          TextButton(onPressed:()=>Navigator.pop(ctx,false),child:const Text('Batal')),
-          FilledButton(onPressed:()=>Navigator.pop(ctx,true),child:const Text('Lanjutkan')),
-        ])));
-    if(ok==true){
-      var confirmed=true;
-      if(status=='Dihapuskan'||status=='Hilang'){
-        if (!mounted) { reason.dispose(); return; }
-        confirmed=await showDialog<bool>(context:context,builder:(ctx)=>AlertDialog(
-          title:const Text('Konfirmasi Perubahan Penting'),
-          content:Text('Pastikan perubahan status '+status+
-            ' sudah didukung prosedur perusahaan. Prototipe lokal belum mempunyai persetujuan otorisasi.'),
-          actions:[
-            TextButton(onPressed:()=>Navigator.pop(ctx,false),child:const Text('Batal')),
-            FilledButton(onPressed:()=>Navigator.pop(ctx,true),child:const Text('Konfirmasi')),
-          ]))??false;
+    var status = a.status;
+    final reason = TextEditingController();
+    var error = '';
+    final ok = await v4ShowModal<bool>(
+      title: 'Ubah Status Aset',
+      subtitle: a.name + ' · ' + a.code,
+      maxWidth: 520,
+      body: (ctx, update) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          v4ModalPair(
+            v4ReadonlyField('Status saat ini', a.status),
+            DropdownButtonFormField<String>(
+              key: const ValueKey('status-selector'),
+              initialValue: status,
+              isExpanded: true,
+              menuMaxHeight: 260,
+              dropdownColor: Colors.white,
+              decoration: v4ModalDecoration('Status baru *'),
+              // Disposal is a dedicated, guarded action, not a regular status.
+              items: ['Tersedia', 'Digunakan', 'Dalam Perbaikan', 'Hilang']
+                .map((value) => DropdownMenuItem(
+                  value: value, child: Text(value))).toList(),
+              onChanged: (value) => update(() {
+                status = value ?? status;
+                error = '';
+              }),
+            ),
+            breakpoint: 430,
+          ),
+          const SizedBox(height: 18),
+          TextField(controller: reason, maxLines: 3,
+            decoration: v4ModalDecoration('Alasan perubahan *',
+              hint: 'Jelaskan dasar perubahan status')),
+          if (status == 'Hilang') ...[
+            const SizedBox(height: 12),
+            const Text('Status Hilang memerlukan konfirmasi tambahan.',
+              style: TextStyle(color: danger, fontSize: 12)),
+          ],
+          if (error.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            v4ModalError(error),
+          ],
+        ],
+      ),
+      actions: (ctx, update) => [
+        OutlinedButton(onPressed: () => Navigator.pop(ctx, false),
+          child: const Text('Batal')),
+        FilledButton(onPressed: () {
+          if (reason.text.trim().isEmpty) {
+            update(() => error = 'Alasan perubahan status wajib diisi.');
+          } else if (status == a.status) {
+            update(() => error = 'Pilih status yang berbeda dari sebelumnya.');
+          } else {
+            Navigator.pop(ctx, true);
+          }
+        }, child: const Text('Lanjutkan')),
+      ],
+    );
+    if (ok == true) {
+      var confirmed = true;
+      if (status == 'Hilang') {
+        if (!mounted) {
+          reason.dispose();
+          return;
+        }
+        confirmed = await v4ShowModal<bool>(
+          title: 'Konfirmasi Status Hilang',
+          subtitle: a.name + ' · ' + a.code,
+          maxWidth: 520,
+          body: (ctx, update) => Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Pastikan kejadian kehilangan telah ditindaklanjuti '
+                'sesuai prosedur perusahaan.'),
+              const SizedBox(height: 12),
+              v4ReadonlyField('Status baru', 'Hilang'),
+              const SizedBox(height: 8),
+              const Text('Konfirmasi ini hanya simulasi lokal; '
+                'belum merupakan persetujuan terverifikasi.',
+                style: TextStyle(fontSize: 12, color: muted)),
+            ],
+          ),
+          actions: (ctx, update) => [
+            OutlinedButton(onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Batal')),
+            FilledButton(onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Konfirmasi Hilang')),
+          ],
+        ) ?? false;
       }
-      if(confirmed){
-        try{await store.editStatus(a,status,reason.text);repaint();}
-        catch(e){notify(e.toString());}
+      if (confirmed) {
+        try {
+          await store.editStatus(a, status, reason.text);
+          repaint();
+          notify('Status aset diperbarui.');
+        } catch (e) {
+          notify(e.toString());
+        }
       }
     }
     reason.dispose();
+  }
+
+  Future<void> v4DisposeAsset(AssetRecord a) async {
+    final reason = TextEditingController();
+    final confirmation = TextEditingController();
+    var error = '';
+    final approved = await v4ShowModal<bool>(
+      title: 'Hapuskan Aset',
+      subtitle: a.name + ' · ' + a.code,
+      maxWidth: 570,
+      body: (ctx, update) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          v4ModalError('Tindakan ini mengakhiri penggunaan aset. '
+            'Kode tetap permanen dan tidak dapat dipakai ulang.'),
+          const SizedBox(height: 15),
+          TextField(controller: reason, maxLines: 3,
+            decoration: v4ModalDecoration('Alasan penghapusan *')),
+          const SizedBox(height: 15),
+          TextField(
+            controller: confirmation,
+            decoration: v4ModalDecoration(
+              'Ketik kode aset untuk mengonfirmasi *',
+              hint: a.code),
+          ),
+          const SizedBox(height: 8),
+          const Text('Pratinjau lokal belum memiliki autentikasi '
+            'atau persetujuan berjenjang.',
+            style: TextStyle(color: muted, fontSize: 12)),
+          if (error.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            v4ModalError(error),
+          ],
+        ],
+      ),
+      actions: (ctx, update) => [
+        OutlinedButton(onPressed: () => Navigator.pop(ctx, false),
+          child: const Text('Batal')),
+        FilledButton(
+          style: FilledButton.styleFrom(backgroundColor: danger),
+          onPressed: () {
+            if (reason.text.trim().isEmpty) {
+              update(() => error = 'Alasan penghapusan wajib diisi.');
+            } else if (confirmation.text.trim() != a.code) {
+              update(() => error = 'Kode konfirmasi tidak sesuai.');
+            } else {
+              Navigator.pop(ctx, true);
+            }
+          },
+          child: const Text('Hapuskan Aset'),
+        ),
+      ],
+    );
+    if (approved == true) {
+      try {
+        await store.editStatus(a, 'Dihapuskan', reason.text);
+        repaint();
+        notify('Aset berstatus Dihapuskan; riwayat tetap tersedia.');
+      } catch (e) {
+        notify(e.toString());
+      }
+    }
+    reason.dispose();
+    confirmation.dispose();
   }
 }
