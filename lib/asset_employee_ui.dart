@@ -97,7 +97,7 @@ extension _AssetEmployeeScreens on _AssetScreenState {
                   TableRow(
                   decoration: BoxDecoration(
                     color: _hoveredTableRow == 'employee:' + employee.id
-                      ? lightBlue : Colors.transparent,
+                      ? _AssetScreenState.lightBlue : Colors.transparent,
                     border: const Border(bottom: BorderSide(color: border))),
                   children: [
                       _v5EmployeeCell(Text(employee.name,

@@ -120,7 +120,7 @@ extension _AssignedAssetsScreens on _AssetScreenState {
                 for (final batch in visible)
                   TableRow(decoration: BoxDecoration(
                     color: _hoveredTableRow == 'assignment:' + batch.id
-                      ? lightBlue : Colors.transparent,
+                      ? _AssetScreenState.lightBlue : Colors.transparent,
                     border: const Border(bottom: BorderSide(color: border))),
                     children: [
                       _v5AssignedCell(Text(batch.draftReference,

@@ -81,7 +81,7 @@ extension _AssetV4Tables on _AssetScreenState {
           TableRow(
             decoration: BoxDecoration(
               color: _hoveredTableRow == 'asset:' + a.id
-                ? lightBlue : Colors.transparent,
+                ? _AssetScreenState.lightBlue : Colors.transparent,
               border: const Border(bottom: BorderSide(color: border))),
             children: [
               _v4Td(Row(children: [
@@ -194,7 +194,7 @@ extension _AssetV4Tables on _AssetScreenState {
           TableRow(
             decoration: BoxDecoration(
               color: _hoveredTableRow == 'event:' + e.hashCode.toString()
-                ? lightBlue : Colors.transparent,
+                ? _AssetScreenState.lightBlue : Colors.transparent,
               border: const Border(bottom: BorderSide(color: border))),
             children: [
               _v4Td(Column(
