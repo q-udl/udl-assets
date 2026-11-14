@@ -2,6 +2,7 @@ part of 'main.dart';
 
 extension AssetLifecycleOperations on AssetStore {
   bool hasOpenCustody(AssetRecord asset) =>
+    asset.holder.trim().isNotEmpty ||
     asset.assignedEmployeeId.isNotEmpty ||
     heldLinesFor(asset.id).isNotEmpty ||
     transfers.any((t) => t.assetId == asset.id &&
@@ -42,7 +43,7 @@ extension AssetLifecycleOperations on AssetStore {
         date.length != 10 ||
         parsed.isAfter(DateTime.now()) ||
         reference.trim().isEmpty || reason.trim().isEmpty ||
-        asset.lifecycle == 'Dilepas') {
+        asset.lifecycle == 'Dilepas' || asset.status == 'Hilang') {
       throw const FormatException('Data pelepasan belum lengkap/valid.');
     }
     if (hasOpenCustody(asset)) {
