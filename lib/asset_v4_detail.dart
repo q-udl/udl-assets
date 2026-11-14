@@ -67,7 +67,7 @@ extension _AssetV4Detail on _AssetScreenState {
         ]),
         if(pending.isNotEmpty)...[
           const Divider(height:28),
-          Text('Serah terima menunggu penerimaan (simulasi lokal)',
+          Text('Serah terima menunggu konfirmasi penerimaan',
             style:const TextStyle(fontWeight:FontWeight.bold,color:amber)),
           Text('Tujuan: '+pending.first.toLocation+' · Penerima: '+
             pending.first.toHolder),
@@ -565,7 +565,7 @@ extension _AssetV4Detail on _AssetScreenState {
               const SizedBox(height: 12),
               v4ReadonlyField('Status baru', 'Hilang'),
               const SizedBox(height: 8),
-              const Text('Konfirmasi ini hanya simulasi lokal; '
+              const Text('Konfirmasi dicatat di aplikasi; '
                 'belum merupakan persetujuan terverifikasi.',
                 style: TextStyle(fontSize: 12, color: muted)),
             ],
