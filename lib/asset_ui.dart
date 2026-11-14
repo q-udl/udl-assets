@@ -51,6 +51,11 @@ class _AssetScreenState extends State<AssetScreen> {
   String statusFilter = 'Semua status';
   String categoryFilter = 'Semua kategori';
   AssetRecord? selected;
+  AssetEmployee? selectedEmployee;
+  AssetAssignment? selectedAssignment;
+  String v5EmployeeSearch = '', v5EmployeeFilter = 'Semua';
+  String v5AssignmentSearch = '', v5AssignmentFilter = 'Semua';
+  int v5AssignmentPage = 0, v5AssignmentPerPage = 20;
   String? viewedPhotoId;
   void repaint() => setState(() {});
   void v4Change(VoidCallback callback) => setState(callback);
@@ -67,7 +72,9 @@ class _AssetScreenState extends State<AssetScreen> {
   static const danger = Color(0xFFC04D53);
 
   final labels = const ['Ringkasan', 'Daftar Aset', 'Master Klasifikasi',
-    'Riwayat', 'Pengaturan', 'Master Lokasi', 'Registrasi Aset'];
+    'Riwayat', 'Pengaturan', 'Master Lokasi', 'Registrasi Aset',
+    'Assigned Assets', 'Master Karyawan', 'Tugaskan Aset',
+    'Pengembalian Aset'];
   final icons = const [
     Icons.space_dashboard_outlined,
     Icons.inventory_2_outlined,
@@ -76,6 +83,10 @@ class _AssetScreenState extends State<AssetScreen> {
     Icons.tune_rounded,
     Icons.place_outlined,
     Icons.add_box_outlined,
+    Icons.assignment_ind_outlined,
+    Icons.people_alt_outlined,
+    Icons.add_task_outlined,
+    Icons.assignment_return_outlined,
   ];
 
   void notify(String message) {
@@ -174,7 +185,25 @@ class _AssetScreenState extends State<AssetScreen> {
       }
       page = index;
       selected = null;
+      selectedEmployee = null;
+      selectedAssignment = null;
       viewedPhotoId = null;
+    });
+  }
+
+  void backFromCurrent() {
+    setState(() {
+      if (selected != null) {
+        selected = null;
+      } else if (selectedEmployee != null) {
+        selectedEmployee = null;
+      } else if (page == 10) {
+        page = 7;
+      } else if (selectedAssignment != null) {
+        selectedAssignment = null;
+      } else if (page == 9) {
+        page = 7;
+      }
     });
   }
 
@@ -442,12 +471,14 @@ class _AssetScreenState extends State<AssetScreen> {
                 _sidebarSectionLabel('MENU UTAMA',
                   condensed: condensed),
                 _sideItem(1, inDrawer: inDrawer, condensedOverride: condensed),
+                _sideItem(7, inDrawer: inDrawer, condensedOverride: condensed),
                 _sideItem(3, inDrawer: inDrawer, condensedOverride: condensed),
                 const SizedBox(height: 7),
                 _sidebarSectionLabel('MASTER DATA',
                   condensed: condensed),
                 _sideItem(2, inDrawer: inDrawer, condensedOverride: condensed),
                 _sideItem(5, inDrawer: inDrawer, condensedOverride: condensed),
+                _sideItem(8, inDrawer: inDrawer, condensedOverride: condensed),
                 Padding(
                   padding: EdgeInsets.symmetric(
                     horizontal: condensed ? 15 : 18, vertical: 10),
@@ -466,8 +497,16 @@ class _AssetScreenState extends State<AssetScreen> {
 
   Widget titleArea() {
     final title = selected != null ? 'Detail Aset' :
+      selectedEmployee != null ? 'Detail Karyawan' :
+      (selectedAssignment != null && page == 7) ? 'Detail Penugasan' :
       page == 0 ? 'Ringkasan Aset' : labels[page];
     final description = selected != null ? 'Informasi, posisi, dan jejak aktivitas aset' :
+      selectedEmployee != null ? 'Aset yang dikuasai dan riwayat penugasan karyawan.' :
+      (selectedAssignment != null && page == 7) ? 'Serah terima, pengembalian, dan dokumen terkait.' :
+      page == 7 ? 'Pengendalian penugasan aset kepada karyawan.' :
+      page == 8 ? 'Data referensi karyawan untuk penugasan aset.' :
+      page == 9 ? 'Pilih karyawan dan beberapa aset untuk diserahkan.' :
+      page == 10 ? 'Pemeriksaan dan pengembalian aset secara sebagian atau seluruhnya.' :
       page == 0 ? 'Pantau kondisi dan distribusi aset perusahaan dari satu tempat.' :
       page == 1 ? 'Temukan, registrasikan, dan kelola seluruh inventaris perusahaan.' :
       page == 2 ? 'Kelola kategori, subkategori, dan jenis aset operasional.' :
@@ -502,8 +541,9 @@ class _AssetScreenState extends State<AssetScreen> {
         const SizedBox(height: 5),
         Text(description, style: const TextStyle(fontSize: 13, color: muted)),
         const SizedBox(height: 12),
-        if (selected != null)
-          outlineButton('Kembali', Icons.arrow_back_rounded, () => setState(() => selected = null)),
+        if (selected != null || selectedEmployee != null ||
+            selectedAssignment != null || page == 9 || page == 10)
+          outlineButton('Kembali', Icons.arrow_back_rounded, backFromCurrent),
         if (selected == null && page == 1)
           primaryButton('Tambah Aset', Icons.add_rounded, () => setState(() => page = 6)),
       ] else
@@ -515,8 +555,9 @@ class _AssetScreenState extends State<AssetScreen> {
             Text(description, style: const TextStyle(fontSize: 13, color: muted)),
           ])),
           const SizedBox(width: 14),
-          if (selected != null)
-            outlineButton('Kembali', Icons.arrow_back_rounded, () => setState(() => selected = null)),
+          if (selected != null || selectedEmployee != null ||
+              selectedAssignment != null || page == 9 || page == 10)
+            outlineButton('Kembali', Icons.arrow_back_rounded, backFromCurrent),
           if (selected == null && page == 1)
             primaryButton('Tambah Aset', Icons.add_rounded, () => setState(() => page = 6)),
         ]),
@@ -1500,7 +1541,7 @@ class _AssetScreenState extends State<AssetScreen> {
                       constraints.maxWidth < 720 ? 16.0 : 28.0;
                     // Full-width data views, bounded content on other pages.
                     final dataView = selected == null &&
-                      (page == 1 || page == 3);
+                      (page == 1 || page == 3 || page == 7 || page == 8);
                     return SingleChildScrollView(
                       padding: EdgeInsets.fromLTRB(
                         contentPadding, 24, contentPadding, 45),
@@ -1534,11 +1575,39 @@ class _AssetScreenState extends State<AssetScreen> {
                               ],
                               const SizedBox(height: 23),
                               if (selected != null) v4Detail(selected!)
+                              else if (selectedEmployee != null && page == 8)
+                                v5EmployeeDetail(selectedEmployee!)
+                              else if (selectedAssignment != null && page == 7)
+                                v5AssignmentDetail(selectedAssignment!)
                               else if (page == 0) dashboard()
                               else if (page == 1) v4Catalog()
                               else if (page == 2) v4Taxonomy()
                               else if (page == 3) v4History()
                               else if (page == 5) v4Locations()
+                              else if (page == 7) v5AssignedAssets()
+                              else if (page == 8) v5Employees()
+                              else if (page == 9) V5AssignmentForm(
+                                store: store,
+                                onCreated: (batch) {
+                                  setState(() {
+                                    page = 7;
+                                    selectedAssignment = batch;
+                                  });
+                                  notify('Penugasan dibuat. '
+                                    'Menunggu penerimaan simulasi.');
+                                },
+                                onOpenEmployees: () => navigate(8),
+                              )
+                              else if (page == 10 && selectedAssignment != null)
+                                V5ReturnForm(
+                                  store: store,
+                                  assignment: selectedAssignment!,
+                                  onCompleted: (receipt) {
+                                    setState(() => page = 7);
+                                    notify('Pengembalian disimpan: ' +
+                                      receipt.draftReference);
+                                  },
+                                )
                               else if (page == 6) V4RegistrationPage(
                                 store: store,
                                 onCompleted: (created) {
