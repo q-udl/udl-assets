@@ -187,6 +187,8 @@ extension AssetAssignmentOperations on AssetStore {
     required String bastNumber,
     required String handoverLocation,
     required String handedOverByName,
+    String handedOverByJobTitle = '',
+    String handedOverByUnit = '',
   }) async {
     if (!assignments.any((b) => b.id == record.id) ||
         !record.isHandoverConfirmed) {
@@ -206,13 +208,25 @@ extension AssetAssignmentOperations on AssetStore {
         (record.handoverLocation.isNotEmpty &&
           record.handoverLocation != handoverLocation.trim()) ||
         (record.bastNumber.isNotEmpty &&
-          record.bastNumber != bastNumber.trim())) {
+          record.bastNumber != bastNumber.trim()) ||
+        (handedOverByJobTitle.trim().isNotEmpty &&
+          record.handedOverByJobTitle.isNotEmpty &&
+          record.handedOverByJobTitle != handedOverByJobTitle.trim()) ||
+        (handedOverByUnit.trim().isNotEmpty &&
+          record.handedOverByUnit.isNotEmpty &&
+          record.handedOverByUnit != handedOverByUnit.trim())) {
       throw const FormatException(
         'Informasi serah terima yang sudah tercatat tidak boleh diubah.');
     }
     final before = backup();
     try {
       record.handedOverByName = handedOverByName.trim();
+      if (handedOverByJobTitle.trim().isNotEmpty) {
+        record.handedOverByJobTitle = handedOverByJobTitle.trim();
+      }
+      if (handedOverByUnit.trim().isNotEmpty) {
+        record.handedOverByUnit = handedOverByUnit.trim();
+      }
       record.handoverLocation = handoverLocation.trim();
       record.bastNumber = bastNumber.trim();
       for (final line in record.lines) {
