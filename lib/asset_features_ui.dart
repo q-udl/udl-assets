@@ -140,13 +140,10 @@ extension _AssetFeaturePanels on _AssetScreenState {
     );
     if (selectedKind == null || !mounted) return;
     try {
-      final selected = await ImagePicker().pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 960, maxHeight: 960, imageQuality: 65,
-      );
-      if (selected == null) return;
-      await store.addPhoto(asset, await selected.readAsBytes(),
-        selected.name, selectedKind);
+      final selected = await AssetPhotoPicker.choose(context);
+      if (selected == null || !mounted) return;
+      await store.addPhoto(asset, selected.bytes,
+        selected.fileName, selectedKind);
       viewedPhotoId = store.photosFor(asset.id).last.id;
       repaint();
       notify('Foto aktual aset berhasil dicatat');
