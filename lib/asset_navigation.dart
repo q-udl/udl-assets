@@ -37,6 +37,8 @@ extension _AssetViewNavigation on _AssetScreenState {
     'historyPerPage': v4HistoryPerPage,
     'employeeQuery': v5EmployeeSearch,
     'employeeFilter': v5EmployeeFilter,
+    'employeePage': v5EmployeePage,
+    'employeePerPage': v5EmployeePerPage,
     'assignmentQuery': v5AssignmentSearch,
     'assignmentFilter': v5AssignmentFilter,
     'assignmentPage': v5AssignmentPage,
@@ -83,6 +85,8 @@ extension _AssetViewNavigation on _AssetScreenState {
     v5EmployeeSearch = data['employeeQuery'] as String? ?? '';
     _employeeSearchController.text = v5EmployeeSearch;
     v5EmployeeFilter = data['employeeFilter'] as String? ?? 'Semua';
+    v5EmployeePage = data['employeePage'] as int? ?? 0;
+    v5EmployeePerPage = data['employeePerPage'] as int? ?? 20;
     v5AssignmentSearch = data['assignmentQuery'] as String? ?? '';
     _assignmentSearchController.text = v5AssignmentSearch;
     v5AssignmentFilter = data['assignmentFilter'] as String? ?? 'Semua';
