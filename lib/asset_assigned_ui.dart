@@ -38,7 +38,7 @@ extension _AssignedAssetsScreens on _AssetScreenState {
                 v5AssignmentPage = 0;
               }));
             final status = filterDropdown(v5AssignmentFilter,
-              ['Semua', 'Menunggu Penerimaan', 'Aktif', 'Selesai', 'Ditolak'],
+              ['Semua', 'Menunggu Serah Terima', 'Aktif', 'Selesai', 'Dibatalkan'],
               (value) => v4Change(() {
                 v5AssignmentFilter = value;
                 v5AssignmentPage = 0;
