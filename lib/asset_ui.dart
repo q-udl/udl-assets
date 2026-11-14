@@ -39,6 +39,8 @@ class _AssetScreenState extends State<AssetScreen> {
   int page = 1;
   String query = '';
   String v4LocationFilter = 'Semua lokasi';
+  String v4LocationAreaFilter = '', v4LocationSpotFilter = '';
+  String v6SiteId = '', v6AreaId = '', v6LocationSearch = '';
   String v4ConditionFilter = 'Semua kondisi';
   bool v4NoPic = false, v4NoPhoto = false, v4Attention = false,
     v4NeedsClassification = false, v4SortAscending = true;
@@ -142,6 +144,7 @@ class _AssetScreenState extends State<AssetScreen> {
     statusFilter = 'Semua status';
     categoryFilter = 'Semua kategori';
     v4LocationFilter = 'Semua lokasi';
+    v4LocationAreaFilter = ''; v4LocationSpotFilter = '';
     v4ConditionFilter = 'Semua kondisi';
     v4NoPic = false;
     v4NoPhoto = false;
@@ -159,12 +162,15 @@ class _AssetScreenState extends State<AssetScreen> {
     statusFilter != 'Semua status' ||
     categoryFilter != 'Semua kategori' ||
     v4LocationFilter != 'Semua lokasi' ||
+    v4LocationAreaFilter.isNotEmpty || v4LocationSpotFilter.isNotEmpty ||
     v4ConditionFilter != 'Semua kondisi' ||
     v4NoPic || v4NoPhoto || v4Attention || v4NeedsClassification;
 
   void openAssetListFromMaster({
     String? category,
     String? location,
+    String? areaId,
+    String? spotId,
     String? type,
   }) {
     setState(() {
@@ -173,6 +179,8 @@ class _AssetScreenState extends State<AssetScreen> {
       selected = null;
       categoryFilter = category ?? 'Semua kategori';
       v4LocationFilter = location ?? 'Semua lokasi';
+      v4LocationAreaFilter = areaId ?? '';
+      v4LocationSpotFilter = spotId ?? '';
       query = type ?? '';
       _assetSearchController.text = query;
     });
