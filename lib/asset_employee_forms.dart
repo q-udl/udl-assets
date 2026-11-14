@@ -58,7 +58,7 @@ extension _AssetEmployeeForms on _AssetScreenState {
             ),
           ),
           const SizedBox(height: 14),
-          editField(startDate, 'Tanggal mulai (opsional; YYYY-MM-DD)'),
+          editField(startDate, 'Tanggal Bergabung (opsional; YYYY-MM-DD)'),
           if (isEdit) ...[
             const SizedBox(height: 14),
             editField(reason, 'Alasan perubahan *'),
