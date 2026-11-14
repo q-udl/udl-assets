@@ -59,7 +59,7 @@ class _BulkImportDialogState extends State<BulkImportDialog> {
 
   Future<void> selectTemplate() async {
     if (busy) return;
-    setState(() { busy = true; error = null; preview = null; });
+    setState(() { busy = true; error = null; });
     try {
       final result = await FilePicker.pickFiles(
         type: FileType.custom,
@@ -216,6 +216,24 @@ class _BulkImportDialogState extends State<BulkImportDialog> {
       : (size.height > 780 ? 690.0 : size.height - 42))
       .clamp(180.0, size.height).toDouble();
     final current = preview;
+    final importTools = <Widget>[
+      OutlinedButton.icon(
+        key: const ValueKey('rv22-download-template'),
+        onPressed: busy ? null : downloadTemplate,
+        icon: const Icon(Icons.file_download_outlined),
+        label: const Text('Unduh Template')),
+      OutlinedButton.icon(
+        key: const ValueKey('rv22-upload-template'),
+        onPressed: busy ? null : selectTemplate,
+        icon: const Icon(Icons.upload_file_outlined),
+        label: const Text('Upload Template')),
+      if (current != null && current.hasErrors)
+        TextButton.icon(
+          key: const ValueKey('rv22-error-report'),
+          onPressed: busy ? null : downloadErrors,
+          icon: const Icon(Icons.report_outlined),
+          label: const Text('Unduh Laporan Kesalahan')),
+    ];
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
@@ -269,24 +287,23 @@ class _BulkImportDialogState extends State<BulkImportDialog> {
                   '3. Validasi & Konfirmasi',
                   style: TextStyle(fontSize: 12, color: muted)),
               const SizedBox(height: 13),
-              Wrap(spacing: 9, runSpacing: 9, children: [
-                OutlinedButton.icon(
-                  key: const ValueKey('rv22-download-template'),
-                  onPressed: busy ? null : downloadTemplate,
-                  icon: const Icon(Icons.file_download_outlined),
-                  label: const Text('Unduh Template')),
-                OutlinedButton.icon(
-                  key: const ValueKey('rv22-upload-template'),
-                  onPressed: busy ? null : selectTemplate,
-                  icon: const Icon(Icons.upload_file_outlined),
-                  label: const Text('Upload Template')),
-                if (current != null && current.hasErrors)
-                  TextButton.icon(
-                    key: const ValueKey('rv22-error-report'),
-                    onPressed: busy ? null : downloadErrors,
-                    icon: const Icon(Icons.report_outlined),
-                    label: const Text('Unduh Laporan Kesalahan')),
-              ]),
+              if (mobile)
+                Column(
+                  key: const ValueKey('rv28-import-mobile-tools'),
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (var i = 0; i < importTools.length; i++) ...[
+                      SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: importTools[i]),
+                      if (i < importTools.length - 1)
+                        const SizedBox(height: 8),
+                    ],
+                  ],
+                )
+              else
+                Wrap(spacing: 9, runSpacing: 9, children: importTools),
               const SizedBox(height: 10),
               if (busy) const LinearProgressIndicator(),
               if (error != null) Container(
