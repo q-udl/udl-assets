@@ -8,6 +8,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 
 part 'asset_taxonomy.dart';
 part 'asset_data.dart';
+part 'asset_operations.dart';
 part 'asset_ui.dart';
 part 'asset_features_ui.dart';
 
