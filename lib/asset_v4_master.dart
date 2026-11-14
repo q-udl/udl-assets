@@ -159,7 +159,8 @@ extension _AssetV4Master on _AssetScreenState {
         sectionHeader('Master Klasifikasi Aset',
           subtitle:'Kelola kategori, subkategori, dan jenis aset operasional'),
         const SizedBox(height:12),
-        TextField(decoration:const InputDecoration(
+        TextField(controller: _taxonomySearchController,
+          decoration:const InputDecoration(
           hintText:'Cari klasifikasi...',prefixIcon:Icon(Icons.search)),
           onChanged:(v)=>v4Change(()=>v4TaxonomySearch=v)),
         const SizedBox(height:8),
