@@ -16,6 +16,17 @@ extension _AssetEmployeeForms on _AssetScreenState {
     var workLocation = employee?.workLocation ??
       (store.locations.isEmpty ? '' : store.locations.first);
     var error = '';
+    final originalWorkLocation = workLocation;
+    final startingValues = [code.text, name.text, unit.text,
+      department.text, jobTitle.text, startDate.text, reason.text];
+    bool hasChanges() {
+      final current = [code.text, name.text, unit.text, department.text,
+        jobTitle.text, startDate.text, reason.text];
+      for (var i = 0; i < current.length; i++) {
+        if (current[i] != startingValues[i]) return true;
+      }
+      return workLocation != originalWorkLocation;
+    }
 
     Widget editField(TextEditingController controller, String label,
         {bool enabled = true}) => TextField(
@@ -28,6 +39,7 @@ extension _AssetEmployeeForms on _AssetScreenState {
         ? 'Kode ' + employee.code + ' tidak dapat diubah'
         : 'Untuk keperluan penguasaan aset, bukan database HRIS',
       maxWidth: 720,
+      isDirty: hasChanges,
       body: (ctx, update) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -69,8 +81,8 @@ extension _AssetEmployeeForms on _AssetScreenState {
         ],
       ),
       actions: (ctx, update) => [
-        OutlinedButton(onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Batal')),
+        OutlinedButton(onPressed: () => assetRequestModalClose(
+          ctx, isDirty: hasChanges), child: const Text('Batal')),
         FilledButton(onPressed: () {
           if (name.text.trim().length < 3 ||
               unit.text.trim().isEmpty ||
