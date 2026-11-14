@@ -1,6 +1,6 @@
 part of 'main.dart';
 
-extension AssetV4Detail on _AssetScreenState {
+extension _AssetV4Detail on _AssetScreenState {
   Widget v4Detail(AssetRecord a) {
     final photos=store.photosFor(a.id);
     final primary=store.primaryPhotoFor(a.id);
@@ -228,6 +228,7 @@ extension AssetV4Detail on _AssetScreenState {
     if(ok==true){
       var confirmed=true;
       if(status=='Dihapuskan'||status=='Hilang'){
+        if (!mounted) { reason.dispose(); return; }
         confirmed=await showDialog<bool>(context:context,builder:(ctx)=>AlertDialog(
           title:const Text('Konfirmasi Perubahan Penting'),
           content:Text('Pastikan perubahan status '+status+
