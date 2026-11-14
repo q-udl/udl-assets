@@ -120,7 +120,7 @@ extension _AssetEmployeeScreens on _AssetScreenState {
                       _v5EmployeeCell(
                         Text(employee.active ? 'Aktif' : 'Tidak Aktif',
                           style: TextStyle(
-                            color: employee.active ? green : muted)),
+                            color: employee.active ? _AssetScreenState.green : muted)),
                         employee: employee),
                       _v5EmployeeCell(const Icon(
                         Icons.chevron_right, color: muted),
@@ -171,7 +171,7 @@ extension _AssetEmployeeScreens on _AssetScreenState {
               ],
             )),
             Text(employee.active ? 'Aktif' : 'Tidak Aktif',
-              style: TextStyle(color: employee.active ? green : danger,
+              style: TextStyle(color: employee.active ? _AssetScreenState.green : danger,
                 fontWeight: FontWeight.bold)),
           ]),
           const SizedBox(height: 15),
