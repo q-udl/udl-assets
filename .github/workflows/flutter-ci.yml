@@ -20,6 +20,33 @@ jobs:
         run: flutter analyze
       - name: Unit tests
         run: flutter test
+      - name: Render and check BAST / BA photo appendices
+        run: |
+          set -euo pipefail
+          if ! command -v pdfinfo >/dev/null || ! command -v pdftoppm >/dev/null || ! command -v pdftotext >/dev/null; then
+            echo "::warning::Poppler tools unavailable; PDF visual QA must be done manually."
+            exit 0
+          fi
+          mkdir -p build/rv030-pdf-qa/render
+          for file in build/rv030-pdf-qa/*.pdf; do
+            test -f "$file"
+            pages=$(pdfinfo "$file" | awk '/^Pages:/ {print $2}')
+            echo "$file -> $pages pages"
+            test "$pages" -ge 2
+            if pdftotext -f 1 -l 1 "$file" - | grep -qi 'LAMPIRAN FOTO BUKTI'; then
+              echo "Appendix heading incorrectly displayed on page 1: $file"
+              exit 1
+            fi
+            pdftotext "$file" - | grep -qi 'LAMPIRAN FOTO BUKTI'
+            pdftoppm -f 1 -l 3 -png -r 115 "$file"               "build/rv030-pdf-qa/render/$(basename "$file" .pdf)"
+          done
+      - name: Preserve RV030 PDF visual QA
+        uses: actions/upload-artifact@v4
+        with:
+          name: udl-assets-rv030-pdf-qa
+          path: build/rv030-pdf-qa/
+          if-no-files-found: warn
+          retention-days: 10
       - name: Build Flutter Web
         run: flutter build web --release
 
