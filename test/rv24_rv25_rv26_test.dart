@@ -111,7 +111,7 @@ void main() {
         child: const Text('Buka Pilihan Foto'))))));
     await tester.tap(find.text('Buka Pilihan Foto'));
     await tester.pumpAndSettle();
-    expect(find.text('Pilih Sumber Foto'), findsOneWidget);
+    expect(find.text('Tambahkan Foto Aset'), findsOneWidget);
     for (final id in ['rv25-camera','rv25-gallery','rv25-file']) {
       expect(find.byKey(ValueKey(id)), findsOneWidget);
     }
