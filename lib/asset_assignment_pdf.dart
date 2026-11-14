@@ -198,8 +198,14 @@ class AssetBastPdf {
           bytes = Uint8List.fromList(img.encodeJpg(decoded, quality: 85));
         }
         final picture = pw.MemoryImage(bytes);
+        final oriented = img.decodeImage(bytes);
+        final portrait = oriented != null && oriented.height > oriented.width;
+        final cardWidth = portrait ? 174.0 : 224.0;
+        final displayWidth = portrait ? 156.0 : 206.0;
+        final displayHeight = portrait ? 195.0 : 130.0;
         pictures.add(pw.Container(
-          width: 205, margin: const pw.EdgeInsets.only(bottom: 12),
+          width: cardWidth,
+          margin: const pw.EdgeInsets.only(bottom: 12),
           child: pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
@@ -207,13 +213,13 @@ class AssetBastPdf {
                 decoration: pw.BoxDecoration(border: pw.Border.all(
                   color: PdfColors.blueGrey200)),
                 padding: const pw.EdgeInsets.all(5),
-                child: pw.Image(picture, width: 190,
-                  height: 122, fit: pw.BoxFit.contain)),
+                child: pw.Image(picture, width: displayWidth,
+                  height: displayHeight, fit: pw.BoxFit.contain)),
               pw.SizedBox(height: 5),
               pw.Text('Aset: ' + entry.value, style: bold(8)),
-              pw.Text('Bukti: ' + text(photo.fileName),
-                style: regular(7.5)),
               pw.Text('Dicatat: ' + date(photo.recordedAt),
+                style: regular(7.5)),
+              pw.Text('Bukti: ' + text(photo.fileName),
                 style: regular(7.5)),
             ],
           ),
