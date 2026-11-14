@@ -5,6 +5,10 @@ class _AssetScreenState extends State<AssetScreen> {
   final GlobalKey<ScaffoldState> _shellKey = GlobalKey<ScaffoldState>();
   final TextEditingController _assetSearchController = TextEditingController();
   final TextEditingController _historySearchController = TextEditingController();
+  final TextEditingController _taxonomySearchController = TextEditingController();
+  final TextEditingController _locationSearchController = TextEditingController();
+  final TextEditingController _employeeSearchController = TextEditingController();
+  final TextEditingController _assignmentSearchController = TextEditingController();
   final ScrollController _contentScroll = ScrollController();
   final List<Map<String, dynamic>> _navigationHistory = [];
   bool _restoringHistory = false, _formDirty = false;
@@ -37,6 +41,10 @@ class _AssetScreenState extends State<AssetScreen> {
     _contentScroll.dispose();
     _assetSearchController.dispose();
     _historySearchController.dispose();
+    _taxonomySearchController.dispose();
+    _locationSearchController.dispose();
+    _employeeSearchController.dispose();
+    _assignmentSearchController.dispose();
     super.dispose();
   }
 
