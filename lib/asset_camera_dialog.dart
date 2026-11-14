@@ -207,23 +207,28 @@ class _AssetCameraDialogState extends State<AssetCameraDialog> {
                   'Kamera berhenti saat jendela ditutup.',
                   style: TextStyle(fontSize: 12, color: muted)),
               const SizedBox(height: 13),
-              Wrap(
-                alignment: WrapAlignment.end,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  if (captured == null && cameras.length > 1 && ready)
+              Builder(builder: (ctx) {
+                final actions = <Widget>[
+                  if (captured != null)
+                    FilledButton.icon(
+                      key: const ValueKey('rv27-use-capture'),
+                      onPressed: busy ? null : () => Navigator.pop(
+                        context, AssetCameraResult.photo(captured)),
+                      icon: const Icon(Icons.check_rounded),
+                      label: const Text('Gunakan Foto'))
+                  else if (error == null)
+                    FilledButton.icon(
+                      key: const ValueKey('rv27-shutter'),
+                      onPressed: ready && !busy ? shoot : null,
+                      icon: const Icon(Icons.camera_alt_outlined),
+                      label: const Text('Ambil Foto')),
+                  if (captured != null)
                     OutlinedButton.icon(
-                      onPressed: busy ? null : switchCamera,
-                      icon: const Icon(Icons.cameraswitch_outlined),
-                      label: const Text('Ganti Kamera')),
-                  if (captured == null && error != null)
-                    OutlinedButton.icon(
-                      key: const ValueKey('rv27-camera-retry'),
-                      onPressed: busy ? null : initialize,
+                      key: const ValueKey('rv27-retake'),
+                      onPressed: busy ? null :
+                        () => setState(() { captured = null; error = null; }),
                       icon: const Icon(Icons.refresh_outlined),
-                      label: const Text('Coba Lagi')),
+                      label: const Text('Foto Ulang')),
                   if (captured == null && error != null)
                     OutlinedButton.icon(
                       key: const ValueKey('rv27-file-fallback'),
@@ -231,31 +236,41 @@ class _AssetCameraDialogState extends State<AssetCameraDialog> {
                         context, const AssetCameraResult.file()),
                       icon: const Icon(Icons.folder_open_outlined),
                       label: const Text('Pilih File')),
+                  if (captured == null && error != null)
+                    OutlinedButton.icon(
+                      key: const ValueKey('rv27-camera-retry'),
+                      onPressed: busy ? null : initialize,
+                      icon: const Icon(Icons.refresh_outlined),
+                      label: const Text('Coba Lagi')),
+                  if (captured == null && cameras.length > 1 && ready)
+                    OutlinedButton.icon(
+                      onPressed: busy ? null : switchCamera,
+                      icon: const Icon(Icons.cameraswitch_outlined),
+                      label: const Text('Ganti Kamera')),
                   TextButton(
                     onPressed: () => Navigator.pop(context),
                     child: const Text('Batal')),
-                  if (captured != null) ...[
-                    OutlinedButton.icon(
-                      key: const ValueKey('rv27-retake'),
-                      onPressed: busy ? null :
-                        () => setState(() { captured = null; error = null; }),
-                      icon: const Icon(Icons.refresh_outlined),
-                      label: const Text('Foto Ulang')),
-                    FilledButton.icon(
-                      key: const ValueKey('rv27-use-capture'),
-                      onPressed: busy ? null : () => Navigator.pop(
-                        context, AssetCameraResult.photo(captured)),
-                      icon: const Icon(Icons.check_rounded),
-                      label: const Text('Gunakan Foto')),
-                  ] else if (error == null) ...[
-                    FilledButton.icon(
-                      key: const ValueKey('rv27-shutter'),
-                      onPressed: ready && !busy ? shoot : null,
-                      icon: const Icon(Icons.camera_alt_outlined),
-                      label: const Text('Ambil Foto')),
-                  ],
-                ],
-              ),
+                ];
+                return narrow
+                  ? Column(
+                      key: const ValueKey('rv28-camera-mobile-actions'),
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        for (var i = 0; i < actions.length; i++) ...[
+                          SizedBox(height: 48, width: double.infinity,
+                            child: actions[i]),
+                          if (i < actions.length - 1)
+                            const SizedBox(height: 8),
+                        ],
+                      ],
+                    )
+                  : Wrap(
+                      alignment: WrapAlignment.end,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 8, runSpacing: 8,
+                      children: actions.reversed.toList(),
+                    );
+              }),
             ],
           ),
         ),
