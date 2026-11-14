@@ -13,10 +13,10 @@ extension _AssignedAssetsDetail on _AssetScreenState {
           const SizedBox(width: 12),
           Expanded(child: Column(
             crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(batch.draftReference, style: const TextStyle(
+            Text(batch.assignmentReference, style: const TextStyle(
               fontSize: 20, fontWeight: FontWeight.w800, color: ink)),
             const SizedBox(height: 4),
-            const Text('Referensi dokumen penugasan',
+            const Text('Referensi penugasan',
               style: TextStyle(fontSize: 11.5, color: muted)),
           ])),
           badge(batch.status, compact: true,
@@ -40,7 +40,7 @@ extension _AssignedAssetsDetail on _AssetScreenState {
                 selectedAssignment = batch;
                 page = 10;
               })),
-          if (batch.status != 'Dibatalkan')
+          if (batch.canPrintBast)
           outlineButton('Lihat / Cetak BAST',
             Icons.picture_as_pdf_outlined, () async {
             try {
@@ -49,6 +49,9 @@ extension _AssignedAssetsDetail on _AssetScreenState {
               notify('PDF gagal dibuat: ' + error.toString());
             }
           }),
+          if (batch.isHandoverConfirmed && !batch.canPrintBast)
+            outlineButton('Lengkapi Data BAST', Icons.edit_document,
+              () => v5CompleteBastMetadata(batch)),
         ]),
         const SizedBox(height: 12),
         Text(
@@ -75,7 +78,7 @@ extension _AssignedAssetsDetail on _AssetScreenState {
           detailValue('Lokasi Kerja',
             batch.employeeSnapshot['workLocation']?.toString() ?? ''),
           if (batch.handedOverByName.isNotEmpty)
-            detailValue('Yang Menyerahkan', batch.handedOverByName),
+            detailValue('Penyerah', batch.handedOverByName),
           TextButton.icon(
             onPressed: () {
               final record = store.employeeById(batch.employeeId);
@@ -101,6 +104,10 @@ extension _AssignedAssetsDetail on _AssetScreenState {
           detailValue('Konfirmasi serah terima',
             batch.acceptedAt.isEmpty ? 'Belum ada' :
               dateText(batch.acceptedAt)),
+          if (batch.handoverLocation.isNotEmpty)
+            detailValue('Lokasi Serah Terima', batch.handoverLocation),
+          if (batch.bastNumber.isNotEmpty)
+            detailValue('Nomor BAST', batch.bastNumber),
           if (batch.cancelledAt.isNotEmpty)
             detailValue('Dibatalkan pada', dateText(batch.cancelledAt)),
           detailValue('Aset masih dikuasai',
@@ -241,15 +248,18 @@ extension _AssignedAssetsDetail on _AssetScreenState {
       AssetAssignment batch, bool accepted) async {
     final reason = TextEditingController();
     final handedBy = TextEditingController();
+    final handoverAt = TextEditingController();
+    final bastNumber = TextEditingController();
     final proofPhotos = <String, SelectedAssetPhoto>{};
     var error = '';
     Future<dynamic>? modalFullyClosed;
     bool hasChanges() => reason.text.isNotEmpty ||
-      handedBy.text.isNotEmpty || proofPhotos.isNotEmpty;
+      handedBy.text.isNotEmpty || handoverAt.text.isNotEmpty ||
+      bastNumber.text.isNotEmpty || proofPhotos.isNotEmpty;
     final approved = await v4ShowModal<bool>(
       title: accepted ? 'Konfirmasi Serah Terima' :
         'Batalkan Penugasan',
-      subtitle: batch.draftReference,
+      subtitle: batch.assignmentReference,
       maxWidth: 650,
       isDirty: hasChanges,
       body: (ctx, update) {
@@ -270,7 +280,17 @@ extension _AssignedAssetsDetail on _AssetScreenState {
         if (accepted) ...[
           const SizedBox(height: 12),
           TextField(controller: handedBy,
-            decoration: v4ModalDecoration('Yang Menyerahkan (nama petugas) *')),
+            decoration: v4ModalDecoration('Penyerah (nama petugas) *')),
+          const SizedBox(height: 10),
+          TextField(controller: handoverAt,
+            decoration: v4ModalDecoration('Lokasi serah terima aktual *')),
+          const SizedBox(height: 10),
+          TextField(controller: bastNumber,
+            decoration: v4ModalDecoration('Nomor BAST (sesuai DMS) *')),
+          const SizedBox(height: 5),
+          const Text('Nomor resmi diisi dari DMS perusahaan, '
+            'belum diterbitkan otomatis oleh UDL Assets.',
+            style: TextStyle(color: muted, fontSize: 11)),
           const SizedBox(height: 10),
         ],
         v4ReadonlyField('Jumlah aset', batch.lines.length.toString()),
@@ -327,6 +347,10 @@ extension _AssignedAssetsDetail on _AssetScreenState {
               update(() => error = 'Alasan pembatalan wajib diisi.');
             } else if (accepted && handedBy.text.trim().isEmpty) {
               update(() => error = 'Nama pihak yang menyerahkan wajib diisi.');
+            } else if (accepted && handoverAt.text.trim().isEmpty) {
+              update(() => error = 'Lokasi serah terima wajib diisi.');
+            } else if (accepted && bastNumber.text.trim().isEmpty) {
+              update(() => error = 'Nomor BAST dari DMS wajib diisi.');
             } else if (accepted &&
                 batch.lines.any((l) => !proofPhotos.containsKey(l.assetId))) {
               update(() => error =
@@ -344,7 +368,9 @@ extension _AssignedAssetsDetail on _AssetScreenState {
         if (accepted) {
           await store.confirmAssignment(batch, true, reason.text,
             proofPhotos: proofPhotos,
-            handedOverByName: handedBy.text);
+            handedOverByName: handedBy.text,
+            handoverLocation: handoverAt.text,
+            bastNumber: bastNumber.text);
         } else {
           await store.cancelAssignment(batch, reason.text);
         }
@@ -359,6 +385,8 @@ extension _AssignedAssetsDetail on _AssetScreenState {
     if (modalFullyClosed != null) await modalFullyClosed;
     reason.dispose();
     handedBy.dispose();
+    handoverAt.dispose();
+    bastNumber.dispose();
   }
 
   Widget v5CustodyForAsset(AssetRecord asset) {
@@ -386,7 +414,7 @@ extension _AssignedAssetsDetail on _AssetScreenState {
       else for (final batch in history)
         ListTile(
           contentPadding: EdgeInsets.zero,
-          title: Text(batch.draftReference),
+          title: Text(batch.assignmentReference),
           subtitle: Text(
             (batch.employeeSnapshot['name']?.toString() ?? '-') +
             ' · ' + batch.status),
