@@ -123,8 +123,8 @@ void main() {
     await tester.tap(find.text('Lihat QR').first);
     await tester.pumpAndSettle();
     expect(find.text('Identitas QR Aset'), findsOneWidget);
-    expect(find.text('QR pratinjau lokal hanya memuat kode aset. '
-      'Belum terhubung ke sistem online.'), findsOneWidget);
+    expect(find.text('QR memuat token acak, bukan kode aset. '
+      'Pencocokan lokal bukan verifikasi keamanan server.'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -205,9 +205,9 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Master Karyawan').first);
     await tester.pumpAndSettle();
-    expect(find.text('Karyawan Demo A'), findsOneWidget);
-    expect(find.text('Karyawan Demo B'), findsOneWidget);
-    await tester.tap(find.text('Karyawan Demo A').first);
+    expect(find.text('Anisa Putri'), findsOneWidget);
+    expect(find.text('Rafi Pratama'), findsOneWidget);
+    await tester.tap(find.text('Anisa Putri').first);
     await tester.pumpAndSettle();
     expect(find.text('Aset dalam Penguasaan'), findsOneWidget);
     await tester.tap(find.text('Assigned Assets').first);
