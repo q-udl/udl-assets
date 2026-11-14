@@ -32,6 +32,7 @@ part 'asset_lifecycle_operations.dart';
 part 'asset_lifecycle_ui.dart';
 part 'asset_navigation.dart';
 part 'asset_bulk_import.dart';
+part 'asset_bulk_import_operations.dart';
 part 'asset_bulk_import_ui.dart';
 part 'asset_v4_catalog.dart';
 part 'asset_v4_master.dart';
