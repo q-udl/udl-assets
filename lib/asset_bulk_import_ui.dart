@@ -324,7 +324,7 @@ class _BulkImportDialogState extends State<BulkImportDialog> {
               const SizedBox(height: 10),
               SizedBox(
                 height: (mobile ? height * .35 : height * .49)
-                  .clamp(140.0, 340.0),
+                  .clamp(140.0, 340.0).toDouble(),
                 child: Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
