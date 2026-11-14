@@ -75,7 +75,7 @@ void main() {
       name: 'Karyawan Arsip', unit: 'Outlet', department: 'Penjualan',
       jobTitle: 'Supervisor', workLocation: 'Outlet Jepara');
     final asset = store.assets.firstWhere(store.canAssignAsset);
-    final record = await store.createAssignment(
+    await store.createAssignment(
       employeeId: person.id, kind: 'Berkelanjutan',
       assetIds: [asset.id], accessories: {});
     final legacy = jsonDecode(store.backup()) as Map<String, dynamic>;
