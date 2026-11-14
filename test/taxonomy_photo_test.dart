@@ -27,7 +27,7 @@ void main() {
     await store.add('Monitor Dell 24 inci', 'Teknologi Informasi & Komunikasi',
       'Dell', 'SERIAL-0024', 'Kantor Pusat', '', 2400000,
       subcategory: 'Periferal Komputer', assetType: 'Monitor');
-    expect(store.assets.first.code, 'UDL-AST-000006');
+    expect(store.assets.first.code, 'UDL-AST-00000006');
     expect(store.assets.first.subcategory, 'Periferal Komputer');
     expect(store.assets.first.assetType, 'Monitor');
   });
