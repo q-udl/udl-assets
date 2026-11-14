@@ -254,6 +254,8 @@ class _AssetScreenState extends State<AssetScreen> {
         tint = amber;
         break;
       case 'Hilang':
+      case 'Tidak Aktif':
+      case 'Dilepas':
       case 'Dihapuskan':
         tint = danger;
         break;
