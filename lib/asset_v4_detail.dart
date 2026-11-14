@@ -80,7 +80,7 @@ extension _AssetV4Detail on _AssetScreenState {
     detailValue('Merek',a.brand),
     detailValue('Model / tipe',a.model),
     detailValue('Nomor seri',a.serial),
-    detailValue('Tanggal perolehan',a.acquisitionDate),
+    detailValue('Tanggal perolehan',a.acquisitionDate.isEmpty ? 'Belum diketahui' : a.acquisitionDate),
     detailValue('Nilai perolehan',
       a.acquisitionCost==null?'Belum diketahui':rupiah(a.acquisitionCost!)),
     const SizedBox(height:12),
@@ -189,8 +189,10 @@ extension _AssetV4Detail on _AssetScreenState {
     final model = TextEditingController(text: a.model);
     final serial = TextEditingController(text: a.serial);
     final cost = TextEditingController(text: a.acquisitionCost?.toString() ?? '');
+    final date = TextEditingController(text: a.acquisitionDate);
     final reason = TextEditingController();
     var unknown = a.acquisitionCost == null;
+    var dateUnknown = a.acquisitionDate.trim().isEmpty;
     var error = '';
     final ok = await v4ShowModal<bool>(
       title: 'Ubah Informasi Aset',
@@ -214,20 +216,36 @@ extension _AssetV4Detail on _AssetScreenState {
           ),
           const SizedBox(height: 15),
           v4ModalPair(
-            TextField(controller: cost, enabled: !unknown,
-              keyboardType: TextInputType.number,
-              decoration: v4ModalDecoration('Nilai perolehan (Rp)')),
-            CheckboxListTile(
-              contentPadding: EdgeInsets.zero,
-              dense: true,
-              value: unknown,
-              title: const Text('Nilai belum diketahui',
-                style: TextStyle(fontSize: 13)),
-              onChanged: (value) => update(() {
-                unknown = value ?? false;
-                error = '';
-              }),
-            ),
+            Column(crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TextField(controller: date, enabled: !dateUnknown,
+                  keyboardType: TextInputType.datetime,
+                  decoration: v4ModalDecoration('Tanggal perolehan (YYYY-MM-DD)')),
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero, dense: true,
+                  controlAffinity: ListTileControlAffinity.leading,
+                  value: dateUnknown,
+                  title: const Text('Tanggal belum diketahui',
+                    style: TextStyle(fontSize: 13)),
+                  onChanged: (v) => update(() {
+                    dateUnknown = v ?? false; error = '';
+                  })),
+              ]),
+            Column(crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TextField(controller: cost, enabled: !unknown,
+                  keyboardType: TextInputType.number,
+                  decoration: v4ModalDecoration('Nilai perolehan (Rp)')),
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero, dense: true,
+                  controlAffinity: ListTileControlAffinity.leading,
+                  value: unknown,
+                  title: const Text('Nilai belum diketahui',
+                    style: TextStyle(fontSize: 13)),
+                  onChanged: (v) => update(() {
+                    unknown = v ?? false; error = '';
+                  })),
+              ]),
           ),
           const SizedBox(height: 17),
           TextField(
@@ -249,6 +267,9 @@ extension _AssetV4Detail on _AssetScreenState {
           final int? value = unknown ? null : int.tryParse(cost.text.trim());
           if (name.text.trim().isEmpty || reason.text.trim().isEmpty) {
             update(() => error = 'Nama aset dan alasan koreksi wajib diisi.');
+          } else if (!dateUnknown && (date.text.trim().isEmpty ||
+              !validAssetAcquisitionDate(date.text))) {
+            update(() => error = 'Isi tanggal perolehan valid (YYYY-MM-DD), atau tandai belum diketahui.');
           } else if (!unknown && (value == null || value < 0)) {
             update(() => error = 'Nilai perolehan harus angka tidak negatif.');
           } else {
@@ -261,14 +282,15 @@ extension _AssetV4Detail on _AssetScreenState {
       try {
         final value = unknown ? null : int.tryParse(cost.text.trim());
         await store.editIdentity(a, name.text, brand.text, model.text,
-          serial.text, value, reason.text);
+          serial.text, value, reason.text,
+          acquisitionDate: dateUnknown ? '' : date.text.trim());
         repaint();
         notify('Informasi aset diperbarui.');
       } catch (e) {
         notify(e.toString());
       }
     }
-    for (final controller in [name, brand, model, serial, cost, reason]) {
+    for (final controller in [name, brand, model, serial, date, cost, reason]) {
       controller.dispose();
     }
   }
