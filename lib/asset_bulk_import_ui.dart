@@ -207,17 +207,29 @@ class _BulkImportDialogState extends State<BulkImportDialog> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
-    final width = size.width > 950 ? 900.0 : size.width - 28;
-    final height = size.height > 780 ? 690.0 : size.height - 42;
+    final mobile = size.width < 650;
+    final keyboard = MediaQuery.viewInsetsOf(context).bottom;
+    final width = mobile ? size.width - 16 :
+      (size.width > 950 ? 900.0 : size.width - 28);
+    final height = (mobile
+      ? size.height - keyboard - 16
+      : (size.height > 780 ? 690.0 : size.height - 42))
+      .clamp(180.0, size.height).toDouble();
     final current = preview;
-    return Dialog(
-      insetPadding: const EdgeInsets.all(14),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) requestClose();
+      },
+      child: Dialog(
+      key: const ValueKey('rv28-import-dialog'),
+      insetPadding: EdgeInsets.all(mobile ? 8 : 14),
       backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16)),
       child: SizedBox(width: width, height: height,
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.all(mobile ? 12 : 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch, children: [
               Row(children: [
@@ -237,8 +249,7 @@ class _BulkImportDialogState extends State<BulkImportDialog> {
                 )),
                 IconButton(
                   tooltip: 'Tutup',
-                  onPressed: busy ? null :
-                    () => Navigator.pop(context),
+                  onPressed: busy ? null : requestClose,
                   icon: const Icon(Icons.close_rounded)),
               ]),
               const SizedBox(height: 14),
@@ -333,9 +344,25 @@ class _BulkImportDialogState extends State<BulkImportDialog> {
                 'tidak ditimpa. Penyimpanan masih lokal di browser.',
                 style: TextStyle(color: muted, fontSize: 11.5)),
               const SizedBox(height: 10),
+              if (mobile) ...[
+                SizedBox(width: double.infinity, height: 48,
+                  child: FilledButton.icon(
+                    key: const ValueKey('rv28-import-confirm'),
+                    onPressed: busy || current == null ||
+                      current.validCount == 0 ? null : confirm,
+                    icon: const Icon(Icons.check_circle_outline),
+                    label: Text('Konfirmasi Impor' +
+                      (current == null ? '' :
+                        ' (' + current.validCount.toString() + ')')),
+                  )),
+                const SizedBox(height: 8),
+                SizedBox(width: double.infinity, height: 48,
+                  child: OutlinedButton(
+                    onPressed: busy ? null : requestClose,
+                    child: const Text('Batal'))),
+              ] else
               Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-                OutlinedButton(onPressed: busy ? null :
-                  () => Navigator.pop(context),
+                OutlinedButton(onPressed: busy ? null : requestClose,
                   child: const Text('Batal')),
                 const SizedBox(width: 10),
                 FilledButton.icon(
@@ -352,6 +379,6 @@ class _BulkImportDialogState extends State<BulkImportDialog> {
           ),
         ),
       ),
-    );
+    ));
   }
 }
