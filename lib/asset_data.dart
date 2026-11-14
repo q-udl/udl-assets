@@ -649,7 +649,7 @@ class AssetStore extends ChangeNotifier {
     final encoded = base64Encode(bytes);
     final total = photos.fold<int>(0, (n, p) => n + p.base64Data.length);
     if (total + encoded.length > maxAllEncodedBytes) {
-      throw const FormatException('Kuota foto prototipe lokal hampir penuh.');
+      throw const FormatException('Kuota foto penyimpanan browser hampir penuh.');
     }
     final photo = AssetPhoto(uuid.v4(), a.id, kind, fileName,
       DateTime.now().toIso8601String(), mime, encoded, photosFor(a.id).isEmpty)
