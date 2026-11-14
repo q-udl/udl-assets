@@ -233,4 +233,43 @@ extension _AssignedAssetsDetail on _AssetScreenState {
     }
     reason.dispose();
   }
+
+  Widget v5CustodyForAsset(AssetRecord asset) {
+    final history = store.assignments.where((a) =>
+      a.lines.any((l) => l.assetId == asset.id)).toList();
+    return surface(child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      sectionHeader('Assigned Assets',
+        subtitle: 'Riwayat penugasan dan penguasaan unit ' + asset.code),
+      const SizedBox(height: 11),
+      if (asset.assignedEmployeeId.isNotEmpty) ...[
+        v4ReadonlyField('Penerima aktif',
+          store.employeeById(asset.assignedEmployeeId)?.name ??
+            'Karyawan tidak ditemukan'),
+        const SizedBox(height: 10),
+      ] else if (asset.holder.trim().isNotEmpty) ...[
+        const Text('PIC ini berasal dari data lama berbasis teks. '
+          'Belum terhubung otomatis ke Master Karyawan.',
+          style: TextStyle(color: muted, fontSize: 12)),
+        const SizedBox(height: 10),
+      ],
+      if (history.isEmpty)
+        const Text('Belum ada penugasan terstruktur pada aset ini.',
+          style: TextStyle(color: muted))
+      else for (final batch in history)
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(batch.draftReference),
+          subtitle: Text(
+            (batch.employeeSnapshot['name']?.toString() ?? '-') +
+            ' · ' + batch.status),
+          trailing: const Icon(Icons.chevron_right, color: muted),
+          onTap: () => v4Change(() {
+            selected = null;
+            selectedAssignment = batch;
+            page = 7;
+          }),
+        ),
+    ]));
+  }
 }
