@@ -5,6 +5,9 @@ class _AssetScreenState extends State<AssetScreen> {
   final GlobalKey<ScaffoldState> _shellKey = GlobalKey<ScaffoldState>();
   final TextEditingController _assetSearchController = TextEditingController();
   final TextEditingController _historySearchController = TextEditingController();
+  final ScrollController _contentScroll = ScrollController();
+  final List<Map<String, dynamic>> _navigationHistory = [];
+  bool _restoringHistory = false, _formDirty = false;
   bool _sidebarCollapsed = false;
 
   @override
@@ -31,9 +34,23 @@ class _AssetScreenState extends State<AssetScreen> {
 
   @override
   void dispose() {
+    _contentScroll.dispose();
     _assetSearchController.dispose();
     _historySearchController.dispose();
     super.dispose();
+  }
+
+  @override
+  void setState(VoidCallback action) {
+    final oldRoute = _viewRouteKey();
+    final oldState = _captureView();
+    super.setState(action);
+    if (!_restoringHistory && oldRoute != _viewRouteKey()) {
+      _navigationHistory.add(oldState);
+      if (_navigationHistory.length > 80) _navigationHistory.removeAt(0);
+      _formDirty = false;
+      _scrollAfterRoute(0);
+    }
   }
 
   int page = 1;
@@ -186,11 +203,10 @@ class _AssetScreenState extends State<AssetScreen> {
     });
   }
 
-  void navigate(int index) {
+  void navigate(int index) async {
+    if (!await _mayLeaveUnsavedForm() || !mounted) return;
     setState(() {
-      if (index == 1 && page != 1) {
-        _clearAssetFilterValues();
-      }
+      if (index == 1 && page != 1) _clearAssetFilterValues();
       page = index;
       selected = null;
       selectedEmployee = null;
@@ -200,19 +216,7 @@ class _AssetScreenState extends State<AssetScreen> {
   }
 
   void backFromCurrent() {
-    setState(() {
-      if (selected != null) {
-        selected = null;
-      } else if (selectedEmployee != null) {
-        selectedEmployee = null;
-      } else if (page == 10) {
-        page = 7;
-      } else if (selectedAssignment != null) {
-        selectedAssignment = null;
-      } else if (page == 9) {
-        page = 7;
-      }
-    });
+    backFromHistory();
   }
 
   Widget surface({required Widget child, EdgeInsetsGeometry padding = const EdgeInsets.all(20)}) {
@@ -547,17 +551,27 @@ class _AssetScreenState extends State<AssetScreen> {
       ]),
       const SizedBox(height: 15),
       if (isMobile) ...[
+        if (_navigationHistory.isNotEmpty) ...[
+          outlineButton('Kembali', Icons.arrow_back_rounded, backFromCurrent),
+          const SizedBox(height: 10),
+        ],
         Text(title, style: const TextStyle(fontSize: 25, fontWeight: FontWeight.w800, color: ink)),
         const SizedBox(height: 5),
         Text(description, style: const TextStyle(fontSize: 13, color: muted)),
         const SizedBox(height: 12),
-        if (selected != null || selectedEmployee != null ||
-            selectedAssignment != null || page == 9 || page == 10)
-          outlineButton('Kembali', Icons.arrow_back_rounded, backFromCurrent),
         if (selected == null && page == 1)
           primaryButton('Tambah Aset', Icons.add_rounded, () => setState(() => page = 6)),
+          if (selected == null && selectedAssignment == null && page == 7)
+            primaryButton('Tugaskan Aset', Icons.add_rounded,
+              () => setState(() => page = 9)),
       ] else
         Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+          if (_navigationHistory.isNotEmpty) ...[
+            IconButton(tooltip: 'Kembali',
+              onPressed: backFromCurrent,
+              icon: const Icon(Icons.arrow_back_rounded, color: blue)),
+            const SizedBox(width: 9),
+          ],
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(title, style: const TextStyle(fontSize: 27, fontWeight: FontWeight.w800,
               letterSpacing: -0.5, color: ink)),
@@ -565,11 +579,11 @@ class _AssetScreenState extends State<AssetScreen> {
             Text(description, style: const TextStyle(fontSize: 13, color: muted)),
           ])),
           const SizedBox(width: 14),
-          if (selected != null || selectedEmployee != null ||
-              selectedAssignment != null || page == 9 || page == 10)
-            outlineButton('Kembali', Icons.arrow_back_rounded, backFromCurrent),
           if (selected == null && page == 1)
             primaryButton('Tambah Aset', Icons.add_rounded, () => setState(() => page = 6)),
+          if (selected == null && selectedAssignment == null && page == 7)
+            primaryButton('Tugaskan Aset', Icons.add_rounded,
+              () => setState(() => page = 9)),
         ]),
     ]);
   }
@@ -1522,7 +1536,14 @@ class _AssetScreenState extends State<AssetScreen> {
   Widget build(BuildContext context) {
     final compact = MediaQuery.sizeOf(context).width < 920;
     final sidebarWidth = _sidebarCollapsed ? 72.0 : 238.0;
-    return Scaffold(
+    return PopScope(
+      canPop: _navigationHistory.isEmpty,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop && _navigationHistory.isNotEmpty) {
+          backFromHistory();
+        }
+      },
+      child: Scaffold(
       key: _shellKey,
       backgroundColor: bg,
       drawer: compact
@@ -1553,6 +1574,7 @@ class _AssetScreenState extends State<AssetScreen> {
                     final dataView = selected == null &&
                       (page == 1 || page == 3 || page == 7 || page == 8);
                     return SingleChildScrollView(
+                      controller: _contentScroll,
                       padding: EdgeInsets.fromLTRB(
                         contentPadding, 24, contentPadding, 45),
                       child: Align(
@@ -1599,7 +1621,7 @@ class _AssetScreenState extends State<AssetScreen> {
                               else if (page == 9) V5AssignmentForm(
                                 store: store,
                                 onCreated: (batch) {
-                                  setState(() {
+                                  replaceRouteAfterSave(() {
                                     page = 7;
                                     selectedAssignment = batch;
                                   });
@@ -1613,7 +1635,7 @@ class _AssetScreenState extends State<AssetScreen> {
                                   store: store,
                                   assignment: selectedAssignment!,
                                   onCompleted: (receipt) {
-                                    setState(() => page = 7);
+                                    replaceRouteAfterSave(() => page = 7);
                                     notify('Pengembalian disimpan: ' +
                                       receipt.draftReference);
                                   },
@@ -1621,7 +1643,7 @@ class _AssetScreenState extends State<AssetScreen> {
                               else if (page == 6) V4RegistrationPage(
                                 store: store,
                                 onCompleted: (created) {
-                                  setState(() {
+                                  replaceRouteAfterSave(() {
                                     page = 1;
                                     selected = created.first;
                                     viewedPhotoId = null;
@@ -1672,6 +1694,7 @@ class _AssetScreenState extends State<AssetScreen> {
           ],
         );
       }),
+      ),
     );
   }
 }
