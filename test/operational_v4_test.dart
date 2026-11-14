@@ -26,11 +26,11 @@ void main() {
     expect(created.length,3);
     expect(created.map((a)=>a.code).toSet().length,3);
     expect(created.map((a)=>a.code).toList(),
-      ['UDL-AST-000006','UDL-AST-000007','UDL-AST-000008']);
+      ['UDL-AST-00000006','UDL-AST-00000007','UDL-AST-00000008']);
     expect(created.first.acquisitionCost,isNull);
     final backup=store.backup();
     final copy=AssetStore()..restore(backup);
-    expect(copy.assets.first.code,'UDL-AST-000008');
+    expect(copy.assets.first.code,'UDL-AST-00000008');
     expect(copy.assets.first.acquisitionCost,isNull);
     expect(copy.nextNumber,9);
   });
