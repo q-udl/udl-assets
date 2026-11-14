@@ -192,6 +192,9 @@ class _V5AssignmentFormState extends State<V5AssignmentForm> {
               selectedIds.length.toString() + ' aset dipilih · ' +
               available.length.toString() + ' aset siap ditugaskan',
               style: const TextStyle(color: muted, fontSize: 12)),
+            const SizedBox(height: 6),
+            const Text('Barang dengan kode aset sendiri (misalnya charger atau case yang dilacak mandiri) wajib dipilih sebagai aset terpisah. Item Penyerta Non-Aset hanya untuk barang tanpa registrasi/kode aset.',
+              style: TextStyle(color: muted, fontSize: 11.5)),
             const SizedBox(height: 12),
             TextField(
               decoration: const InputDecoration(
@@ -246,8 +249,10 @@ class _V5AssignmentFormState extends State<V5AssignmentForm> {
                     key: ValueKey('accessories-' + a.id),
                     initialValue: accessories[a.id] ?? '',
                     decoration: const InputDecoration(
-                      labelText: 'Kelengkapan yang diserahkan',
-                      hintText: 'Contoh: charger, tas, kabel'),
+                      labelText: 'Item Penyerta Non-Aset (opsional)',
+                      hintText: 'Contoh: buku panduan atau kemasan bawaan',
+                      helperText: 'Hanya barang tanpa kode aset; tidak dilacak mandiri.',
+                      helperMaxLines: 2),
                     onChanged: (value) { widget.onDirty?.call();
                       accessories[a.id] = value; },
                   ),
