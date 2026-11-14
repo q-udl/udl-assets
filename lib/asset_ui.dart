@@ -108,7 +108,7 @@ class _AssetScreenState extends State<AssetScreen> {
         border: Border.all(color: border),
         borderRadius: BorderRadius.circular(16),
       ),
-      child: child,
+      child: Material(color: Colors.transparent, child: child),
     );
   }
 
