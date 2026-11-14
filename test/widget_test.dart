@@ -123,6 +123,47 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('RV16 dan RV17 membuka menu, detail karyawan, dan formulir',
+      (tester) async {
+    tester.view.physicalSize = const Size(1600, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(const AssetApp());
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Master Karyawan').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Karyawan Demo A'), findsOneWidget);
+    expect(find.text('Karyawan Demo B'), findsOneWidget);
+    await tester.tap(find.text('Karyawan Demo A').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Aset dalam Penguasaan'), findsOneWidget);
+    await tester.tap(find.text('Assigned Assets').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Belum ada penugasan aset'), findsOneWidget);
+    await tester.tap(find.text('Tugaskan Aset').first);
+    await tester.pumpAndSettle();
+    expect(find.text('1. Karyawan Penerima'), findsOneWidget);
+    expect(find.text('2. Pilih Aset'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Assigned Assets tampil responsif pada layar mobile',
+      (tester) async {
+    tester.view.physicalSize = const Size(412, 915);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(const AssetApp());
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Buka Menu'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Assigned Assets').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Belum ada penugasan aset'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Halaman awal adalah Daftar Aset', (tester) async {
     await tester.pumpWidget(const AssetApp());
     await tester.pumpAndSettle();
