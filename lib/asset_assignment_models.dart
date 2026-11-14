@@ -52,6 +52,7 @@ class AssetEmployee {
 class AssignedAssetLine {
   final String id, assetId, assetCode, assetName, serial, handoverCondition;
   String accessories, state, returnReceiptId, returnedAt;
+  final List<String> photoIds;
 
   AssignedAssetLine({
     required this.id,
@@ -64,6 +65,7 @@ class AssignedAssetLine {
     this.state = 'Menunggu Penerimaan',
     this.returnReceiptId = '',
     this.returnedAt = '',
+    this.photoIds = const [],
   });
 
   Map<String, dynamic> toJson() => {
@@ -72,6 +74,7 @@ class AssignedAssetLine {
     'handoverCondition': handoverCondition,
     'accessories': accessories, 'state': state,
     'returnReceiptId': returnReceiptId, 'returnedAt': returnedAt,
+    'photoIds': photoIds,
   };
 
   factory AssignedAssetLine.fromJson(Map<String, dynamic> x) => AssignedAssetLine(
@@ -85,6 +88,8 @@ class AssignedAssetLine {
     state: x['state']?.toString() ?? 'Menunggu Penerimaan',
     returnReceiptId: x['returnReceiptId']?.toString() ?? '',
     returnedAt: x['returnedAt']?.toString() ?? '',
+    photoIds: (x['photoIds'] as List<dynamic>? ?? [])
+      .map((v) => v.toString()).toList(),
   );
 }
 
@@ -154,6 +159,7 @@ class AssetAssignment {
 class AssetReturnLine {
   final String assignmentLineId, assetId, assetCode, assetName;
   final String handoverCondition, returnCondition, accessoriesReturned, notes;
+  final List<String> photoIds;
   AssetReturnLine({
     required this.assignmentLineId,
     required this.assetId,
@@ -163,6 +169,7 @@ class AssetReturnLine {
     required this.returnCondition,
     required this.accessoriesReturned,
     required this.notes,
+    this.photoIds = const [],
   });
 
   Map<String, dynamic> toJson() => {
@@ -171,6 +178,7 @@ class AssetReturnLine {
     'handoverCondition': handoverCondition,
     'returnCondition': returnCondition,
     'accessoriesReturned': accessoriesReturned, 'notes': notes,
+    'photoIds': photoIds,
   };
   factory AssetReturnLine.fromJson(Map<String, dynamic> x) => AssetReturnLine(
     assignmentLineId: x['assignmentLineId']?.toString() ?? '',
@@ -181,6 +189,8 @@ class AssetReturnLine {
     returnCondition: x['returnCondition']?.toString() ?? '',
     accessoriesReturned: x['accessoriesReturned']?.toString() ?? '',
     notes: x['notes']?.toString() ?? '',
+    photoIds: (x['photoIds'] as List<dynamic>? ?? [])
+      .map((v) => v.toString()).toList(),
   );
 }
 
