@@ -65,7 +65,6 @@ extension _AssignedAssetsDetail on _AssetScreenState {
           sectionHeader('Penerima Aset'),
           const SizedBox(height: 12),
           detailValue('Nama', batch.employeeSnapshot['name']?.toString() ?? ''),
-          detailValue('Kode', batch.employeeSnapshot['code']?.toString() ?? ''),
           detailValue('Jabatan',
             batch.employeeSnapshot['jobTitle']?.toString() ?? ''),
           detailValue('Unit / Departemen',
