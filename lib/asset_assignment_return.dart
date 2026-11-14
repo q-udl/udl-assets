@@ -56,8 +56,10 @@ class _V5ReturnFormState extends State<V5ReturnForm> {
           content: Text('Foto kondisi ditambahkan ke dokumentasi aset.')));
       }
     } catch (e) {
-      if (mounted) setState(() =>
-        error = 'Gagal menambah foto kondisi: ' + e.toString());
+      if (mounted) {
+        setState(() =>
+          error = 'Gagal menambah foto kondisi: ' + e.toString());
+      }
     }
   }
 
