@@ -25,6 +25,10 @@ class _V5AssignmentFormState extends State<V5AssignmentForm> {
   final accessories = <String, String>{};
   bool saving = false;
   String? error;
+  bool get hasUnsavedChanges =>
+    employeeId != null || kind != 'Berkelanjutan' ||
+    due.text.trim().isNotEmpty || notes.text.trim().isNotEmpty ||
+    selectedIds.isNotEmpty || accessories.isNotEmpty;
 
   @override
   void initState() {
