@@ -145,10 +145,10 @@ extension _AssetV4Master on _AssetScreenState {
       ])),
       const SizedBox(height:12),
       LayoutBuilder(builder:(context,box) {
-        if(box.maxWidth<850) return Column(children:[
+        if(box.maxWidth<850) { return Column(children:[
           for(final panel in panels) Padding(
             padding:const EdgeInsets.only(bottom:12),child:panel),
-        ]);
+        ]); }
         return Row(crossAxisAlignment:CrossAxisAlignment.start,children:[
           Expanded(child:panels[0]),const SizedBox(width:12),
           Expanded(child:panels[1]),const SizedBox(width:12),
