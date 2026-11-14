@@ -231,12 +231,14 @@ extension _AssetV4Actions on _AssetScreenState {
           child: const Text('Lanjut ke Foto')),
       ],
     );
-    if (confirmed == true && mounted) {
+    if (!mounted) { note.dispose(); return; }
+    if (anchorContext != null && !anchorContext.mounted) {
+      note.dispose(); return;
+    }
+    if (confirmed == true) {
       try {
-        final safeAnchor = anchorContext != null && anchorContext.mounted
-          ? anchorContext : null;
         final selected = await AssetPhotoPicker.choose(context,
-          anchorContext: safeAnchor);
+          anchorContext: anchorContext);
         if (selected != null && mounted) {
           await store.addPhoto(a, selected.bytes, selected.fileName, kind,
             note: note.text);
