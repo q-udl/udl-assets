@@ -21,6 +21,7 @@ extension _AssetEmployeeScreens on _AssetScreenState {
           const SizedBox(height: 15),
           LayoutBuilder(builder: (ctx, box) {
             final search = TextField(
+              controller: _employeeSearchController,
               decoration: const InputDecoration(
                 prefixIcon: Icon(Icons.search),
                 hintText: 'Cari nama, kode, unit, jabatan...'),
