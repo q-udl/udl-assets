@@ -253,7 +253,9 @@ class AssetBastPdf {
         header('Berita Acara Pengembalian Aset', receipt.draftReference),
         item('Dibuat pada', date(receipt.createdAt)),
         item('Referensi penyerahan', original.draftReference),
-        item('Lokasi penerimaan', receipt.receivingLocation),
+        item('Lokasi penerimaan',
+          receipt.receivingLocationPath.isEmpty
+            ? receipt.receivingLocation : receipt.receivingLocationPath),
         pw.SizedBox(height: 10),
         pw.Text('PIHAK YANG MENGEMBALIKAN', style: bold(10)),
         pw.SizedBox(height: 7),
