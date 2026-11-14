@@ -51,12 +51,34 @@ jobs:
               grep -qi 'Referensi Penugasan' "$textfile"
               grep -qi 'Tanggal Serah Terima' "$textfile"
               grep -qi 'Lokasi Serah Terima' "$textfile"
-              grep -qi 'PARA PIHAK' "$textfile"
+              if grep -qi 'PARA PIHAK' "$textfile"; then
+                echo 'Retired PARA PIHAK section heading found in BAST'
+                exit 1
+              fi
               grep -qi 'Penyerah' "$textfile"
               grep -qi 'Penerima' "$textfile"
               grep -qi 'PERNYATAAN SERAH TERIMA' "$textfile"
+              if grep -qi 'Kelengkapan' "$textfile"; then
+                echo 'Kelengkapan must not be a BAST table column or new-item label'
+                exit 1
+              fi
+              if [[ "$(basename "$file")" == "BAST-multi-photo.pdf" ]]; then
+                grep -qi 'CATATAN ITEM PENYERTA' "$textfile"
+                grep -qi 'Buku panduan tanpa kode aset' "$textfile"
+              fi
               if grep -Eqi 'DRAF - TANDA|Nomor dokumen resmi:|Status sistem|Tanda tangan:' "$textfile"; then
                 echo "BAST contains a retired draft label or signature guide"
+                exit 1
+              fi
+            fi
+            if [[ "$(basename "$file")" == "BA-Pengembalian-parsial.pdf" ]]; then
+              returnedText="build/rv030-pdf-qa/render/BA-return-contents.txt"
+              pdftotext -layout "$file" "$returnedText"
+              grep -qi 'CATATAN ITEM PENYERTA' "$returnedText"
+              grep -qi 'Saat diserahkan' "$returnedText"
+              grep -qi 'saat pengembalian' "$returnedText"
+              if grep -qi 'Kelengkapan' "$returnedText"; then
+                echo 'Return PDF fixture must not have a Kelengkapan table column'
                 exit 1
               fi
             fi
