@@ -476,7 +476,7 @@ class _AssetScreenState extends State<AssetScreen> with WidgetsBindingObserver {
         border: Border.all(color: border),
       ),
       child: Tooltip(
-        message: 'Pratinjau Lokal · belum ada akun yang login',
+        message: 'Sesi tanpa autentikasi · penyimpanan browser',
         child: Row(
           mainAxisAlignment: condensed
             ? MainAxisAlignment.center : MainAxisAlignment.start,
@@ -488,12 +488,12 @@ class _AssetScreenState extends State<AssetScreen> with WidgetsBindingObserver {
               Expanded(child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: const [
-                  Text('Pratinjau Lokal', maxLines: 1,
+                  Text('Mode Lokal', maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(fontWeight: FontWeight.w700,
                       fontSize: 12, color: ink)),
                   SizedBox(height: 3),
-                  Text('UDL Assets · v0.7.1',
+                  Text('UDL Assets · v0.8.0',
                     style: TextStyle(fontSize: 11, color: muted)),
                 ],
               )),
@@ -1141,7 +1141,7 @@ class _AssetScreenState extends State<AssetScreen> with WidgetsBindingObserver {
                         const Icon(Icons.qr_code_2_rounded, size: 18, color: blue),
                         const SizedBox(width: 10),
                         Expanded(child: Text('Kode berikutnya: UDL-AST-' +
-                          store.nextNumber.toString().padLeft(6, '0'),
+                          store.nextNumber.toString().padLeft(8, '0'),
                           style: const TextStyle(color: blue, fontWeight: FontWeight.w800, fontSize: 12))),
                         const Text('OTOMATIS', style: TextStyle(color: blue,
                           fontSize: 9.5, fontWeight: FontWeight.w900, letterSpacing: 1)),
@@ -1426,13 +1426,14 @@ class _AssetScreenState extends State<AssetScreen> with WidgetsBindingObserver {
         padding: const EdgeInsets.all(13),
         decoration: BoxDecoration(border: Border.all(color: border),
           borderRadius: BorderRadius.circular(13)),
-        child: QrImageView(data: a.code, size: 176, padding: EdgeInsets.zero),
+        child: QrImageView(data: 'UDLQR1:' + a.qrToken,
+          size: 176, padding: EdgeInsets.zero),
       )),
       const SizedBox(height: 13),
       SelectableText(a.code, style: const TextStyle(fontSize: 14,
         color: ink, fontWeight: FontWeight.w800)),
       const SizedBox(height: 6),
-      const Text('QR demo berisi kode aset. Belum terhubung ke sistem produksi.',
+      const Text('QR berisi token acak. Verifikasi server belum tersedia.',
         textAlign: TextAlign.center, style: TextStyle(fontSize: 11.5, color: muted)),
       const SizedBox(height: 13),
       outlineButton('Salin kode', Icons.copy_rounded, () async {
@@ -1569,7 +1570,7 @@ class _AssetScreenState extends State<AssetScreen> with WidgetsBindingObserver {
           child: const Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Icon(Icons.info_outline_rounded, size: 20, color: amber),
             SizedBox(width: 10),
-            Expanded(child: Text('Ini prototipe lokal tanpa autentikasi atau server. '
+            Expanded(child: Text('Versi lokal ini belum memiliki autentikasi atau server. '
               'Data hanya tersimpan di browser ini. Jangan gunakan data operasional nyata.',
               style: TextStyle(fontSize: 12.5, color: ink, height: 1.5))),
           ])),
@@ -1723,7 +1724,7 @@ class _AssetScreenState extends State<AssetScreen> with WidgetsBindingObserver {
                                     selectedAssignment = batch;
                                   });
                                   notify('Penugasan dibuat. '
-                                    'Menunggu penerimaan simulasi.');
+                                    'Menunggu konfirmasi serah terima.');
                                 },
                                 onOpenEmployees: () => navigate(8),
                               )
