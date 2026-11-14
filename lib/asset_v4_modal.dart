@@ -77,15 +77,16 @@ extension _AssetV4Modal on _AssetScreenState {
                     ),
                     const Divider(height: 1, color: border),
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 12, 20, 14),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          for (final action in actions(ctx, update)) ...[
-                            const SizedBox(width: 8),
-                            action,
-                          ],
-                        ],
+                      padding: EdgeInsets.fromLTRB(
+                        size.width < 650 ? 12 : 20, 12,
+                        size.width < 650 ? 12 : 20, 14),
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: Wrap(
+                          spacing: 8, runSpacing: 8,
+                          alignment: WrapAlignment.end,
+                          children: actions(ctx, update),
+                        ),
                       ),
                     ),
                   ],
