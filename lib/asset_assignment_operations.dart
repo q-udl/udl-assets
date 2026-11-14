@@ -45,7 +45,7 @@ extension AssetAssignmentOperations on AssetStore {
     final now = DateTime.now().toIso8601String();
     final number = nextAssignmentNumber.toString().padLeft(6, '0');
     final record = AssetAssignment(
-      id: uuid.v4(), draftReference: 'DRAF-BAST-ASG-' + number,
+      id: uuid.v4(), draftReference: 'ASG-' + number,
       employeeId: employee.id,
       employeeSnapshot: employee.snapshot(),
       kind: kind, createdAt: now, dueDate: dueDate,
@@ -77,12 +77,20 @@ extension AssetAssignmentOperations on AssetStore {
     AssetAssignment record, bool accepted, String reason, {
     Map<String, SelectedAssetPhoto> proofPhotos = const {},
     String handedOverByName = '',
+    String handoverLocation = '',
+    String bastNumber = '',
   }) async {
     if (!record.isPending) {
       throw const FormatException('Penugasan sudah dikonfirmasi atau dibatalkan.');
     }
     if (accepted && handedOverByName.trim().isEmpty) {
       throw const FormatException('Nama pihak yang menyerahkan wajib diisi.');
+    }
+    if (accepted) {
+      if (handoverLocation.trim().isEmpty) {
+        throw const FormatException('Lokasi serah terima aktual wajib diisi.');
+      }
+      _validateBastNumber(bastNumber, record.id);
     }
     if (!accepted && reason.trim().isEmpty) {
       throw const FormatException('Alasan pembatalan penugasan wajib diisi.');
@@ -118,6 +126,8 @@ extension AssetAssignmentOperations on AssetStore {
     record.cancelledAt = accepted ? '' : now;
     record.cancellationReason = accepted ? '' : reason.trim();
     record.handedOverByName = accepted ? handedOverByName.trim() : '';
+    record.handoverLocation = accepted ? handoverLocation.trim() : '';
+    record.bastNumber = accepted ? bastNumber.trim() : '';
     for (final line in record.lines) {
       line.state = accepted ? 'Aktif' : 'Dibatalkan';
       if (accepted) {
@@ -133,7 +143,8 @@ extension AssetAssignmentOperations on AssetStore {
         asset.holder = employee!.name;
         asset.assignedEmployeeId = employee.id;
         log(asset, 'Konfirmasi Serah Terima',
-          record.draftReference + ' diserahterimakan kepada ' + employee.name,
+          record.assignmentReference + ' diserahterimakan kepada ' +
+          employee.name + ' · BAST ' + record.bastNumber,
           changes: {
             'Status': {'from': previous, 'to': asset.status},
             'PIC': {'from': '', 'to': employee.name},
@@ -148,6 +159,70 @@ extension AssetAssignmentOperations on AssetStore {
     await persist();
     } catch (_) {
       restore(previousBackup);
+      rethrow;
+    }
+  }
+
+  void _validateBastNumber(String number, String assignmentId) {
+    final value = number.trim();
+    if (value.isEmpty || value.length > 100 ||
+        value.contains('\n') || value.contains('\r')) {
+      throw const FormatException(
+        'Isi Nomor BAST sesuai DMS (maksimal 100 karakter).');
+    }
+    if (assignments.any((b) => b.id != assignmentId &&
+        b.bastNumber.toLowerCase() == value.toLowerCase())) {
+      throw const FormatException('Nomor BAST sudah digunakan.');
+    }
+  }
+
+  /// Complete missing data on an already-confirmed historical handover.
+  /// Never rewrite its confirmation timestamp or invent a signature.
+  Future<void> completeBastMetadata(
+    AssetAssignment record, {
+    required String bastNumber,
+    required String handoverLocation,
+    required String handedOverByName,
+  }) async {
+    if (!assignments.any((b) => b.id == record.id) ||
+        !record.isHandoverConfirmed) {
+      throw const FormatException(
+        'Data BAST hanya dapat dilengkapi setelah serah terima terkonfirmasi.');
+    }
+    if (record.canPrintBast) {
+      throw const FormatException('BAST sudah lengkap; tidak dapat ditimpa.');
+    }
+    if (handedOverByName.trim().isEmpty ||
+        handoverLocation.trim().isEmpty) {
+      throw const FormatException('Identitas Penyerah dan lokasi wajib diisi.');
+    }
+    _validateBastNumber(bastNumber, record.id);
+    if ((record.handedOverByName.isNotEmpty &&
+          record.handedOverByName != handedOverByName.trim()) ||
+        (record.handoverLocation.isNotEmpty &&
+          record.handoverLocation != handoverLocation.trim()) ||
+        (record.bastNumber.isNotEmpty &&
+          record.bastNumber != bastNumber.trim())) {
+      throw const FormatException(
+        'Informasi serah terima yang sudah tercatat tidak boleh diubah.');
+    }
+    final before = backup();
+    try {
+      record.handedOverByName = handedOverByName.trim();
+      record.handoverLocation = handoverLocation.trim();
+      record.bastNumber = bastNumber.trim();
+      for (final line in record.lines) {
+        final asset = assignmentAsset(line.assetId);
+        if (asset != null) {
+          log(asset, 'Pelengkapan Data BAST',
+            record.assignmentReference + ' · Nomor BAST ' +
+              record.bastNumber + ' dicatat dari dokumen perusahaan',
+            reason: 'Pelengkapan arsip; waktu serah terima tidak diubah');
+        }
+      }
+      await persist();
+    } catch (_) {
+      restore(before);
       rethrow;
     }
   }
