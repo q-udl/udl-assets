@@ -26,6 +26,13 @@ class _V5ReturnFormState extends State<V5ReturnForm> {
   String receivingAreaId = '', receivingSpotId = '';
   bool saving = false;
   String? error;
+  bool get hasUnsavedChanges =>
+    selected.isNotEmpty || condition.isNotEmpty || accessories.isNotEmpty ||
+    notesByLine.values.any((v) => v.trim().isNotEmpty) ||
+    notes.text.trim().isNotEmpty || receivedBy.text.trim().isNotEmpty ||
+    receivingAreaId.isNotEmpty || receivingSpotId.isNotEmpty ||
+    (location != (widget.store.activeSites.isEmpty
+      ? '' : widget.store.activeSites.first.name));
 
   @override
   void initState() {
