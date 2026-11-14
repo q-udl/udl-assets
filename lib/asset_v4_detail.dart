@@ -77,6 +77,8 @@ extension _AssetV4Detail on _AssetScreenState {
         ]);
       }),
       const SizedBox(height:14),
+      v5CustodyForAsset(a),
+      const SizedBox(height:14),
       surface(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
         sectionHeader('Riwayat Aset',subtitle:'Peristiwa terkait '+a.code),
         const SizedBox(height:8),
