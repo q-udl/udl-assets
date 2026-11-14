@@ -50,7 +50,7 @@ extension AssetOperations on AssetStore {
     }
     final result = <AssetRecord>[];
     for (var i = 0; i < quantity; i++) {
-      final a = AssetRecord(uuid.v4(), 'UDL-AST-' + nextNumber.toString().padLeft(6, '0'),
+      final a = AssetRecord(uuid.v4(), 'UDL-AST-' + nextNumber.toString().padLeft(8, '0'),
         name.trim(), category, brand.trim(), serial.trim(), location, holder.trim(),
         condition, status, cost ?? 0, subcategory: subcategory, assetType: assetType);
       a.model = model.trim(); a.acquisitionDate = acquisitionDate.trim();
