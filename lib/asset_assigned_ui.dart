@@ -47,8 +47,10 @@ extension _AssignedAssetsScreens on _AssetScreenState {
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       LayoutBuilder(builder: (ctx, box) => GridView.count(
-        crossAxisCount: box.maxWidth >= 760 ? 3 : 1,
-        childAspectRatio: box.maxWidth >= 760 ? 4.1 : 5.8,
+        crossAxisCount: box.maxWidth >= 1000 ? 3 :
+          box.maxWidth >= 640 ? 2 : 1,
+        childAspectRatio: box.maxWidth >= 1000 ? 3.5 :
+          box.maxWidth >= 640 ? 3.0 : 4.0,
         mainAxisSpacing: 10, crossAxisSpacing: 10,
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
