@@ -1,20 +1,46 @@
 part of 'main.dart';
 
 extension _AssetV4Master on _AssetScreenState {
-  Future<void> v4MasterPrompt(String title, String initial,
-      Future<void> Function(String) onSave) async {
-    final controller = TextEditingController(text:initial);
-    final value = await showDialog<String>(context:context,builder:(ctx) =>
-      AlertDialog(title:Text(title),content:TextField(controller:controller,
-        decoration:const InputDecoration(labelText:'Nama')),
-        actions:[
-          TextButton(onPressed:()=>Navigator.pop(ctx),child:const Text('Batal')),
-          FilledButton(onPressed:()=>Navigator.pop(ctx,controller.text.trim()),
-            child:const Text('Simpan')),
-        ]));
-    if(value != null && value.isNotEmpty) {
-      try {await onSave(value);repaint();}
-      catch(e){notify('Gagal: ' + e.toString());}
+  Future<void> v4MasterPrompt(
+    String title, String initial,
+    Future<void> Function(String) onSave,
+  ) async {
+    final controller = TextEditingController(text: initial);
+    var error = '';
+    final value = await v4ShowModal<String>(
+      title: title,
+      subtitle: 'Master Data UDL Assets',
+      maxWidth: 520,
+      body: (ctx, update) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TextField(controller: controller,
+            autofocus: true,
+            decoration: v4ModalDecoration('Nama *')),
+          if (error.isNotEmpty) ...[
+            const SizedBox(height: 12), v4ModalError(error),
+          ],
+        ],
+      ),
+      actions: (ctx, update) => [
+        OutlinedButton(onPressed: () => Navigator.pop(ctx),
+          child: const Text('Batal')),
+        FilledButton(onPressed: () {
+          if (controller.text.trim().isEmpty) {
+            update(() => error = 'Nama tidak boleh kosong.');
+          } else {
+            Navigator.pop(ctx, controller.text.trim());
+          }
+        }, child: const Text('Simpan')),
+      ],
+    );
+    if (value != null && value.isNotEmpty) {
+      try {
+        await onSave(value);
+        repaint();
+      } catch (e) {
+        notify('Gagal: ' + e.toString());
+      }
     }
     controller.dispose();
   }
