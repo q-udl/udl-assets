@@ -243,6 +243,7 @@ extension _AssignedAssetsDetail on _AssetScreenState {
     final handedBy = TextEditingController();
     final proofPhotos = <String, SelectedAssetPhoto>{};
     var error = '';
+    Future<dynamic>? modalFullyClosed;
     bool hasChanges() => reason.text.isNotEmpty ||
       handedBy.text.isNotEmpty || proofPhotos.isNotEmpty;
     final approved = await v4ShowModal<bool>(
@@ -251,7 +252,11 @@ extension _AssignedAssetsDetail on _AssetScreenState {
       subtitle: batch.draftReference,
       maxWidth: 650,
       isDirty: hasChanges,
-      body: (ctx, update) => Column(
+      body: (ctx, update) {
+        // The showDialog Future resolves before its reverse animation ends.
+        // Keep controllers alive until the overlay is fully removed.
+        modalFullyClosed ??= ModalRoute.of(ctx)?.completed;
+        return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Text(accepted
           ? 'Konfirmasi ini mencatat serah terima oleh petugas, '
@@ -305,7 +310,8 @@ extension _AssignedAssetsDetail on _AssetScreenState {
         if (error.isNotEmpty) ...[
           const SizedBox(height: 10), v4ModalError(error),
         ],
-      ]),
+      ]);
+      },
       actions: (ctx, update) => [
         OutlinedButton(
           style: assetOutlinedStyle(AssetActionTone.secondary),
@@ -350,6 +356,7 @@ extension _AssignedAssetsDetail on _AssetScreenState {
         notify('Gagal memproses penugasan: ' + e.toString());
       }
     }
+    if (modalFullyClosed != null) await modalFullyClosed;
     reason.dispose();
     handedBy.dispose();
   }
