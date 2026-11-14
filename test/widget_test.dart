@@ -11,6 +11,31 @@ void main() {
   });
 
 
+  testWidgets('RV21 sidebar menampilkan Manajemen Aset dan UD. LUTHFI',
+      (tester) async {
+    tester.view.physicalSize = const Size(1600, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(const AssetApp());
+    await tester.pumpAndSettle();
+    expect(find.text('Manajemen Aset'), findsOneWidget);
+    expect(find.text('UD. LUTHFI'), findsOneWidget);
+    expect(find.text('UDL Assets'), findsNothing);
+
+    await tester.tap(find.byTooltip('Minimalkan Sidebar'));
+    await tester.pumpAndSettle();
+    expect(find.text('Manajemen Aset'), findsNothing);
+    expect(find.text('UD. LUTHFI'), findsNothing);
+
+    await tester.tap(find.byTooltip('Perluas Sidebar'));
+    await tester.pumpAndSettle();
+    expect(find.text('Manajemen Aset'), findsOneWidget);
+    expect(find.text('UD. LUTHFI'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Master klasifikasi dapat dibuka dari sidebar', (tester) async {
     tester.view.physicalSize = const Size(1440, 900);
     tester.view.devicePixelRatio = 1;
