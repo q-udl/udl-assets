@@ -1,7 +1,7 @@
 part of 'main.dart';
 
 // UDL Assets local preview — UI layer. Data model and persistence remain in main.dart.
-class _AssetScreenState extends State<AssetScreen> {
+class _AssetScreenState extends State<AssetScreen> with WidgetsBindingObserver {
   final GlobalKey<ScaffoldState> _shellKey = GlobalKey<ScaffoldState>();
   final GlobalKey<_V4RegistrationPageState> _registrationKey =
     GlobalKey<_V4RegistrationPageState>();
@@ -19,6 +19,19 @@ class _AssetScreenState extends State<AssetScreen> {
   final List<Map<String, dynamic>> _navigationHistory = [];
   bool _restoringHistory = false, _formDirty = false;
   bool _sidebarCollapsed = false;
+  bool _scanQrAvailable = false;
+
+  Future<void> _checkQrCamera() async {
+    final available = await camera_probe.detectAvailableWebcam();
+    if (mounted && _scanQrAvailable != (available == true)) {
+      setState(() => _scanQrAvailable = available == true);
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _checkQrCamera();
+  }
   String? _hoveredTableRow;
 
   void _setTableHover(String? value) {
@@ -30,7 +43,9 @@ class _AssetScreenState extends State<AssetScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _restoreSidebarPreference();
+    _checkQrCamera();
   }
 
   Future<void> _restoreSidebarPreference() async {
@@ -51,6 +66,7 @@ class _AssetScreenState extends State<AssetScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _contentScroll.dispose();
     _assetSearchController.dispose();
     _historySearchController.dispose();
@@ -554,7 +570,7 @@ class _AssetScreenState extends State<AssetScreen> {
       page == 3 ? 'Lacak aktivitas dan perubahan sepanjang siklus hidup aset.' :
       page == 5 ? 'Kelola lokasi penempatan aset.' :
       page == 6 ? 'Registrasikan aset satuan atau beberapa unit sekaligus.' :
-      'Kelola data simulasi dan standar identitas aset.';
+      'Kelola data dan standar identitas aset.';
     final isMobile = MediaQuery.sizeOf(context).width < 650;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(children: [
@@ -575,6 +591,10 @@ class _AssetScreenState extends State<AssetScreen> {
         Flexible(child: Text(title.toUpperCase(), overflow: TextOverflow.ellipsis,
           style: const TextStyle(fontSize: 10.5, color: blue,
             fontWeight: FontWeight.w800, letterSpacing: 1.0))),
+         if (_scanQrAvailable && page != 4) IconButton(
+           tooltip: 'Scan QR Code',
+           onPressed: v4ScanQrCode,
+           icon: const Icon(Icons.qr_code_scanner_outlined, color: blue)),
       ]),
       const SizedBox(height: 15),
       if (isMobile) ...[
@@ -618,6 +638,11 @@ class _AssetScreenState extends State<AssetScreen> {
             Text(description, style: const TextStyle(fontSize: 13, color: muted)),
           ])),
           const SizedBox(width: 14),
+          if (_scanQrAvailable && page != 4) ...[
+            outlineButton('Scan QR Code', Icons.qr_code_scanner_outlined,
+              v4ScanQrCode),
+            const SizedBox(width: 9),
+          ],
           if (selected == null && page == 1) ...[
             outlineButton('Impor Data Aset', Icons.upload_file_outlined,
               () => v22OpenImport(BulkImportKind.assets)),
