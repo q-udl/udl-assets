@@ -32,8 +32,8 @@ class _V5ReturnFormState extends State<V5ReturnForm> {
     super.initState();
     notes.addListener(() => widget.onDirty?.call());
     receivedBy.addListener(() => widget.onDirty?.call());
-    location = widget.store.locations.isEmpty
-      ? '' : widget.store.locations.first;
+    location = widget.store.activeSites.isEmpty
+      ? '' : widget.store.activeSites.first.name;
   }
 
   @override
