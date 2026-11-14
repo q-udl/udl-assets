@@ -127,7 +127,7 @@ class _V4RegistrationPageState extends State<V4RegistrationPage> {
       }
     }
     if (MediaQuery.sizeOf(context).width >= 650 &&
-        !keyForm.currentState!.validate()) return;
+        !keyForm.currentState!.validate()) { return; }
     final qty=int.tryParse(quantity.text);
     if(qty==null || qty<1 || qty>100){
       ScaffoldMessenger.of(context).showSnackBar(
