@@ -325,16 +325,17 @@ class _AssetScreenState extends State<AssetScreen> {
         mainAxisAlignment: condensed
           ? MainAxisAlignment.center : MainAxisAlignment.start,
         children: [
-          Container(
-            width: 38, height: 38,
-            decoration: BoxDecoration(
-              color: const Color(0xFF214C78),
-              borderRadius: BorderRadius.circular(10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: Image.asset(
+              'assets/branding/udl_assets_icon.png',
+              key: const ValueKey('udl-assets-logo'),
+              width: 38,
+              height: 38,
+              fit: BoxFit.cover,
+              filterQuality: FilterQuality.medium,
+              semanticLabel: 'Logo UDL Assets',
             ),
-            alignment: Alignment.center,
-            child: const Text('L', style: TextStyle(
-              color: Colors.white, fontSize: 21,
-              fontWeight: FontWeight.w900)),
           ),
           if (!condensed) ...[
             const SizedBox(width: 10),
