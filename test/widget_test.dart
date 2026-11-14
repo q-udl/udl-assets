@@ -64,6 +64,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(const AssetApp());
     await tester.pumpAndSettle();
+    expect(find.byType(AppBar), findsNothing);
     expect(find.byTooltip('Minimalkan Sidebar'), findsOneWidget);
     await tester.tap(find.byTooltip('Minimalkan Sidebar'));
     await tester.pumpAndSettle();
@@ -91,6 +92,27 @@ void main() {
     final tableHistory = find.byKey(const ValueKey('adaptive-history-table'));
     expect(tableHistory, findsOneWidget);
     expect(tester.getSize(tableHistory).width, greaterThan(1200));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Filter tanpa hasil menampilkan empty state dan Reset Filter',
+      (tester) async {
+    tester.view.physicalSize = const Size(1600, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(const AssetApp());
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).first, 'ASET-TIDAK-ADA-123');
+    await tester.pumpAndSettle();
+    expect(find.text('Tidak ada aset yang sesuai'), findsOneWidget);
+    expect(find.text('0 dari 5 aset'), findsOneWidget);
+    expect(find.byKey(const ValueKey('adaptive-asset-table')), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('asset-reset-filters')));
+    await tester.pumpAndSettle();
+    expect(find.text('5 dari 5 aset'), findsOneWidget);
+    final input = tester.widget<TextField>(find.byType(TextField).first);
+    expect(input.controller?.text, isEmpty);
     expect(tester.takeException(), isNull);
   });
 
