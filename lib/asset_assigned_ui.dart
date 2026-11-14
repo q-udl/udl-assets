@@ -143,7 +143,7 @@ extension _AssignedAssetsScreens on _AssetScreenState {
                       _v5AssignedCell(Text(batch.kind +
                         (batch.dueDate.isEmpty ? '' : ' · ' + batch.dueDate)),
                         batch: batch),
-                      _v5AssignedCell(statusChip(batch.status,
+                      _v5AssignedCell(badge(batch.status,
                         compact: true, toneColor: batch.isOverdue ? danger : null),
                         batch: batch),
                       _v5AssignedCell(const Icon(
