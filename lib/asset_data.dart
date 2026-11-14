@@ -157,6 +157,16 @@ class AssetStore extends ChangeNotifier {
         'Baik', 'Digunakan', 1700000,
         subcategory: 'Meja', assetType: 'Meja Kerja'),
     ];
+    for (final a in assets) {
+      a.acquisitionCost = a.cost;
+      final c = categoryByName(a.category);
+      if (c == null) continue;
+      a.categoryId = c.code;
+      final sub = subcategoryByName(c.name, a.subcategory);
+      if (sub == null) continue;
+      a.subcategoryId = sub.id;
+      a.typeId = sub.typeId(a.assetType);
+    }
     events = [for (final a in assets)
       EventRecord(a.id, 'Registrasi', 'Registrasi data simulasi',
         DateTime.now().toIso8601String())];
