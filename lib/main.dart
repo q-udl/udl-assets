@@ -14,6 +14,7 @@ part 'asset_v4_master.dart';
 part 'asset_v4_history.dart';
 part 'asset_v4_registration.dart';
 part 'asset_v4_detail.dart';
+part 'asset_v4_modal.dart';
 part 'asset_v4_actions.dart';
 part 'asset_ui.dart';
 part 'asset_features_ui.dart';
