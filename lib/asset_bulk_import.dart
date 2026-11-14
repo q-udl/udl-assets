@@ -27,7 +27,7 @@ class BulkImportService {
   static const maxFileBytes = 2 * 1024 * 1024;
   static const maxDataRows = 500;
   static const employeeColumns = <String>[
-    'Kode Karyawan', 'Nama Lengkap', 'Unit', 'Departemen',
+    'Nama Lengkap', 'Unit', 'Departemen',
     'Jabatan', 'Lokasi Kerja', 'Tanggal Bergabung', 'Status Karyawan',
   ];
   static const assetColumns = <String>[
@@ -99,7 +99,6 @@ class BulkImportService {
       ['DUPLIKAT', 'Tidak ada pembaruan otomatis terhadap data yang sudah ada.'],
       ['KESALAHAN', 'Baris salah ditolak; laporan kesalahan dapat diunduh.'],
       if (kind == BulkImportKind.employees) ...[
-        ['KODE KARYAWAN', 'Opsional. Jika kosong, dibuat otomatis.'],
         ['STATUS', 'Aktif (default) atau Tidak Aktif.'],
         ['TANGGAL BERGABUNG', 'Tidak sama dengan tanggal penerimaan aset.'],
       ] else ...[
@@ -202,7 +201,6 @@ class BulkImportService {
       throw FormatException(
         'Kolom wajib template tidak ditemukan: ' + absent.join(', '));
     }
-    final seenCode = {for (final e in store.employees) norm(e.code)};
     final seenEmployee = {for (final e in store.employees)
       norm(e.name) + '|' + norm(e.unit) + '|' + norm(e.department)};
     final seenSerial = {for (final a in store.assets)
@@ -226,7 +224,7 @@ class BulkImportService {
           'Maksimal 500 baris. Pecah menjadi beberapa file.');
       }
       if (kind == BulkImportKind.employees) {
-        _checkEmployee(store, values, errors, seenCode, seenEmployee);
+        _checkEmployee(store, values, errors, seenEmployee);
       } else {
         _checkAsset(store, values, errors, seenSerial);
       }
@@ -240,7 +238,7 @@ class BulkImportService {
 
   static void _checkEmployee(
     AssetStore store, Map<String, String> row, List<String> errors,
-    Set<String> codes, Set<String> identities) {
+    Set<String> identities) {
     String val(String x) => row[x]!.trim();
     for (final key in ['Nama Lengkap','Unit','Departemen','Jabatan',
       'Lokasi Kerja']) {
@@ -248,13 +246,6 @@ class BulkImportService {
     }
     if (val('Nama Lengkap').isNotEmpty && val('Nama Lengkap').length < 3) {
       errors.add('Nama Lengkap minimal 3 karakter');
-    }
-    final code = val('Kode Karyawan');
-    if (code.isNotEmpty) {
-      if (code.length < 3 || !RegExp(r'^[a-zA-Z0-9._-]+$').hasMatch(code)) {
-        errors.add('Kode Karyawan minimal 3 karakter tanpa spasi');
-      }
-      if (!codes.add(norm(code))) errors.add('Kode Karyawan sudah ada/berulang');
     }
     final identity = norm(val('Nama Lengkap')) + '|' +
       norm(val('Unit')) + '|' + norm(val('Departemen'));
