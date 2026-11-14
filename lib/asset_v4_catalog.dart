@@ -347,37 +347,21 @@ extension _AssetV4Catalog on _AssetScreenState {
               const SizedBox(height: 12),
               const Divider(height: 1, color: border),
               const SizedBox(height: 7),
-              Row(children: [
-                Expanded(child: Text(
-                  'Menampilkan ' +
-                    (v4CatalogPage * v4PerPage + 1).toString() +
-                    '–' +
-                    (v4CatalogPage * v4PerPage + slice.length).toString() +
-                    ' dari ' + items.length.toString() + ' aset',
-                  style: const TextStyle(fontSize: 12, color: muted))),
-                DropdownButton<int>(
-                  value: v4PerPage,
-                  items: [20, 40, 80].map((value) =>
-                    DropdownMenuItem(
-                      value: value,
-                      child: Text(value.toString() + ' / halaman'))).toList(),
-                  onChanged: (value) => v4Change(() {
-                    v4PerPage = value ?? 20; v4CatalogPage = 0;
-                  }),
-                ),
-                IconButton(
-                  tooltip: 'Halaman sebelumnya',
-                  onPressed: v4CatalogPage == 0 ? null :
-                    () => v4Change(() => v4CatalogPage--),
-                  icon: const Icon(Icons.chevron_left_rounded),
-                ),
-                IconButton(
-                  tooltip: 'Halaman berikutnya',
-                  onPressed: v4CatalogPage >= pages - 1 ? null :
-                    () => v4Change(() => v4CatalogPage++),
-                  icon: const Icon(Icons.chevron_right_rounded),
-                ),
-              ]),
+              responsiveAssetPager(
+                description: 'Menampilkan ' +
+                  (v4CatalogPage * v4PerPage + 1).toString() +
+                  '–' +
+                  (v4CatalogPage * v4PerPage + slice.length).toString() +
+                  ' dari ' + items.length.toString() + ' aset',
+                perPage: v4PerPage,
+                onPerPage: (v) => v4Change(() {
+                  v4PerPage = v; v4CatalogPage = 0;
+                }),
+                onPrevious: v4CatalogPage == 0 ? null :
+                  () => v4Change(() => v4CatalogPage--),
+                onNext: v4CatalogPage >= pages - 1 ? null :
+                  () => v4Change(() => v4CatalogPage++),
+              ),
             ],
           ],
         )),
