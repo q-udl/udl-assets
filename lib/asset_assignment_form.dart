@@ -241,15 +241,19 @@ class _V5AssignmentFormState extends State<V5AssignmentForm> {
           child: Text(error!, style: const TextStyle(color: danger)),
         ),
         const SizedBox(height: 15),
-        Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-          FilledButton.icon(
-            key: const ValueKey('assignment-save'),
-            onPressed: saving ? null : save,
-            icon: const Icon(Icons.assignment_ind_outlined),
-            label: Text(saving ? 'Menyimpan...' :
-              'Buat Penugasan & Draf BAST'),
+        LayoutBuilder(builder:(ctx,box)=>Align(
+          alignment:Alignment.centerRight,
+          child:SizedBox(
+            width:box.maxWidth<530?box.maxWidth:null,
+            child:FilledButton.icon(
+              key:const ValueKey('assignment-save'),
+              onPressed:saving?null:save,
+              icon:const Icon(Icons.assignment_ind_outlined),
+              label:Text(saving?'Menyimpan...':'Buat Penugasan & Draf BAST',
+                textAlign:TextAlign.center),
+            ),
           ),
-        ]),
+        )),
       ],
     );
   }
