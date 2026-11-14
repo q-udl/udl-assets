@@ -92,6 +92,20 @@ void main() {
     expect(restored.assignments.single.employeeId, person.id);
   });
 
+  test('RV030-07: QR scan action is catalog-only and camera-gated', () {
+    expect(assetQrScanVisible(cameraAvailable: false,
+      page: 1, showingAssetDetail: false), isFalse);
+    expect(assetQrScanVisible(cameraAvailable: true,
+      page: 1, showingAssetDetail: false), isTrue);
+    expect(assetQrScanVisible(cameraAvailable: true,
+      page: 1, showingAssetDetail: true), isFalse);
+    for (final page in [0, 2, 3, 4, 5, 6, 7, 8, 9, 10]) {
+      expect(assetQrScanVisible(cameraAvailable: true,
+        page: page, showingAssetDetail: false), isFalse,
+        reason: 'Scan QR must not appear on page $page');
+    }
+  });
+
   testWidgets('RV030-07: scan action absent without confirmed camera',
       (tester) async {
     tester.view.physicalSize = const Size(1440, 900);
