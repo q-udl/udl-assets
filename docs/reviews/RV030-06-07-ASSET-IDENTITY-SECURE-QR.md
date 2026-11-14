@@ -3,12 +3,12 @@
 
 **Proyek:** UDL Assets — UD. LUTHFI  
 **Tanggal keputusan:** 14 November 2026  
-**Status:** Keputusan review disetujui; **BELUM DIIMPLEMENTASIKAN**  
+**Status:** Keputusan telah diimplementasikan di **branch review RV030**; belum merge atau deploy; QA/CI dan UAT perangkat menentukan kelayakan rilis  
 **Referensi:** PR #2 (draft), branch review `agent/udl-assets-v040-local-20261114`  
-**Kendali perubahan:** Dokumen ini adalah pengingat/spesifikasi review. Penulisan dokumen tidak mengizinkan implementasi fitur, merge, deploy, atau perubahan data operasional. Tunggu perintah eksplisit **GAS RV030**.
+**Kendali perubahan:** Instruksi **GAS RV030** sudah diberikan pada 14 November 2026. Implementasi berlangsung hanya pada branch review. Dokumen ini **tidak** memberikan izin merge, deploy, mengubah production, atau menghapus data pengguna.
 
 > **PENTING UNTUK IMPLEMENTOR BERIKUTNYA**  
-> Jangan mengasumsikan isi dokumen ini telah diterapkan pada source, backup, PDF, maupun label QR. Lakukan audit HEAD dan migrasi kompatibel sebelum implementasi. Jangan mengklaim Secure QR lokal sebagai verifikasi aman production.
+> Verifikasi HEAD dan hasil GitHub Actions terkini. Implementasi branch review belum sama dengan rilis production. Token lokal bukan verifikasi aman server; jangan klaim production security. Uji migrasi, backup, PDF, kamera nyata dan viewport sebelum menyetujui rilis.
 
 ---
 
@@ -128,7 +128,7 @@ Pada baseline sebelum RV030:
 - Pemulihan backup masih memvalidasi format aset lama minimum enam digit. Kompatibilitas ini perlu dijaga.
 - Aplikasi masih berjalan dalam pola penyimpanan per-browser, tanpa backend otoritatif.
 
-**Artinya: keputusan sudah final secara desain, tetapi belum berlaku sebagai fungsi aplikasi.**
+**Catatan historis:** Ini merupakan keadaan baseline sebelum RV030. Implementasi branch review sesudahnya telah mengubah generator kode, model karyawan, identitas QR, dan alur transaksi. Validasi akhir harus menggunakan HEAD terbaru dan laporan CI.
 
 ---
 
@@ -147,7 +147,24 @@ Keputusan detail UI/UX yang belum disetujui tetap berstatus review, **tidak otom
 ## 5. Batas kewenangan dan langkah selanjutnya
 
 - Dokumen ini boleh ditambahkan sebagai **commit dokumentasi saja di branch review**.
-- **BELUM ADA IMPLEMENTASI RV030**; tidak ada perubahan kode, model, tes, migrasi, build, maupun dataset sebagai bagian dari pencatatan keputusan ini.
+- Implementasi RV030 telah dimulai dan dilakukan di branch review. Penulisan keputusan ini sendiri tetap hanya aktivitas dokumentasi; source dan tes diubah pada commit implementasi sesudah persetujuan GAS.
 - **JANGAN** melakukan merge, deploy UAT/PROD, reset browser storage, atau mengubah data operasional.
-- Ketika pengguna memberi perintah **GAS RV030**, implementor harus membaca dokumen ini, memverifikasi source HEAD terbaru, membuat rencana migrasi, mengimplementasikan dan menjalankan test/QA lengkap.
+- Instruksi **GAS RV030** sudah diberikan. Sebelum rilis, verifikasi GitHub Actions terbaru, uji backup historis, render PDF dan pemeriksaan kamera nyata pada Windows Chrome, Android Chrome dan Safari iOS.
 - Setelah fitur selesai, perbarui dokumen ini dengan versi, commit, tanggal implementasi, hasil pengujian, dan status production sebenarnya.
+
+---
+
+## 6. Catatan realisasi implementasi review (14 November 2026)
+
+**Scope yang telah ditulis dalam source branch review:**
+
+- Generator kode aset baru minimum delapan digit pada pendaftaran satuan, massal dan impor Excel; restore masih menerima kode historis enam digit.
+- UUID karyawan menjadi satu-satunya kunci internal; kode lama diabaikan dari master dan dibuang dari snapshot backup baru.
+- Token QR terpisah dari Kode Aset, diterbitkan dengan CSPRNG lokal, mendukung pemindaian token, pencabutan dan penerbitan ulang.
+- Tombol Scan QR hanya dirender ketika input video terdeteksi. Kamera tidak aktif sebelum pengguna membuka scanner. Webcam tanpa akses/izin atau deteksi tidak pasti memerlukan pengujian manual.
+- BAST/BA pengembalian memakai nama pihak yang tersimpan pada transaksi dan memisahkan halaman lampiran foto.
+- Paket UAT Windows satu klik dikemas dari hasil Flutter Web build pada GitHub Actions dengan profil browser terisolasi.
+
+**Batas keamanan tetap:** Scan QR berbasis token lokal tidak memverifikasi token di server; file browser bisa disalin/dimodifikasi. Production membutuhkan backend, token hash, auth/otorisasi, audit dan rate limiting sebagaimana fase B di atas.
+
+**Gerbang penerimaan:** GitHub Actions `flutter analyze`, `flutter test`, `flutter build web --release`, artefak PDF visual QA, artefak UAT Windows, serta inspeksi manual semua viewport & kamera nyata. Status tes tidak dijamin oleh dokumen ini; **lihat workflow terbaru PR #2**. Tidak boleh merge/deploy sebelum verifikasi dan persetujuan eksplisit pengguna.
