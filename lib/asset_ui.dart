@@ -422,6 +422,14 @@ class _AssetScreenState extends State<AssetScreen> {
     final isMobile = MediaQuery.sizeOf(context).width < 650;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(children: [
+        if (MediaQuery.sizeOf(context).width < 920) ...[
+          IconButton(
+            tooltip: 'Buka Menu',
+            icon: const Icon(Icons.menu_rounded, color: ink),
+            onPressed: () => _shellKey.currentState?.openDrawer(),
+          ),
+          const SizedBox(width: 4),
+        ],
         const Icon(Icons.home_outlined, size: 14, color: muted),
         const SizedBox(width: 7),
         const Text('ASET PERUSAHAAN', style: TextStyle(fontSize: 10.5,
@@ -1405,88 +1413,129 @@ class _AssetScreenState extends State<AssetScreen> {
   @override
   Widget build(BuildContext context) {
     final compact = MediaQuery.sizeOf(context).width < 920;
+    final sidebarWidth = _sidebarCollapsed ? 72.0 : 238.0;
     return Scaffold(
+      key: _shellKey,
       backgroundColor: bg,
-      appBar: AppBar(
-        backgroundColor: navy, foregroundColor: Colors.white, toolbarHeight: 62,
-        titleSpacing: compact ? 4 : 24,
-        title: appHeader(),
-        actions: [
-          if (!compact) ...[
-            Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: const Color(0xFF274D75), borderRadius: BorderRadius.circular(20)),
-              child: const Row(children: [
-                Icon(Icons.laptop_chromebook_outlined, size: 15, color: Colors.white),
-                SizedBox(width: 7),
-                Text('LOCAL PREVIEW', style: TextStyle(color: Colors.white,
-                  fontSize: 10.5, letterSpacing: 0.8, fontWeight: FontWeight.w800)),
-              ])),
-            const SizedBox(width: 18),
-            const CircleAvatar(radius: 17, backgroundColor: Color(0xFF41668C),
-              child: Icon(Icons.person_outline_rounded, color: Colors.white, size: 19)),
-            const SizedBox(width: 24),
-          ],
-        ],
-      ),
-      drawer: compact ? Drawer(backgroundColor: Colors.white, child: sidebar(inDrawer: true)) : null,
-      body: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        if (!compact)
-          SizedBox(width: 238, child: DecoratedBox(
-            decoration: const BoxDecoration(border: Border(right: BorderSide(color: border))),
-            child: sidebar())),
-        Expanded(child: LayoutBuilder(builder: (context, constraints) {
-          final contentPadding = constraints.maxWidth < 720 ? 16.0 : 28.0;
-          return SingleChildScrollView(
-            padding: EdgeInsets.fromLTRB(contentPadding, 24, contentPadding, 45),
-            child: Align(
-              alignment: Alignment.topLeft,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1520),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                  titleArea(),
-                  if (store.loadError != null) ...[
-                    const SizedBox(height: 14),
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFF5E8),
-                        borderRadius: BorderRadius.circular(10),
+      drawer: compact
+        ? Drawer(
+            width: 270,
+            backgroundColor: Colors.white,
+            child: sidebar(inDrawer: true))
+        : null,
+      body: LayoutBuilder(builder: (context, viewport) {
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (!compact)
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeInOut,
+                    width: sidebarWidth,
+                    child: sidebar(),
+                  ),
+                Expanded(child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final contentPadding =
+                      constraints.maxWidth < 720 ? 16.0 : 28.0;
+                    // Full-width data views, bounded content on other pages.
+                    final dataView = selected == null &&
+                      (page == 1 || page == 3);
+                    return SingleChildScrollView(
+                      padding: EdgeInsets.fromLTRB(
+                        contentPadding, 24, contentPadding, 45),
+                      child: Align(
+                        alignment: Alignment.topLeft,
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: dataView
+                              ? constraints.maxWidth : 1520),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              titleArea(),
+                              if (store.loadError != null) ...[
+                                const SizedBox(height: 14),
+                                Container(
+                                  padding: const EdgeInsets.all(14),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFFF5E8),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Row(children: [
+                                    const Icon(Icons.warning_amber_outlined,
+                                      color: amber),
+                                    const SizedBox(width: 10),
+                                    Expanded(child: Text(store.loadError!,
+                                      style: const TextStyle(
+                                        fontSize: 12, color: ink))),
+                                  ]),
+                                ),
+                              ],
+                              const SizedBox(height: 23),
+                              if (selected != null) v4Detail(selected!)
+                              else if (page == 0) dashboard()
+                              else if (page == 1) v4Catalog()
+                              else if (page == 2) v4Taxonomy()
+                              else if (page == 3) v4History()
+                              else if (page == 5) v4Locations()
+                              else if (page == 6) V4RegistrationPage(
+                                store: store,
+                                onCompleted: (created) {
+                                  setState(() {
+                                    page = 1;
+                                    selected = created.first;
+                                    viewedPhotoId = null;
+                                  });
+                                  notify(created.length.toString() +
+                                    ' unit berhasil diregistrasikan. '
+                                    'Lengkapi foto tiap unit.');
+                                },
+                              )
+                              else settings(),
+                            ],
+                          ),
+                        ),
                       ),
-                      child: Row(children: [
-                        const Icon(Icons.warning_amber_outlined, color: amber),
-                        const SizedBox(width: 10),
-                        Expanded(child: Text(store.loadError!,
-                          style: const TextStyle(fontSize: 12, color: ink))),
-                      ]),
-                    ),
-                  ],
-                  const SizedBox(height: 23),
-                  if (selected != null) v4Detail(selected!)
-                  else if (page == 0) dashboard()
-                  else if (page == 1) v4Catalog()
-                  else if (page == 2) v4Taxonomy()
-                  else if (page == 3) v4History()
-                  else if (page == 5) v4Locations()
-                  else if (page == 6) V4RegistrationPage(
-                    store: store,
-                    onCompleted: (created) {
-                      setState(() {
-                        page = 1;
-                        selected = created.first;
-                        viewedPhotoId = null;
-                      });
-                      notify(created.length.toString() +
-                        ' unit berhasil diregistrasikan. Lengkapi foto tiap unit.');
-                    },
-                  )
-                  else settings(),
-                ]),
-              ),
+                    );
+                  },
+                )),
+              ],
             ),
-          );
-        })),
-      ]),
+            if (!compact)
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeInOut,
+                left: sidebarWidth - 16,
+                top: viewport.maxHeight / 2 - 16,
+                child: Tooltip(
+                  message: _sidebarCollapsed
+                    ? 'Perluas Sidebar' : 'Minimalkan Sidebar',
+                  child: Material(
+                    elevation: 3,
+                    color: Colors.white,
+                    shape: const CircleBorder(
+                      side: BorderSide(color: border)),
+                    child: InkWell(
+                      customBorder: const CircleBorder(),
+                      onTap: _toggleSidebar,
+                      child: SizedBox(
+                        width: 32, height: 32,
+                        child: Icon(_sidebarCollapsed
+                          ? Icons.chevron_right_rounded
+                          : Icons.chevron_left_rounded,
+                          size: 20, color: blue),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      }),
     );
   }
 }
