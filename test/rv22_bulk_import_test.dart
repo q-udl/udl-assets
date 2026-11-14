@@ -8,7 +8,9 @@ import 'package:udl_assets/main.dart';
 Uint8List fillTemplate(Uint8List bytes, List<List<xls.CellValue?>> rows) {
   final excel = xls.Excel.decodeBytes(bytes);
   final sheet = excel['DATA'];
-  for (final row in rows) sheet.appendRow(row);
+  for (final row in rows) {
+    sheet.appendRow(row);
+  }
   return Uint8List.fromList(excel.encode()!);
 }
 
