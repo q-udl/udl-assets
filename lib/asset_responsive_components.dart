@@ -67,6 +67,7 @@ Widget compactCustodyAssetRow({
   required String code,
   required String condition,
   required String accessories,
+  bool legacyAccessories = false,
   required String status,
   required AssetPhoto? photo,
   required VoidCallback onTap,
@@ -111,7 +112,9 @@ Widget compactCustodyAssetRow({
         fontSize: 11.5, color: blue, fontWeight: FontWeight.w600)),
       const SizedBox(height: 3),
       Text('Kondisi: ' + condition +
-        (accessories.isEmpty ? '' : ' · ' + accessories),
+        (accessories.trim().isEmpty ? '' :
+          ' · ' + (legacyAccessories ? 'Kelengkapan arsip: ' :
+          'Penyerta non-aset: ') + accessories),
         maxLines: mobile ? 3 : 2, overflow: TextOverflow.ellipsis,
         style: const TextStyle(fontSize: 11, color: muted)),
       if (mobile) ...[
