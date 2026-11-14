@@ -69,9 +69,11 @@ extension _AssetViewNavigation on _AssetScreenState {
     v4CategoryCode = data['taxonomyCategory'] as String? ?? '03';
     v4SubcategoryId = data['taxonomySubcategory'] as String? ?? '';
     v4TaxonomySearch = data['taxonomyQuery'] as String? ?? '';
+    _taxonomySearchController.text = v4TaxonomySearch;
     v6SiteId = data['locationSite'] as String? ?? '';
     v6AreaId = data['locationArea'] as String? ?? '';
     v6LocationSearch = data['locationQuery'] as String? ?? '';
+    _locationSearchController.text = v6LocationSearch;
     v4HistoryQuery = data['historyQuery'] as String? ?? '';
     _historySearchController.text = v4HistoryQuery;
     v4HistoryType = data['historyType'] as String? ?? 'Semua aktivitas';
@@ -79,8 +81,10 @@ extension _AssetViewNavigation on _AssetScreenState {
     v4HistoryPage = data['historyPage'] as int? ?? 0;
     v4HistoryPerPage = data['historyPerPage'] as int? ?? 20;
     v5EmployeeSearch = data['employeeQuery'] as String? ?? '';
+    _employeeSearchController.text = v5EmployeeSearch;
     v5EmployeeFilter = data['employeeFilter'] as String? ?? 'Semua';
     v5AssignmentSearch = data['assignmentQuery'] as String? ?? '';
+    _assignmentSearchController.text = v5AssignmentSearch;
     v5AssignmentFilter = data['assignmentFilter'] as String? ?? 'Semua';
     v5AssignmentPage = data['assignmentPage'] as int? ?? 0;
     v5AssignmentPerPage = data['assignmentPerPage'] as int? ?? 20;
