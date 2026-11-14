@@ -40,14 +40,14 @@ class _V4RegistrationPageState extends State<V4RegistrationPage> {
     validator:(v)=>v==null?'Wajib dipilih':null,onChanged:change);
 
   Widget pairs(Widget a,Widget b,bool narrow){
-    if(narrow)return Column(children:[a,const SizedBox(height:12),b]);
+    if(narrow) { return Column(children:[a,const SizedBox(height:12),b]); }
     return Row(children:[Expanded(child:a),const SizedBox(width:12),Expanded(child:b)]);
   }
 
   Future<void> selectPhoto()async{
     final x=await ImagePicker().pickImage(source:ImageSource.gallery,
       maxWidth:960,maxHeight:960,imageQuality:65);
-    if(x==null)return;
+    if(x==null) { return; }
     final bytes=await x.readAsBytes();
     if(bytes.length>AssetStore.maxPhotoBytes){
       if(mounted)ScaffoldMessenger.of(context).showSnackBar(
@@ -58,7 +58,7 @@ class _V4RegistrationPageState extends State<V4RegistrationPage> {
   }
 
   Future<void> save()async{
-    if(!keyForm.currentState!.validate())return;
+    if(!keyForm.currentState!.validate()) { return; }
     final qty=int.tryParse(quantity.text);
     if(qty==null || qty<1 || qty>100){
       ScaffoldMessenger.of(context).showSnackBar(
@@ -89,12 +89,12 @@ class _V4RegistrationPageState extends State<V4RegistrationPage> {
           // Registration remains valid, and the missing photo can be uploaded on detail.
         }
       }
-      if(mounted)widget.onCompleted(created);
+      if(mounted) { widget.onCompleted(created); }
     }catch(e){
       if(mounted)ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content:Text('Registrasi gagal: '+e.toString())));
     }finally{
-      if(mounted)setState(()=>saving=false);
+      if(mounted) { setState(()=>saving=false); }
     }
   }
 
