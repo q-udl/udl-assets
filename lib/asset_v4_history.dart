@@ -17,7 +17,7 @@ extension _AssetV4History on _AssetScreenState {
         (v4HistoryType=='Semua aktivitas'||v4HistoryType==e.type);
     }).toList()..sort((a,b)=>b.timestamp.compareTo(a.timestamp));
     final pages=items.isEmpty?1:((items.length-1)~/v4HistoryPerPage)+1;
-    if(v4HistoryPage>=pages)v4HistoryPage=pages-1;
+    if(v4HistoryPage>=pages) { v4HistoryPage=pages-1; }
     final rows=items.skip(v4HistoryPage*v4HistoryPerPage).take(v4HistoryPerPage);
     return surface(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
       sectionHeader('Riwayat Aktivitas',
@@ -36,14 +36,14 @@ extension _AssetV4History on _AssetScreenState {
       ]),
       const SizedBox(height:14),
       LayoutBuilder(builder:(ctx,box) {
-        if(box.maxWidth<750)return Column(children:[
+        if(box.maxWidth<750) { return Column(children:[
           for(final e in rows) ListTile(
             onTap:()=>v4EventDetail(e),
             leading:Icon(v4EventIcon(e.type)),
             title:Text(e.type+' · '+(assetFor(e.assetId)?.name ?? 'Master Data')),
             subtitle:Text(e.detail,maxLines:2,overflow:TextOverflow.ellipsis),
             trailing:const Icon(Icons.chevron_right)),
-        ]);
+        ]); }
         return SingleChildScrollView(scrollDirection:Axis.horizontal,
           child:DataTable(columnSpacing:18,
             columns:const [
@@ -88,11 +88,11 @@ extension _AssetV4History on _AssetScreenState {
   }
 
   IconData v4EventIcon(String type) {
-    if(type=='Registrasi')return Icons.add_circle_outline;
-    if(type.contains('Foto'))return Icons.photo_camera_outlined;
-    if(type.contains('Mutasi'))return Icons.swap_horiz_rounded;
-    if(type.contains('Kondisi'))return Icons.build_outlined;
-    if(type.contains('Status')||type=='Penghapusan')return Icons.flag_outlined;
+    if(type=='Registrasi') { return Icons.add_circle_outline; }
+    if(type.contains('Foto')) { return Icons.photo_camera_outlined; }
+    if(type.contains('Mutasi')) { return Icons.swap_horiz_rounded; }
+    if(type.contains('Kondisi')) { return Icons.build_outlined; }
+    if(type.contains('Status')||type=='Penghapusan') { return Icons.flag_outlined; }
     return Icons.history_rounded;
   }
 
