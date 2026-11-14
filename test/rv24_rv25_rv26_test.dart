@@ -167,12 +167,22 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(const AssetApp());
     await tester.pumpAndSettle();
+    final initialError = tester.takeException();
+    if (initialError is FlutterError) {
+      debugPrint('RV26 INITIAL 320 ERROR: ' + initialError.toStringDeep());
+    }
+    expect(initialError, isNull, reason: 'Initial asset catalog at 320px');
     await tester.tap(find.byTooltip('Buka Menu'));
     await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull, reason: 'Open drawer at 320px');
     await tester.tap(find.text('Master Karyawan').first);
     await tester.pumpAndSettle();
     expect(find.text('Master Karyawan'), findsWidgets);
     expect(find.byTooltip('Buka Menu'), findsOneWidget);
-    expect(tester.takeException(), isNull);
+    final navigationError = tester.takeException();
+    if (navigationError is FlutterError) {
+      debugPrint('RV26 EMPLOYEE 320 ERROR: ' + navigationError.toStringDeep());
+    }
+    expect(navigationError, isNull, reason: 'Employee master at 320px');
   });
 }
