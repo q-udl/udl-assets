@@ -47,13 +47,10 @@ class _V5ReturnFormState extends State<V5ReturnForm> {
     final asset = widget.store.assignmentAsset(line.assetId);
     if (asset == null) return;
     try {
-      final chosen = await ImagePicker().pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 960, maxHeight: 960, imageQuality: 65);
-      if (chosen == null) return;
-      final bytes = await chosen.readAsBytes();
+      final chosen = await AssetPhotoPicker.choose(context);
+      if (chosen == null || !mounted) return;
       await widget.store.addPhoto(
-        asset, bytes, chosen.name, 'Dokumentasi Kondisi',
+        asset, chosen.bytes, chosen.fileName, 'Dokumentasi Kondisi',
         note: 'Dokumentasi saat pengembalian: ' +
           widget.assignment.draftReference);
       if (mounted) {
