@@ -295,14 +295,16 @@ class _AssetScreenState extends State<AssetScreen> with WidgetsBindingObserver {
         tint = blue;
         break;
       case 'Dalam Perbaikan':
-      case 'Menunggu Penerimaan':
+      case 'Menunggu Penerimaan': // Transfer workflow remains unchanged.
+      case 'Menunggu Serah Terima':
         tint = amber;
         break;
       case 'Hilang':
       case 'Tidak Aktif':
       case 'Dilepas':
       case 'Dihapuskan':
-      case 'Ditolak':
+      case 'Ditolak': // Transfer workflow remains unchanged.
+      case 'Dibatalkan':
         tint = danger;
         break;
       default:
