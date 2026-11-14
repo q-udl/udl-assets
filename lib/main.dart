@@ -80,6 +80,15 @@ class _AssetAppState extends State<AssetApp> {
       cardTheme: CardThemeData(elevation: 0, color: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14),
           side: const BorderSide(color: Color(0xFFE2E9F0)))),
+      dialogTheme: DialogThemeData(
+        backgroundColor: Colors.white, surfaceTintColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+          side: const BorderSide(color: border))),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: Colors.white,
+        modalBackgroundColor: Colors.white,
+        surfaceTintColor: Colors.white),
       inputDecorationTheme: InputDecorationTheme(isDense: true,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)))),
     home: AnimatedBuilder(animation: store, builder: (context, child) =>
