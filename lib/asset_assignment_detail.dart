@@ -145,6 +145,7 @@ extension _AssignedAssetsDetail on _AssetScreenState {
             code: line.assetCode,
             condition: line.handoverCondition,
             accessories: line.accessories,
+            legacyAccessories: line.hasLegacyAccessories,
             status: line.state,
             photo: store.primaryPhotoFor(line.assetId),
             onTap: () {
