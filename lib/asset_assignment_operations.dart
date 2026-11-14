@@ -56,7 +56,9 @@ extension AssetAssignmentOperations on AssetStore {
             id: uuid.v4(), assetId: asset.id,
             assetCode: asset.code, assetName: asset.name,
             serial: asset.serial, handoverCondition: asset.condition,
-            accessories: accessories[asset.id]?.trim() ?? ''),
+            accessories: accessories[asset.id]?.trim() ?? '',
+            photoIds: photosFor(asset.id).take(2)
+              .map((photo) => photo.id).toList()),
       ],
     );
     assignments.insert(0, record);
@@ -169,6 +171,12 @@ extension AssetAssignmentOperations on AssetStore {
             returnCondition: inspections[line.id]!.condition,
             accessoriesReturned: inspections[line.id]!.accessories.trim(),
             notes: inspections[line.id]!.notes.trim(),
+            photoIds: photosFor(line.assetId).where((p) {
+              final photoTime = DateTime.tryParse(p.timestamp);
+              final acceptedTime = DateTime.tryParse(record.acceptedAt);
+              return photoTime != null && acceptedTime != null &&
+                photoTime.isAfter(acceptedTime);
+            }).take(2).map((p) => p.id).toList(),
           ),
       ],
     );
