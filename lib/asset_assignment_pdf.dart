@@ -109,13 +109,14 @@ class AssetBastPdf {
   ]);
 
   static pw.Widget signing(String left, String right,
-      String leftName, String rightName, {bool showGuide = true}) => pw.Padding(
-    padding: const pw.EdgeInsets.only(top: 20),
+      String leftName, String rightName,
+      {bool showGuide = true, bool compact = false}) => pw.Padding(
+    padding: pw.EdgeInsets.only(top: compact ? 10 : 20),
     child: pw.Row(
       children: [
         pw.Expanded(child: pw.Column(children: [
           pw.Text(left, style: bold(9)),
-          pw.SizedBox(height: 60),
+          pw.SizedBox(height: compact ? 55 : 60),
           pw.Text(leftName, style: bold(9)),
           if (showGuide)
             pw.Text('Tanda tangan: __________________', style: regular(8)),
@@ -123,7 +124,7 @@ class AssetBastPdf {
         pw.SizedBox(width: 20),
         pw.Expanded(child: pw.Column(children: [
           pw.Text(right, style: bold(9)),
-          pw.SizedBox(height: 60),
+          pw.SizedBox(height: compact ? 55 : 60),
           pw.Text(rightName, style: bold(9)),
           if (showGuide)
             pw.Text('Tanda tangan: __________________', style: regular(8)),
@@ -344,8 +345,10 @@ class AssetBastPdf {
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                pw.Text('BAST ' + record.bastNumber + ' (lanjutan)',
+                pw.Text('BERITA ACARA SERAH TERIMA ASET (LANJUTAN)',
                   style: bold(9)),
+                pw.Text('Nomor: ' + record.bastNumber,
+                  style: regular(8)),
                 pw.SizedBox(height: 5),
                 pw.Divider(color: PdfColors.blueGrey200),
               ]),
@@ -358,7 +361,7 @@ class AssetBastPdf {
         item('Jenis Penugasan', record.kind),
         item('Batas Pengembalian', record.kind == 'Sementara'
           ? text(record.dueDate) : 'Tidak ditentukan'),
-        pw.SizedBox(height: 15),
+        pw.SizedBox(height: 12),
         pw.Text('PARA PIHAK', style: bold(10)),
         pw.SizedBox(height: 10),
         pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -382,7 +385,7 @@ class AssetBastPdf {
             ])),
           ],
         ),
-        pw.SizedBox(height: 15),
+        pw.SizedBox(height: 12),
         pw.Text('RINCIAN ASET', style: bold(10)),
         pw.SizedBox(height: 7),
         pw.Text('Dengan ini, Penyerah telah menyerahkan dan Penerima '
@@ -406,12 +409,12 @@ class AssetBastPdf {
         pw.Inseparable(canSpan: false, child: pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
-            pw.SizedBox(height: 10),
+            pw.SizedBox(height: 5),
             item('Catatan', record.notes.trim().isEmpty
               ? 'Tidak ada catatan tambahan' : record.notes.trim()),
-            pw.SizedBox(height: 11),
-            pw.Text('PERNYATAAN SERAH TERIMA', style: bold(10)),
             pw.SizedBox(height: 7),
+            pw.Text('PERNYATAAN SERAH TERIMA', style: bold(10)),
+            pw.SizedBox(height: 5),
             pw.Text(
               'Para pihak menyatakan bahwa serah terima aset sebagaimana '
               'tercantum dalam dokumen ini telah dilaksanakan sesuai '
@@ -426,7 +429,8 @@ class AssetBastPdf {
             ),
             signing('Penyerah', 'Penerima',
               text(record.handedOverByName),
-              text(record.employeeSnapshot['name']), showGuide: false),
+              text(record.employeeSnapshot['name']),
+              showGuide: false, compact: true),
           ],
         )),
       ],
