@@ -188,11 +188,12 @@ class AssetReturnReceipt {
   final String id, draftReference, assignmentId, createdAt;
   final Map<String, dynamic> employeeSnapshot;
   final List<AssetReturnLine> lines;
-  final String notes;
+  final String notes, receivingLocation, receivedByName;
   AssetReturnReceipt({
     required this.id, required this.draftReference,
     required this.assignmentId, required this.employeeSnapshot,
     required this.createdAt, required this.lines, this.notes = '',
+    required this.receivingLocation, this.receivedByName = '',
   });
 
   Map<String, dynamic> toJson() => {
@@ -200,6 +201,7 @@ class AssetReturnReceipt {
     'assignmentId': assignmentId,
     'employeeSnapshot': employeeSnapshot,
     'createdAt': createdAt, 'notes': notes,
+    'receivingLocation': receivingLocation, 'receivedByName': receivedByName,
     'lines': lines.map((l) => l.toJson()).toList(),
   };
 
@@ -216,5 +218,7 @@ class AssetReturnReceipt {
         .map((v) => AssetReturnLine.fromJson(
           Map<String, dynamic>.from(v as Map))).toList(),
       notes: x['notes']?.toString() ?? '',
+      receivingLocation: x['receivingLocation']?.toString() ?? '',
+      receivedByName: x['receivedByName']?.toString() ?? '',
     );
 }
