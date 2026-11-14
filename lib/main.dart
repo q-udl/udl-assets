@@ -9,6 +9,12 @@ import 'package:qr_flutter/qr_flutter.dart';
 part 'asset_taxonomy.dart';
 part 'asset_data.dart';
 part 'asset_operations.dart';
+part 'asset_v4_catalog.dart';
+part 'asset_v4_master.dart';
+part 'asset_v4_history.dart';
+part 'asset_v4_registration.dart';
+part 'asset_v4_detail.dart';
+part 'asset_v4_actions.dart';
 part 'asset_ui.dart';
 part 'asset_features_ui.dart';
 
