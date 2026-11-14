@@ -38,11 +38,14 @@ void main() {
     await store.confirmAssignment(
       batch, true, '',
       handedOverByName: 'Petugas GA',
+      handoverLocation: 'Gudang Pusat', bastNumber: 'BAST-PDF-QA-001',
       proofPhotos: {
         for (var index = 0; index < records.length; index++)
           records[index].id: proof(index),
       });
     expect(batch.handedOverByName, 'Petugas GA');
+    expect(batch.bastNumber, 'BAST-PDF-QA-001');
+    expect(batch.canPrintBast, isTrue);
     expect(batch.employeeSnapshot['name'], 'Dimas Nugroho');
     final bast = await AssetBastPdf.handover(batch, store: store);
     expect(utf8.decode(bast.take(5).toList()), '%PDF-');
