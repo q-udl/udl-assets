@@ -35,11 +35,11 @@ extension _AssignedAssetsDetail on _AssetScreenState {
             }
           }),
           if (batch.isPending) ...[
-            primaryButton('Terima (Simulasi)',
+            primaryButton('Terima Penugasan',
               Icons.check_circle_outline, () =>
                 v5ConfirmAssignment(batch, true),
               tone: AssetActionTone.success),
-            outlineButton('Tolak (Simulasi)', Icons.cancel_outlined,
+            outlineButton('Tolak Penugasan', Icons.cancel_outlined,
               () => v5ConfirmAssignment(batch, false),
               tone: AssetActionTone.danger),
           ],
@@ -72,6 +72,8 @@ extension _AssignedAssetsDetail on _AssetScreenState {
             (batch.employeeSnapshot['department']?.toString() ?? '-')),
           detailValue('Lokasi Kerja',
             batch.employeeSnapshot['workLocation']?.toString() ?? ''),
+          if (batch.handedOverByName.isNotEmpty)
+            detailValue('Yang Menyerahkan', batch.handedOverByName),
           TextButton.icon(
             onPressed: () {
               final record = store.employeeById(batch.employeeId);
@@ -94,7 +96,7 @@ extension _AssignedAssetsDetail on _AssetScreenState {
           detailValue('Pengajuan', dateText(batch.createdAt)),
           detailValue('Batas pengembalian',
             batch.dueDate.isEmpty ? 'Tidak ditentukan' : batch.dueDate),
-          detailValue('Konfirmasi simulasi',
+          detailValue('Konfirmasi',
             batch.acceptedAt.isEmpty ? 'Belum ada' :
               dateText(batch.acceptedAt)),
           detailValue('Aset masih dikuasai',
@@ -211,12 +213,14 @@ extension _AssignedAssetsDetail on _AssetScreenState {
   Future<void> v5ConfirmAssignment(
       AssetAssignment batch, bool accepted) async {
     final reason = TextEditingController();
+    final handedBy = TextEditingController();
     final proofPhotos = <String, SelectedAssetPhoto>{};
     var error = '';
-    bool hasChanges() => reason.text.isNotEmpty || proofPhotos.isNotEmpty;
+    bool hasChanges() => reason.text.isNotEmpty ||
+      handedBy.text.isNotEmpty || proofPhotos.isNotEmpty;
     final approved = await v4ShowModal<bool>(
-      title: accepted ? 'Terima Penugasan (Simulasi)' :
-        'Tolak Penugasan (Simulasi)',
+      title: accepted ? 'Konfirmasi Serah Terima' :
+        'Tolak Penugasan',
       subtitle: batch.draftReference,
       maxWidth: 650,
       isDirty: hasChanges,
@@ -227,7 +231,12 @@ extension _AssignedAssetsDetail on _AssetScreenState {
         const SizedBox(height: 12),
         v4ReadonlyField('Nama karyawan',
           batch.employeeSnapshot['name']?.toString() ?? ''),
-        const SizedBox(height: 10),
+        if (accepted) ...[
+          const SizedBox(height: 12),
+          TextField(controller: handedBy,
+            decoration: v4ModalDecoration('Yang Menyerahkan (nama petugas) *')),
+          const SizedBox(height: 10),
+        ],
         v4ReadonlyField('Jumlah aset', batch.lines.length.toString()),
         const SizedBox(height: 15),
         TextField(
@@ -279,6 +288,8 @@ extension _AssignedAssetsDetail on _AssetScreenState {
           onPressed: () {
             if (!accepted && reason.text.trim().isEmpty) {
               update(() => error = 'Alasan penolakan wajib diisi.');
+            } else if (accepted && handedBy.text.trim().isEmpty) {
+              update(() => error = 'Nama pihak yang menyerahkan wajib diisi.');
             } else if (accepted &&
                 batch.lines.any((l) => !proofPhotos.containsKey(l.assetId))) {
               update(() => error =
@@ -294,16 +305,18 @@ extension _AssignedAssetsDetail on _AssetScreenState {
     if (approved == true) {
       try {
         await store.confirmAssignment(batch, accepted, reason.text,
-          proofPhotos: proofPhotos);
+          proofPhotos: proofPhotos,
+          handedOverByName: handedBy.text);
         repaint();
         notify(accepted
-          ? 'Penugasan aktif; foto bukti terlampir pada BAST simulasi.'
+          ? 'Penugasan aktif; foto bukti tercatat pada BAST.'
           : 'Pengajuan penugasan ditolak.');
       } catch (e) {
         notify('Gagal memproses penugasan: ' + e.toString());
       }
     }
     reason.dispose();
+    handedBy.dispose();
   }
 
   Widget v5CustodyForAsset(AssetRecord asset) {
