@@ -572,7 +572,16 @@ class _AssetScreenState extends State<AssetScreen> with WidgetsBindingObserver {
       page == 5 ? 'Kelola lokasi penempatan aset.' :
       page == 6 ? 'Registrasikan aset satuan atau beberapa unit sekaligus.' :
       'Kelola data dan standar identitas aset.';
-    final isMobile = MediaQuery.sizeOf(context).width < 650;
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isMobile = screenWidth < 650;
+    // QR scanning is an asset lookup action, never a global page action.
+    final showAssetScanner = assetQrScanVisible(
+      cameraAvailable: _scanQrAvailable,
+      page: page,
+      showingAssetDetail: selected != null,
+    );
+    final stackedActions = isMobile ||
+      (page == 1 && selected == null && screenWidth < 1120);
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(children: [
         if (MediaQuery.sizeOf(context).width < 920) ...[
@@ -592,13 +601,9 @@ class _AssetScreenState extends State<AssetScreen> with WidgetsBindingObserver {
         Flexible(child: Text(title.toUpperCase(), overflow: TextOverflow.ellipsis,
           style: const TextStyle(fontSize: 10.5, color: blue,
             fontWeight: FontWeight.w800, letterSpacing: 1.0))),
-         if (_scanQrAvailable && page != 4) IconButton(
-           tooltip: 'Scan QR Code',
-           onPressed: v4ScanQrCode,
-           icon: const Icon(Icons.qr_code_scanner_outlined, color: blue)),
       ]),
       const SizedBox(height: 15),
-      if (isMobile) ...[
+      if (stackedActions) ...[
         if (_navigationHistory.isNotEmpty) ...[
           outlineButton('Kembali', Icons.arrow_back_rounded, backFromCurrent),
           const SizedBox(height: 10),
@@ -609,6 +614,9 @@ class _AssetScreenState extends State<AssetScreen> with WidgetsBindingObserver {
         const SizedBox(height: 12),
         if (selected == null && page == 1)
           Wrap(spacing: 9, runSpacing: 9, children: [
+            if (showAssetScanner)
+              outlineButton('Scan QR Code', Icons.qr_code_scanner_outlined,
+                v4ScanQrCode),
             outlineButton('Impor Data Aset', Icons.upload_file_outlined,
               () => v22OpenImport(BulkImportKind.assets)),
             primaryButton('Tambah Aset', Icons.add_rounded,
@@ -639,12 +647,12 @@ class _AssetScreenState extends State<AssetScreen> with WidgetsBindingObserver {
             Text(description, style: const TextStyle(fontSize: 13, color: muted)),
           ])),
           const SizedBox(width: 14),
-          if (_scanQrAvailable && page != 4) ...[
-            outlineButton('Scan QR Code', Icons.qr_code_scanner_outlined,
-              v4ScanQrCode),
-            const SizedBox(width: 9),
-          ],
           if (selected == null && page == 1) ...[
+            if (showAssetScanner) ...[
+              outlineButton('Scan QR Code', Icons.qr_code_scanner_outlined,
+                v4ScanQrCode),
+              const SizedBox(width: 9),
+            ],
             outlineButton('Impor Data Aset', Icons.upload_file_outlined,
               () => v22OpenImport(BulkImportKind.assets)),
             const SizedBox(width: 9),
