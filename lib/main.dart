@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:math';
+import 'dart:math' as math;
 import 'package:excel/excel.dart' as xls;
 import 'package:file_picker/file_picker.dart';
 import 'package:camera/camera.dart' as cam;
@@ -74,7 +74,7 @@ const uuid = Uuid();
 /// Cryptographically unpredictable local identity. The production authority
 /// will issue and verify these tokens server-side instead.
 String newAssetQrToken() {
-  final entropy = Random.secure();
+  final entropy = math.Random.secure();
   return base64UrlEncode(List<int>.generate(
     32, (_) => entropy.nextInt(256))).replaceAll('=', '');
 }
