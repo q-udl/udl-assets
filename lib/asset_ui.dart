@@ -2,6 +2,38 @@ part of 'main.dart';
 
 // UDL Assets local preview — UI layer. Data model and persistence remain in main.dart.
 class _AssetScreenState extends State<AssetScreen> {
+  final GlobalKey<ScaffoldState> _shellKey = GlobalKey<ScaffoldState>();
+  final TextEditingController _assetSearchController = TextEditingController();
+  bool _sidebarCollapsed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _restoreSidebarPreference();
+  }
+
+  Future<void> _restoreSidebarPreference() async {
+    final preferences = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _sidebarCollapsed =
+          preferences.getBool('udl_assets_sidebar_collapsed') ?? false;
+      });
+    }
+  }
+
+  void _toggleSidebar() {
+    setState(() => _sidebarCollapsed = !_sidebarCollapsed);
+    SharedPreferences.getInstance().then((preferences) =>
+      preferences.setBool('udl_assets_sidebar_collapsed', _sidebarCollapsed));
+  }
+
+  @override
+  void dispose() {
+    _assetSearchController.dispose();
+    super.dispose();
+  }
+
   int page = 1;
   String query = '';
   String v4LocationFilter = 'Semua lokasi';
@@ -187,10 +219,51 @@ class _AssetScreenState extends State<AssetScreen> {
     );
   }
 
+  Widget _appIdentity({required bool condensed}) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(condensed ? 15 : 18, 19,
+        condensed ? 15 : 16, 14),
+      child: Row(
+        mainAxisAlignment: condensed
+          ? MainAxisAlignment.center : MainAxisAlignment.start,
+        children: [
+          Container(
+            width: 38, height: 38,
+            decoration: BoxDecoration(
+              color: const Color(0xFF214C78),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            alignment: Alignment.center,
+            child: const Text('L', style: TextStyle(
+              color: Colors.white, fontSize: 21,
+              fontWeight: FontWeight.w900)),
+          ),
+          if (!condensed) ...[
+            const SizedBox(width: 10),
+            Expanded(child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                Text('UD. LUTHFI', maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontWeight: FontWeight.w900,
+                    fontSize: 14, color: ink)),
+                SizedBox(height: 3),
+                Text('UDL Assets', style: TextStyle(
+                  fontSize: 12, color: muted)),
+              ],
+            )),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _sideItem(int index, {bool inDrawer = false}) {
     final active = page == index;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
+    final condensed = _sidebarCollapsed && !inDrawer;
+    final item = Padding(
+      padding: EdgeInsets.symmetric(vertical: 3,
+        horizontal: condensed ? 9 : 12),
       child: Material(
         color: active ? lightBlue : Colors.transparent,
         borderRadius: BorderRadius.circular(11),
@@ -201,104 +274,138 @@ class _AssetScreenState extends State<AssetScreen> {
             if (inDrawer) Navigator.of(context).pop();
           },
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            height: 43,
+            padding: EdgeInsets.symmetric(horizontal: condensed ? 0 : 13),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(11),
-              border: active ? Border.all(color: const Color(0xFFDCEAF9)) : null,
+              border: active ? Border.all(
+                color: const Color(0xFFDCEAF9)) : null,
             ),
-            child: Row(children: [
-              Icon(icons[index], size: 19, color: active ? blue : const Color(0xFF697B91)),
-              const SizedBox(width: 13),
-              Expanded(child: Text(labels[index], style: TextStyle(
-                fontSize: 13.5, fontWeight: active ? FontWeight.w800 : FontWeight.w600,
-                color: active ? blue : const Color(0xFF54667A)))),
-              if (index == 1) Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                decoration: BoxDecoration(color: active ? Colors.white : const Color(0xFFF0F3F8),
-                  borderRadius: BorderRadius.circular(6)),
-                child: Text(store.assets.length.toString(), style: const TextStyle(fontSize: 11, color: muted)),
-              ),
-            ]),
+            child: Row(
+              mainAxisAlignment: condensed
+                ? MainAxisAlignment.center : MainAxisAlignment.start,
+              children: [
+                Icon(icons[index], size: 19,
+                  color: active ? blue : const Color(0xFF697B91)),
+                if (!condensed) ...[
+                  const SizedBox(width: 12),
+                  Expanded(child: Text(labels[index],
+                    maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 13.5,
+                      fontWeight: active
+                        ? FontWeight.w800 : FontWeight.w600,
+                      color: active ? blue : const Color(0xFF54667A)))),
+                  if (index == 1) Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 7, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: active ? Colors.white :
+                        const Color(0xFFF0F3F8),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(store.assets.length.toString(),
+                      style: const TextStyle(fontSize: 11, color: muted)),
+                  ),
+                ],
+              ],
+            ),
           ),
+        ),
+      ),
+    );
+    return condensed
+      ? Tooltip(message: labels[index], preferBelow: false, child: item)
+      : item;
+  }
+
+  Widget _sidebarSectionLabel(String label, {bool condensed = false}) {
+    if (condensed) return const Divider(
+      height: 24, indent: 17, endIndent: 17, color: border);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(23, 17, 12, 8),
+      child: Text(label, style: const TextStyle(
+        color: Color(0xFF9AA8B9), fontSize: 10,
+        letterSpacing: 1.5, fontWeight: FontWeight.w800)),
+    );
+  }
+
+  Widget _accountFooter({required bool condensed}) {
+    return Container(
+      margin: EdgeInsets.fromLTRB(condensed ? 9 : 12, 8,
+        condensed ? 9 : 12, 15),
+      padding: EdgeInsets.all(condensed ? 8 : 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF6F9FD),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: border),
+      ),
+      child: Tooltip(
+        message: 'Pratinjau Lokal · belum ada akun yang login',
+        child: Row(
+          mainAxisAlignment: condensed
+            ? MainAxisAlignment.center : MainAxisAlignment.start,
+          children: [
+            const Icon(Icons.account_circle_outlined,
+              color: blue, size: 25),
+            if (!condensed) ...[
+              const SizedBox(width: 9),
+              Expanded(child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Text('Pratinjau Lokal', maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontWeight: FontWeight.w700,
+                      fontSize: 12, color: ink)),
+                  SizedBox(height: 3),
+                  Text('UDL Assets · v0.4.0',
+                    style: TextStyle(fontSize: 11, color: muted)),
+                ],
+              )),
+            ],
+          ],
         ),
       ),
     );
   }
 
   Widget sidebar({bool inDrawer = false}) {
+    final condensed = _sidebarCollapsed && !inDrawer;
     return Container(
-      color: Colors.white,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(right: BorderSide(color: border)),
+      ),
       child: SafeArea(
-        top: false,
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const SizedBox(height: 24),
-          const Padding(
-            padding: EdgeInsets.only(left: 22, right: 16, bottom: 12),
-            child: Text('MENU UTAMA', style: TextStyle(
-              fontSize: 10, letterSpacing: 1.7, color: Color(0xFF9AA8B9), fontWeight: FontWeight.w800)),
-          ),
-          Padding(padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Column(children: [
-              _sideItem(1, inDrawer: inDrawer),
-              _sideItem(3, inDrawer: inDrawer),
-            ])), 
-          const SizedBox(height: 18),
-          const Padding(
-            padding: EdgeInsets.only(left: 22, right: 16, bottom: 12),
-            child: Text('MASTER DATA', style: TextStyle(
-              fontSize: 10, letterSpacing: 1.7, color: Color(0xFF9AA8B9), fontWeight: FontWeight.w800)),
-          ),
-          Padding(padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Column(children: [
-              _sideItem(2, inDrawer: inDrawer),
-              _sideItem(5, inDrawer: inDrawer),
-              const Divider(height: 20),
-              _sideItem(4, inDrawer: inDrawer),
-            ])), 
-          const Spacer(),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-            child: Container(
-              padding: const EdgeInsets.all(13),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF6F9FD),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: border),
-              ),
-              child: Row(children: [
-                Container(width: 8, height: 8,
-                  decoration: const BoxDecoration(color: green, shape: BoxShape.circle)),
-                const SizedBox(width: 10),
-                const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('Pratinjau Lokal', style: TextStyle(fontSize: 12, color: ink, fontWeight: FontWeight.w700)),
-                  SizedBox(height: 3),
-                  Text('UDL Assets · v0.4.0', style: TextStyle(fontSize: 11, color: muted)),
-                ])),
-              ]),
-            ),
-          ),
-        ]),
+        top: true, bottom: true,
+        child: Column(
+          children: [
+            _appIdentity(condensed: condensed),
+            const Divider(height: 1, color: border),
+            Expanded(child: ListView(
+              padding: const EdgeInsets.only(top: 8),
+              children: [
+                _sidebarSectionLabel('MENU UTAMA',
+                  condensed: condensed),
+                _sideItem(1, inDrawer: inDrawer),
+                _sideItem(3, inDrawer: inDrawer),
+                const SizedBox(height: 7),
+                _sidebarSectionLabel('MASTER DATA',
+                  condensed: condensed),
+                _sideItem(2, inDrawer: inDrawer),
+                _sideItem(5, inDrawer: inDrawer),
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: condensed ? 15 : 18, vertical: 10),
+                  child: const Divider(height: 1, color: border),
+                ),
+                _sideItem(4, inDrawer: inDrawer),
+              ],
+            )),
+            _accountFooter(condensed: condensed),
+          ],
+        ),
       ),
     );
-  }
-
-  Widget appHeader() {
-    return Row(children: [
-      Container(
-        width: 34, height: 34,
-        decoration: BoxDecoration(color: const Color(0xFF2A547F), borderRadius: BorderRadius.circular(9)),
-        child: const Center(child: Text('L', style: TextStyle(
-          color: Colors.white, fontSize: 19, fontWeight: FontWeight.w900))),
-      ),
-      const SizedBox(width: 12),
-      const Flexible(child: Text('UD. LUTHFI', overflow: TextOverflow.ellipsis,
-        style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800))),
-      const SizedBox(width: 12),
-      Container(width: 1, height: 22, color: Colors.white24),
-      const SizedBox(width: 12),
-      const Flexible(child: Text('Manajemen Aset', overflow: TextOverflow.ellipsis,
-        style: TextStyle(color: Color(0xFFD8E4F1), fontSize: 14, fontWeight: FontWeight.w600))),
-    ]);
   }
 
   Widget titleArea() {
