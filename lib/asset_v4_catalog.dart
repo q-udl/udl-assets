@@ -1,6 +1,6 @@
 part of 'main.dart';
 
-extension AssetV4Catalog on _AssetScreenState {
+extension _AssetV4Catalog on _AssetScreenState {
   List<AssetRecord> v4FilteredAssets() {
     final q = query.trim().toLowerCase();
     final items = store.assets.where((a) {
@@ -44,25 +44,25 @@ extension AssetV4Catalog on _AssetScreenState {
         Wrap(spacing: 9, runSpacing: 9, children: [
           filterDropdown(statusFilter, const ['Semua status','Tersedia','Digunakan',
             'Dalam Perbaikan','Hilang','Dihapuskan'],
-            (v) => setState(() {statusFilter=v; v4CatalogPage=0;}), width: 175),
+            (v) => v4Change(() {statusFilter=v; v4CatalogPage=0;}), width: 175),
           filterDropdown(categoryFilter, ['Semua kategori', ...cats],
-            (v) => setState(() {categoryFilter=v; v4CatalogPage=0;}), width: 225),
+            (v) => v4Change(() {categoryFilter=v; v4CatalogPage=0;}), width: 225),
           filterDropdown(v4LocationFilter, ['Semua lokasi', ...store.locations],
-            (v) => setState(() {v4LocationFilter=v; v4CatalogPage=0;}), width: 195),
+            (v) => v4Change(() {v4LocationFilter=v; v4CatalogPage=0;}), width: 195),
           filterDropdown(v4ConditionFilter, const ['Semua kondisi','Baru','Baik',
             'Cukup','Kurang Baik','Rusak'],
-            (v) => setState(() {v4ConditionFilter=v; v4CatalogPage=0;}), width: 170),
+            (v) => v4Change(() {v4ConditionFilter=v; v4CatalogPage=0;}), width: 170),
         ]),
         const SizedBox(height: 8),
         Wrap(spacing: 7, runSpacing: 3, children: [
           FilterChip(label: const Text('Belum ada PIC'), selected: v4NoPic,
-            onSelected: (v) => setState(() {v4NoPic=v; v4CatalogPage=0;})),
+            onSelected: (v) => v4Change(() {v4NoPic=v; v4CatalogPage=0;})),
           FilterChip(label: const Text('Belum ada foto'), selected: v4NoPhoto,
-            onSelected: (v) => setState(() {v4NoPhoto=v; v4CatalogPage=0;})),
+            onSelected: (v) => v4Change(() {v4NoPhoto=v; v4CatalogPage=0;})),
           FilterChip(label: const Text('Perlu perhatian'), selected: v4Attention,
-            onSelected: (v) => setState(() {v4Attention=v; v4CatalogPage=0;})),
+            onSelected: (v) => v4Change(() {v4Attention=v; v4CatalogPage=0;})),
           FilterChip(label: const Text('Perlu klasifikasi'), selected: v4NeedsClassification,
-            onSelected: (v) => setState(() {v4NeedsClassification=v; v4CatalogPage=0;})),
+            onSelected: (v) => v4Change(() {v4NeedsClassification=v; v4CatalogPage=0;})),
         ]),
       ])),
       const SizedBox(height: 12),
@@ -73,9 +73,9 @@ extension AssetV4Catalog on _AssetScreenState {
           DropdownButton<String>(value: v4Sort, items: ['Kode','Nama','Kategori',
             'Lokasi','Kondisi','Status'].map((v) =>
             DropdownMenuItem(value:v,child:Text(v))).toList(),
-            onChanged: (v) => setState(() {v4Sort=v ?? 'Kode';v4CatalogPage=0;})),
+            onChanged: (v) => v4Change(() {v4Sort=v ?? 'Kode';v4CatalogPage=0;})),
           IconButton(tooltip:'Balik urutan', onPressed: () =>
-            setState(() => v4SortAscending = !v4SortAscending),
+            v4Change(() => v4SortAscending = !v4SortAscending),
             icon: Icon(v4SortAscending ? Icons.arrow_upward : Icons.arrow_downward)),
         ]),
         LayoutBuilder(builder: (context, box) {
@@ -101,7 +101,7 @@ extension AssetV4Catalog on _AssetScreenState {
                       style:const TextStyle(fontWeight:FontWeight.bold)),
                     Text(a.assetType,maxLines:1,overflow:TextOverflow.ellipsis),
                   ])),
-                ])),onTap:() => setState(() => selected=a)),
+                ])),onTap:() => v4Change(() => selected=a)),
                 DataCell(SelectableText(a.code)),
                 DataCell(SizedBox(width:180,child:Text(a.category,maxLines:2))),
                 DataCell(SizedBox(width:175,child:Column(
@@ -116,7 +116,7 @@ extension AssetV4Catalog on _AssetScreenState {
                 DataCell(badge(a.status,compact:true)),
                 DataCell(PopupMenuButton<String>(
                   onSelected:(v) {
-                    if(v=='detail') setState(() => selected=a);
+                    if(v=='detail') v4Change(() => selected=a);
                     if(v=='mutasi') v4Transfer(a);
                     if(v=='copy') Clipboard.setData(ClipboardData(text:a.code));
                   },
@@ -134,12 +134,12 @@ extension AssetV4Catalog on _AssetScreenState {
           const Spacer(),
           DropdownButton<int>(value:v4PerPage,items:[20,40,80].map((n) =>
             DropdownMenuItem(value:n,child:Text(n.toString()+' / halaman'))).toList(),
-            onChanged:(v) => setState(() {v4PerPage=v ?? 20;v4CatalogPage=0;})),
+            onChanged:(v) => v4Change(() {v4PerPage=v ?? 20;v4CatalogPage=0;})),
           IconButton(onPressed:v4CatalogPage==0 ? null :
-            () => setState(() => v4CatalogPage--),
+            () => v4Change(() => v4CatalogPage--),
             icon:const Icon(Icons.chevron_left)),
           IconButton(onPressed:v4CatalogPage>=pages-1 ? null :
-            () => setState(() => v4CatalogPage++),
+            () => v4Change(() => v4CatalogPage++),
             icon:const Icon(Icons.chevron_right)),
         ]),
       ])),
