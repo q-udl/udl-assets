@@ -37,6 +37,94 @@ extension _AssetV4Catalog on _AssetScreenState {
   }
 
 
+  Future<void> v26ShowMobileFilters(List<String> categories) async {
+    await showModalBottomSheet<void>(
+      context: context, isScrollControlled: true,
+      showDragHandle: true, useSafeArea: true,
+      builder: (sheet) => StatefulBuilder(
+        builder: (ctx, update) {
+          final available = MediaQuery.sizeOf(ctx);
+          final width = available.width - 40;
+          void apply(VoidCallback change) {
+            v4Change(() { change(); v4CatalogPage = 0; });
+            update(() {});
+          }
+          Widget choice(String label, String value, List<String> options,
+              ValueChanged<String> changed) => Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(label, style: const TextStyle(
+                  fontSize: 12, fontWeight: FontWeight.w700, color: ink)),
+                const SizedBox(height: 6),
+                filterDropdown(value, options, changed, width: width),
+              ]),
+          );
+          return ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: available.height * 0.88),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 6, 20, 22),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text('Filter Daftar Aset',
+                    style: TextStyle(color: ink, fontSize: 19,
+                      fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 14),
+                  choice('Status', statusFilter,
+                    const ['Semua status','Tersedia','Digunakan',
+                      'Dalam Perbaikan','Hilang','Tidak Aktif','Dilepas'],
+                    (value) => apply(() => statusFilter = value)),
+                  choice('Kategori', categoryFilter,
+                    ['Semua kategori', ...categories],
+                    (value) => apply(() => categoryFilter = value)),
+                  choice('Lokasi', v4LocationFilter,
+                    ['Semua lokasi', ...store.locations],
+                    (value) => apply(() => v4LocationFilter = value)),
+                  choice('Kondisi', v4ConditionFilter,
+                    const ['Semua kondisi','Baru','Baik','Cukup',
+                      'Kurang Baik','Rusak'],
+                    (value) => apply(() => v4ConditionFilter = value)),
+                  const Text('Filter cepat',
+                    style: TextStyle(color: ink, fontSize: 12,
+                      fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 8),
+                  Wrap(spacing: 8, runSpacing: 5, children: [
+                    FilterChip(label: const Text('Belum ada PIC'),
+                      selected: v4NoPic,
+                      onSelected: (v) => apply(() => v4NoPic = v)),
+                    FilterChip(label: const Text('Belum ada foto'),
+                      selected: v4NoPhoto,
+                      onSelected: (v) => apply(() => v4NoPhoto = v)),
+                    FilterChip(label: const Text('Perlu perhatian'),
+                      selected: v4Attention,
+                      onSelected: (v) => apply(() => v4Attention = v)),
+                    FilterChip(label: const Text('Perlu klasifikasi'),
+                      selected: v4NeedsClassification,
+                      onSelected: (v) => apply(() => v4NeedsClassification = v)),
+                  ]),
+                  const SizedBox(height: 18),
+                  Wrap(spacing: 8, runSpacing: 8,
+                    alignment: WrapAlignment.end, children: [
+                      if (hasAssetFilters) OutlinedButton.icon(
+                        onPressed: () { resetAssetFilters(); update(() {}); },
+                        icon: const Icon(Icons.filter_alt_off_outlined),
+                        label: const Text('Reset Filter')),
+                      FilledButton(
+                        key: const ValueKey('rv26-apply-filters'),
+                        onPressed: () => Navigator.pop(sheet),
+                        child: const Text('Selesai')),
+                    ]),
+                ]),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   Widget v4Catalog() {
     final items = v4FilteredAssets();
     final total = store.assets.length;
@@ -81,7 +169,25 @@ extension _AssetV4Catalog on _AssetScreenState {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (box.maxWidth >= 1180)
+              if (box.maxWidth < 650) ...[
+                searchBox(),
+                const SizedBox(height: 10),
+                Row(children: [
+                  Expanded(child: OutlinedButton.icon(
+                    key: const ValueKey('rv26-open-filters'),
+                    onPressed: () => v26ShowMobileFilters(categories),
+                    icon: const Icon(Icons.tune_rounded),
+                    label: Text(hasAssetFilters
+                      ? 'Filter Aset · Aktif' : 'Filter Aset'))),
+                  if (hasAssetFilters) ...[
+                    const SizedBox(width: 8),
+                    IconButton(
+                      tooltip: 'Reset Filter',
+                      onPressed: resetAssetFilters,
+                      icon: const Icon(Icons.filter_alt_off_outlined)),
+                  ],
+                ]),
+              ] else if (box.maxWidth >= 1180)
                 Row(children: [
                   Expanded(child: searchBox()),
                   const SizedBox(width: 8),
@@ -95,6 +201,7 @@ extension _AssetV4Catalog on _AssetScreenState {
                 const SizedBox(height: 10),
                 Wrap(spacing: 9, runSpacing: 9, children: filters),
               ],
+              if (box.maxWidth >= 650) ...[
               const SizedBox(height: 9),
               Wrap(
                 spacing: 8, runSpacing: 5,
@@ -149,6 +256,7 @@ extension _AssetV4Catalog on _AssetScreenState {
                     ),
                 ],
               ),
+              ],
             ],
           );
         })),
