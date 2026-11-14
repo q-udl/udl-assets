@@ -219,18 +219,20 @@ extension _AssetEmployeeScreens on _AssetScreenState {
             const Text('Belum ada aset aktif pada karyawan ini.',
               style: TextStyle(color: muted))
           else for (final line in activeLines)
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(line.assetName),
-              subtitle: Text(line.assetCode),
-              trailing: const Icon(Icons.chevron_right),
+            compactCustodyAssetRow(
+              name: line.assetName,
+              code: line.assetCode,
+              condition: line.handoverCondition,
+              accessories: line.accessories,
+              status: line.state,
+              photo: store.primaryPhotoFor(line.assetId),
               onTap: () {
-                final batch = batches.firstWhere((b) =>
-                  b.lines.any((l) => l.id == line.id));
+                final asset = store.assignmentAsset(line.assetId);
+                if (asset == null) return;
                 v4Change(() {
                   selectedEmployee = null;
-                  selectedAssignment = batch;
-                  page = 7;
+                  selected = asset;
+                  page = 1;
                 });
               },
             ),
