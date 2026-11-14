@@ -51,9 +51,9 @@
 
 **Referensi penugasan** diterbitkan oleh UDL Assets secara berurutan, dalam format `ASG-000001`, bukan kode resmi dokumen perusahaan. Backup historis yang menyimpan `DRAF-BAST-ASG-000001` tetap dipertahankan, namun antarmuka dan PDF menampilkan `ASG-000001`.
 
-**Nomor BAST resmi** bukan ditebak dari referensi penugasan. Pada implementasi lokal ini, petugas memasukkan nomor yang diperoleh dari sistem/ketentuan DMS yang berlaku saat konfirmasi serah terima. Sistem mengecek tidak kosong dan tidak duplikat dalam data lokal (case-insensitive). **Belum** ada integrasi langsung ke DMS atau penjaminan penerbitan nomor unik lintas browser/perangkat; server production harus menjadi sumber otoritatif untuk integrasi/registrasi nomor.
+**Nomor BAST resmi** bukan ditebak dari referensi penugasan. Pada implementasi lokal ini, petugas memasukkan nomor yang diperoleh dari sistem/ketentuan DMS, baik saat konfirmasi maupun setelahnya. **Serah terima fisik tidak ditunda jika nomor DMS belum tersedia**, tetapi tombol Lihat/Cetak BAST baru muncul ketika nomornya sudah lengkap. Sistem mengecek tidak kosong dan tidak duplikat dalam data lokal (case-insensitive). **Belum** ada integrasi langsung ke DMS atau penjaminan penerbitan nomor unik lintas browser/perangkat; server production harus menjadi sumber otoritatif untuk integrasi/registrasi nomor.
 
-Untuk data lama yang sudah Aktif/Selesai dan memiliki waktu konfirmasi, aplikasi menyediakan **Lengkapi Data BAST**; pengisian metadata lama dicatat di riwayat, tidak menimpa data yang sudah terisi dan **tidak mengubah waktu konfirmasi historis**. Data lama tanpa bukti waktu konfirmasi tidak diperlakukan otomatis sebagai sudah diserahterimakan.
+Untuk penugasan yang baru saja dikonfirmasi tanpa nomor DMS, atau data lama yang sudah Aktif/Selesai dan memiliki waktu konfirmasi, aplikasi menyediakan **Lengkapi Data BAST**; pengisian metadata lama dicatat di riwayat, tidak menimpa data yang sudah terisi dan **tidak mengubah waktu konfirmasi historis**. Data lama tanpa bukti waktu konfirmasi tidak diperlakukan otomatis sebagai sudah diserahterimakan.
 
 ## 5. Pengujian minimum
 
