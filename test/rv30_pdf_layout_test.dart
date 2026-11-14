@@ -34,7 +34,10 @@ void main() {
       employeeId: employee.id,
       kind: 'Berkelanjutan',
       assetIds: records.map((asset) => asset.id).toList(),
-      accessories: {});
+      accessories: {
+        records[0].id: 'Buku panduan tanpa kode aset',
+        records[1].id: 'Kemasan asli tanpa kode aset',
+      });
     await store.confirmAssignment(
       batch, true, '',
       handedOverByName: 'Petugas GA',
@@ -56,8 +59,10 @@ void main() {
       inspections: {
         for (final line in batch.lines)
           if (selected.any((a) => a.id == line.assetId))
-            line.id: const AssetReturnInput(
-              condition: 'Baik', accessories: 'Lengkap'),
+            line.id: AssetReturnInput(
+              condition: 'Baik',
+              accessories: line.assetId == records[0].id
+                ? 'Buku panduan tanpa kode aset' : ''),
       },
       receivingLocation: 'Gudang Pusat',
       receivedByName: 'Petugas Penerimaan GA',
