@@ -76,17 +76,15 @@ extension _AssetV4History on _AssetScreenState {
         return _v4HistoryTable(rows, box.maxWidth);
       }),
       const Divider(height:22),
-      Row(children:[
-        Text('Halaman '+(v4HistoryPage+1).toString()+' / '+pages.toString()),
-        const Spacer(),
-        DropdownButton<int>(value:v4HistoryPerPage,items:[20,40,80].map((n)=>
-          DropdownMenuItem(value:n,child:Text(n.toString()))).toList(),
-          onChanged:(v)=>v4Change(() {v4HistoryPerPage=v ?? 20;v4HistoryPage=0;})),
-        IconButton(onPressed:v4HistoryPage==0?null:
-          ()=>v4Change(()=>v4HistoryPage--),icon:const Icon(Icons.chevron_left)),
-        IconButton(onPressed:v4HistoryPage>=pages-1?null:
-          ()=>v4Change(()=>v4HistoryPage++),icon:const Icon(Icons.chevron_right)),
-      ]),
+      responsiveAssetPager(
+        description:'Halaman '+(v4HistoryPage+1).toString()+' / '+pages.toString(),
+        perPage:v4HistoryPerPage,
+        onPerPage:(v)=>v4Change(() {v4HistoryPerPage=v;v4HistoryPage=0;}),
+        onPrevious:v4HistoryPage==0?null:
+          ()=>v4Change(()=>v4HistoryPage--),
+        onNext:v4HistoryPage>=pages-1?null:
+          ()=>v4Change(()=>v4HistoryPage++),
+      ),
     ]));
   }
 
