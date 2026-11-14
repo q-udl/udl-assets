@@ -100,40 +100,71 @@ extension _AssetV4History on _AssetScreenState {
   }
 
   Future<void> v4EventDetail(EventRecord e) async {
-    final a=assetFor(e.assetId);
-    await showDialog<void>(context:context,builder:(ctx)=>AlertDialog(
-      title:const Text('Rincian Aktivitas'),
-      content:SizedBox(width:530,child:SingleChildScrollView(child:Column(
-        mainAxisSize:MainAxisSize.min,
-        crossAxisAlignment:CrossAxisAlignment.start,children:[
-          Text(e.type,style:const TextStyle(fontWeight:FontWeight.bold)),
-          Text(a==null?'Master Data':a.name+' · '+a.code),
+    final a = assetFor(e.assetId);
+    await v4ShowModal<void>(
+      title: 'Rincian Aktivitas',
+      subtitle: a == null ? 'Master Data' : a.name + ' · ' + a.code,
+      maxWidth: 650,
+      body: (ctx, update) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(children: [
+            Icon(v4EventIcon(e.type), size: 20, color: blue),
+            const SizedBox(width: 9),
+            Expanded(child: Text(e.type,
+              style: const TextStyle(fontSize: 15, color: ink,
+                fontWeight: FontWeight.w800))),
+          ]),
+          const SizedBox(height: 6),
           Text(dateText(e.timestamp),
-            style:const TextStyle(fontSize:12,color:muted)),
-          const SizedBox(height:12),Text(e.detail),
-          if(e.reason.isNotEmpty)...[
-            const SizedBox(height:12),Text('Alasan: '+e.reason),
+            style: const TextStyle(fontSize: 12, color: muted)),
+          const SizedBox(height: 14),
+          Text(e.detail, style: const TextStyle(fontSize: 13)),
+          if (e.reason.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            v4ReadonlyField('Alasan perubahan', e.reason),
           ],
-          if(e.changes.isNotEmpty)...[
-            const SizedBox(height:14),
-            const Text('Nilai sebelum → sesudah',
-              style:TextStyle(fontWeight:FontWeight.bold)),
-            for(final change in e.changes.entries)
-              Padding(padding:const EdgeInsets.symmetric(vertical:5),
-                child:Text(change.key+': '+(change.value is Map
-                  ? ((change.value as Map)['from']?.toString() ?? '—')+
-                    ' → '+((change.value as Map)['to']?.toString() ?? '—')
-                  : change.value.toString()))),
+          if (e.changes.isNotEmpty) ...[
+            const SizedBox(height: 17),
+            const Text('Nilai Sebelum dan Sesudah',
+              style: TextStyle(color: ink, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 10),
+            for (final change in e.changes.entries)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: v4ModalPair(
+                  v4ReadonlyField(change.key + ' · Sebelum',
+                    change.value is Map
+                      ? ((change.value as Map)['from']?.toString() ?? '—')
+                      : '—'),
+                  v4ReadonlyField(change.key + ' · Sesudah',
+                    change.value is Map
+                      ? ((change.value as Map)['to']?.toString() ?? '—')
+                      : change.value.toString()),
+                  breakpoint: 460,
+                ),
+              ),
           ],
-          const SizedBox(height:12),
-          const Text('Pelaku belum terverifikasi (pratinjau tanpa autentikasi)',
-            style:TextStyle(fontSize:11,color:muted)),
-        ]))),
-      actions:[
-        TextButton(onPressed:()=>Navigator.pop(ctx),child:const Text('Tutup')),
-        if(a!=null)TextButton(onPressed:(){
-          Navigator.pop(ctx);v4Change(() {page=1;selected=a;});
-        },child:const Text('Lihat Detail Aset')),
-      ]));
+          const SizedBox(height: 14),
+          const Text(
+            'Pelaku belum terverifikasi (prototipe tanpa autentikasi).',
+            style: TextStyle(fontSize: 12, color: muted)),
+        ],
+      ),
+      actions: (ctx, update) => [
+        OutlinedButton(onPressed: () => Navigator.pop(ctx),
+          child: const Text('Tutup')),
+        if (a != null)
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              v4Change(() {
+                page = 1; selected = a;
+              });
+            },
+            child: const Text('Lihat Detail Aset'),
+          ),
+      ],
+    );
   }
 }
