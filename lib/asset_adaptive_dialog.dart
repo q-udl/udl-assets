@@ -137,3 +137,12 @@ Future<bool> assetAllowDiscard(
     confirmLabel: 'Tinggalkan Tanpa Menyimpan',
     destructive: true);
 }
+
+
+/// Common close action for editable modals. Never blindly discard typed data.
+Future<void> assetRequestModalClose(
+    BuildContext context, {bool Function()? isDirty}) async {
+  final allowed = await assetAllowDiscard(
+    context, isDirty: isDirty?.call() ?? false);
+  if (allowed && context.mounted) Navigator.of(context).pop();
+}
