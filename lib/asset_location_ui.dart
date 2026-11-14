@@ -141,6 +141,7 @@ extension _AssetLocationMasterUI on _AssetScreenState {
           subtitle: 'Lokasi Utama → Area → Titik Penempatan'),
         const SizedBox(height: 12),
         TextField(
+          controller: _locationSearchController,
           decoration: const InputDecoration(
             hintText: 'Cari lokasi, area, atau titik penempatan...',
             prefixIcon: Icon(Icons.search)),
