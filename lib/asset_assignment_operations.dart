@@ -76,9 +76,13 @@ extension AssetAssignmentOperations on AssetStore {
   Future<void> confirmAssignment(
     AssetAssignment record, bool accepted, String reason, {
     Map<String, SelectedAssetPhoto> proofPhotos = const {},
+    String handedOverByName = '',
   }) async {
     if (!record.isPending) {
       throw const FormatException('Penugasan telah diproses.');
+    }
+    if (accepted && handedOverByName.trim().isEmpty) {
+      throw const FormatException('Nama pihak yang menyerahkan wajib diisi.');
     }
     if (!accepted && reason.trim().isEmpty) {
       throw const FormatException('Alasan penolakan wajib diisi.');
@@ -112,6 +116,7 @@ extension AssetAssignmentOperations on AssetStore {
     record.status = accepted ? 'Aktif' : 'Ditolak';
     record.acceptedAt = accepted ? now : '';
     record.rejectionReason = accepted ? '' : reason.trim();
+    record.handedOverByName = accepted ? handedOverByName.trim() : '';
     for (final line in record.lines) {
       line.state = accepted ? 'Aktif' : 'Ditolak';
       if (accepted) {
@@ -127,14 +132,14 @@ extension AssetAssignmentOperations on AssetStore {
         asset.holder = employee!.name;
         asset.assignedEmployeeId = employee.id;
         log(asset, 'Penerimaan Penugasan',
-          record.draftReference + ' diterima (simulasi) oleh ' + employee.name,
+          record.draftReference + ' dicatat sebagai diterima oleh ' + employee.name,
           changes: {
             'Status': {'from': previous, 'to': asset.status},
             'PIC': {'from': '', 'to': employee.name},
           });
       } else {
         log(asset, 'Penolakan Penugasan',
-          record.draftReference + ' ditolak (simulasi)', reason: reason);
+          record.draftReference + ' dicatat sebagai ditolak', reason: reason);
       }
     }
     evidencePhotos.addAll(preparedProof);
@@ -154,7 +159,7 @@ extension AssetAssignmentOperations on AssetStore {
     String notes = '',
     Map<String, SelectedAssetPhoto> proofPhotos = const {},
   }) async {
-    if (record.status != 'Aktif' ||
+    if (record.status != 'Aktif' || receivedByName.trim().isEmpty ||
       inspections.isEmpty || !locations.contains(receivingLocation)) {
       throw const FormatException('Penugasan atau lokasi penerimaan tidak valid.');
     }
