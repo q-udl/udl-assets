@@ -385,6 +385,11 @@ class AssetStore extends ChangeNotifier {
       holder.trim().isEmpty ? 'Tersedia' : 'Digunakan', cost,
       subcategory: s.name, assetType: t);
     a.categoryId = c.code; a.subcategoryId = s.id; a.typeId = s.typeId(t);
+    final site = siteByName(location.trim());
+    if (site == null || !site.active) {
+      throw const FormatException('Lokasi tidak ada/aktif.');
+    }
+    applyPlacement(a, AssetPlacement(site.id));
     assets.insert(0, a); nextNumber++;
     log(a, 'Registrasi', 'Aset didaftarkan di ' + a.location);
     await persist();
@@ -407,7 +412,14 @@ class AssetStore extends ChangeNotifier {
       '; ' + a.status + ' → ' + status + '. Alasan: ' + reason;
     final before = {'Lokasi': a.location, 'PIC': a.holder,
       'Status': a.status, 'Kondisi': a.condition};
-    a.location = location.trim(); a.holder = holder.trim();
+    final site = siteByName(location.trim());
+    if (site == null || !site.active) {
+      throw const FormatException('Lokasi baru tidak valid.');
+    }
+    if (location.trim() != a.location) {
+      applyPlacement(a, AssetPlacement(site.id));
+    }
+    a.holder = holder.trim();
     a.status = status; a.condition = condition;
     log(a, status == 'Dihapuskan' ? 'Penghapusan' : 'Mutasi', detail,
       reason: reason, changes: {
