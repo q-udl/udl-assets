@@ -65,7 +65,7 @@ extension AssetAssignmentOperations on AssetStore {
     nextAssignmentNumber++;
     for (final asset in selected) {
       log(asset, 'Pengajuan Penugasan',
-        record.draftReference + ' kepada ' + employee.name +
+        record.assignmentReference + ' kepada ' + employee.name +
         '; menunggu serah terima',
         reason: notes.trim());
     }
@@ -151,7 +151,7 @@ extension AssetAssignmentOperations on AssetStore {
           });
       } else {
         log(asset, 'Pembatalan Penugasan',
-          record.draftReference + ' dibatalkan sebelum serah terima',
+          record.assignmentReference + ' dibatalkan sebelum serah terima',
           reason: reason.trim());
       }
     }
@@ -325,7 +325,7 @@ extension AssetAssignmentOperations on AssetStore {
       asset.status = ['Rusak','Kurang Baik'].contains(inspection.condition)
         ? 'Dalam Perbaikan' : 'Tersedia';
       log(asset, 'Pengembalian Aset',
-        receipt.draftReference + ' · ' + record.draftReference,
+        receipt.draftReference + ' · ' + record.assignmentReference,
         reason: inspection.notes, changes: {
           'Kondisi': {'from': oldCondition, 'to': inspection.condition},
           'Status': {'from': oldStatus, 'to': asset.status},
