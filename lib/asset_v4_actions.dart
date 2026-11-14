@@ -213,9 +213,7 @@ extension _AssetV4Actions on _AssetScreenState {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           DropdownButtonFormField<String>(
-            initialValue: kind,
-            isExpanded: true,
-            menuMaxHeight: 260,
+            initialValue: kind, isExpanded: true, menuMaxHeight: 260,
             decoration: v4ModalDecoration('Jenis dokumentasi'),
             items: AssetStore.photoKinds.map((value) =>
               DropdownMenuItem(value: value, child: Text(value))).toList(),
@@ -230,53 +228,20 @@ extension _AssetV4Actions on _AssetScreenState {
         OutlinedButton(onPressed: () => Navigator.pop(ctx, false),
           child: const Text('Batal')),
         FilledButton(onPressed: () => Navigator.pop(ctx, true),
-          child: const Text('Pilih Foto')),
+          child: const Text('Lanjut ke Foto')),
       ],
     );
-    if (confirmed == true) {
+    if (confirmed == true && mounted) {
       try {
-        final picked = await ImagePicker().pickImage(
-          source: ImageSource.gallery,
-          maxWidth: 960, maxHeight: 960, imageQuality: 65);
-        if (picked != null) {
-          final bytes = await picked.readAsBytes();
-          if (!mounted) {
-            note.dispose();
-            return;
-          }
-          final preview = await v4ShowModal<bool>(
-            title: 'Pratinjau Dokumentasi',
-            subtitle: kind + ' · ' + a.code,
-            maxWidth: 660,
-            body: (ctx, update) => Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Center(child: Image.memory(bytes,
-                  height: 320, fit: BoxFit.contain)),
-                const SizedBox(height: 12),
-                Text(kind, style: const TextStyle(
-                  fontWeight: FontWeight.w700)),
-                if (note.text.isNotEmpty) Text(note.text),
-              ],
-            ),
-            actions: (ctx, update) => [
-              OutlinedButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('Batal')),
-              FilledButton(
-                onPressed: () => Navigator.pop(ctx, true),
-                child: const Text('Simpan Foto')),
-            ],
-          );
-          if (preview == true) {
-            await store.addPhoto(
-              a, bytes, picked.name, kind, note: note.text);
-            repaint();
-            notify('Foto dokumentasi ditambahkan.');
-          }
+        final selected = await AssetPhotoPicker.choose(context);
+        if (selected != null && mounted) {
+          await store.addPhoto(a, selected.bytes, selected.fileName, kind,
+            note: note.text);
+          repaint();
+          notify('Foto dokumentasi berhasil ditambahkan.');
         }
       } catch (e) {
-        notify('Foto gagal disimpan: ' + e.toString());
+        if (mounted) notify('Foto gagal disimpan: ' + e.toString());
       }
     }
     note.dispose();
