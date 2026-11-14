@@ -972,11 +972,15 @@ class _AssetScreenState extends State<AssetScreen> {
           decoration: BoxDecoration(borderRadius: BorderRadius.circular(14),
             border: Border.all(color: border)),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
-              assetThumbnail(a, size: 38),
-              const Spacer(),
-              badge(a.status, compact: true),
-            ]),
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8, runSpacing: 8,
+              children: [
+                assetThumbnail(a, size: 38),
+                badge(a.status, compact: true),
+              ],
+            ),
             const SizedBox(height: 12),
             Text(a.name, maxLines: 2, overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: ink)),
