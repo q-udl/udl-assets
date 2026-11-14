@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 import 'package:excel/excel.dart' as xls;
 import 'package:file_picker/file_picker.dart';
 import 'package:camera/camera.dart' as cam;
@@ -12,6 +13,7 @@ import 'package:image/image.dart' as img;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -53,6 +55,7 @@ part 'asset_evidence_picker.dart';
 part 'asset_v4_tables.dart';
 part 'asset_v4_actions.dart';
 part 'asset_ui.dart';
+part 'asset_secure_qr.dart';
 part 'asset_features_ui.dart';
 
 void main() => runApp(const AssetApp());
@@ -67,6 +70,14 @@ const danger = Color(0xFFC04D53);
 const amber = Color(0xFFB97813);
 
 const uuid = Uuid();
+
+/// Cryptographically unpredictable local identity. The production authority
+/// will issue and verify these tokens server-side instead.
+String newAssetQrToken() {
+  final entropy = Random.secure();
+  return base64UrlEncode(List<int>.generate(
+    32, (_) => entropy.nextInt(256))).replaceAll('=', '');
+}
 
 class AssetApp extends StatefulWidget {
   const AssetApp({super.key});
