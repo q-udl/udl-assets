@@ -569,7 +569,19 @@ class _AssetScreenState extends State<AssetScreen> {
         Text(description, style: const TextStyle(fontSize: 13, color: muted)),
         const SizedBox(height: 12),
         if (selected == null && page == 1)
-          primaryButton('Tambah Aset', Icons.add_rounded, () => setState(() => page = 6)),
+          Wrap(spacing: 9, runSpacing: 9, children: [
+            outlineButton('Impor Data Aset', Icons.upload_file_outlined,
+              () => v22OpenImport(BulkImportKind.assets)),
+            primaryButton('Tambah Aset', Icons.add_rounded,
+              () => setState(() => page = 6)),
+          ]),
+        if (selectedEmployee == null && page == 8)
+          Wrap(spacing: 9, runSpacing: 9, children: [
+            outlineButton('Impor Data Karyawan', Icons.upload_file_outlined,
+              () => v22OpenImport(BulkImportKind.employees)),
+            primaryButton('Tambah Karyawan',
+              Icons.person_add_alt_1_outlined, () => v5EditEmployee()),
+          ]),
           if (selected == null && selectedAssignment == null && page == 7)
             primaryButton('Tugaskan Aset', Icons.add_rounded,
               () => setState(() => page = 9)),
@@ -588,8 +600,20 @@ class _AssetScreenState extends State<AssetScreen> {
             Text(description, style: const TextStyle(fontSize: 13, color: muted)),
           ])),
           const SizedBox(width: 14),
-          if (selected == null && page == 1)
-            primaryButton('Tambah Aset', Icons.add_rounded, () => setState(() => page = 6)),
+          if (selected == null && page == 1) ...[
+            outlineButton('Impor Data Aset', Icons.upload_file_outlined,
+              () => v22OpenImport(BulkImportKind.assets)),
+            const SizedBox(width: 9),
+            primaryButton('Tambah Aset', Icons.add_rounded,
+              () => setState(() => page = 6)),
+          ],
+          if (selectedEmployee == null && page == 8) ...[
+            outlineButton('Impor Data Karyawan', Icons.upload_file_outlined,
+              () => v22OpenImport(BulkImportKind.employees)),
+            const SizedBox(width: 9),
+            primaryButton('Tambah Karyawan',
+              Icons.person_add_alt_1_outlined, () => v5EditEmployee()),
+          ],
           if (selected == null && selectedAssignment == null && page == 7)
             primaryButton('Tugaskan Aset', Icons.add_rounded,
               () => setState(() => page = 9)),
