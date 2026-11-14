@@ -53,7 +53,7 @@ extension AssetOperations on AssetStore {
 
   Future<void> editIdentity(AssetRecord a, String name, String brand,
       String model, String serial, int? cost, String reason) async {
-    if (name.trim().isEmpty || reason.trim().isEmpty || (cost != null && cost < 0)) {
+    if (!canOperate(a) || name.trim().isEmpty || reason.trim().isEmpty || (cost != null && cost < 0)) {
       throw const FormatException('Nama dan alasan wajib diisi.');
     }
     if (serial.trim().isNotEmpty && assets.any((v) => v.id != a.id &&
@@ -78,7 +78,7 @@ extension AssetOperations on AssetStore {
   }
 
   Future<void> editCondition(AssetRecord a, String condition, String reason) async {
-    if (a.status == 'Dihapuskan' || condition == a.condition ||
+    if (!canOperate(a) || condition == a.condition ||
       reason.trim().isEmpty ||
       !['Baru', 'Baik', 'Cukup', 'Kurang Baik', 'Rusak'].contains(condition)) {
       throw const FormatException('Perubahan kondisi tidak valid.');
@@ -94,9 +94,9 @@ extension AssetOperations on AssetStore {
       throw const FormatException(
         'Aset masih ditugaskan. Selesaikan pengembalian sebelum ubah status.');
     }
-    if (a.status == 'Dihapuskan' || status == a.status ||
+    if (!canOperate(a) || status == a.status ||
       reason.trim().isEmpty ||
-      !['Tersedia', 'Digunakan', 'Dalam Perbaikan', 'Hilang', 'Dihapuskan'].contains(status)) {
+      !['Tersedia', 'Digunakan', 'Dalam Perbaikan', 'Hilang'].contains(status)) {
       throw const FormatException('Perubahan status tidak valid.');
     }
     if (transfers.any((t) => t.assetId == a.id && t.state == 'Menunggu Penerimaan')) {
@@ -111,7 +111,7 @@ extension AssetOperations on AssetStore {
 
   Future<AssetTransfer> proposeTransfer(AssetRecord a, String destination,
       String receiver, String reason, {AssetPlacement? placement}) async {
-    if (a.assignedEmployeeId.isNotEmpty || heldLinesFor(a.id).isNotEmpty) {
+    if (a.lifecycle != 'Aktif' || a.assignedEmployeeId.isNotEmpty || heldLinesFor(a.id).isNotEmpty) {
       throw const FormatException(
         'Aset sedang dalam proses penugasan; selesaikan dahulu.');
     }
