@@ -7,10 +7,12 @@ extension _AssetV4Master on _AssetScreenState {
   ) async {
     final controller = TextEditingController(text: initial);
     var error = '';
+    bool hasChanges() => controller.text != initial;
     final value = await v4ShowModal<String>(
       title: title,
       subtitle: 'Master Data UDL Assets',
       maxWidth: 520,
+      isDirty: hasChanges,
       body: (ctx, update) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -23,8 +25,8 @@ extension _AssetV4Master on _AssetScreenState {
         ],
       ),
       actions: (ctx, update) => [
-        OutlinedButton(onPressed: () => Navigator.pop(ctx),
-          child: const Text('Batal')),
+        OutlinedButton(onPressed: () => assetRequestModalClose(
+          ctx, isDirty: hasChanges), child: const Text('Batal')),
         FilledButton(onPressed: () {
           if (controller.text.trim().isEmpty) {
             update(() => error = 'Nama tidak boleh kosong.');
