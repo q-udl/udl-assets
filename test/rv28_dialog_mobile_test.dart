@@ -141,7 +141,6 @@ void main() {
   testWidgets('RV28 keyboard inset keeps employee modal actions reachable',
       (tester) async {
     await setSize(tester, const Size(320, 568));
-    tester.view.viewInsets = const FakeViewPadding(bottom: 230);
     addTearDown(tester.view.resetViewInsets);
     await tester.pumpWidget(const AssetApp());
     await tester.pumpAndSettle();
@@ -150,6 +149,8 @@ void main() {
     await tester.tap(find.text('Master Karyawan').last);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Tambah Karyawan').last);
+    await tester.pumpAndSettle();
+    tester.view.viewInsets = const FakeViewPadding(bottom: 230);
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('rv28-adaptive-modal')), findsOneWidget);
     expect(find.byKey(const ValueKey('rv28-modal-scroll')), findsOneWidget);
