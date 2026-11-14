@@ -96,6 +96,64 @@ class AssetBastPdf {
     ],
   );
 
+  /// Additional information that does not create another registered asset.
+  /// Historic 'Kelengkapan' stays labelled as unclassified archival text.
+  static List<pw.Widget> handoverIncludedItems(
+      List<AssignedAssetLine> lines) {
+    final entries = lines.where((line) =>
+      line.accessories.trim().isNotEmpty).toList();
+    if (entries.isEmpty) return [];
+    return [
+      pw.SizedBox(height: 9),
+      pw.Text('CATATAN ITEM PENYERTA (OPSIONAL)', style: bold(9)),
+      pw.SizedBox(height: 5),
+      for (final line in entries)
+        pw.Padding(
+          padding: const pw.EdgeInsets.only(bottom: 4),
+          child: pw.Text(line.assetCode + ' - ' +
+            (line.hasLegacyAccessories
+              ? 'Kelengkapan arsip (belum diklasifikasikan): '
+              : 'Item Penyerta Non-Aset: ') +
+            line.accessories.trim(), style: regular(8.5)),
+        ),
+    ];
+  }
+
+  static List<pw.Widget> returnedIncludedItems(
+      AssetAssignment assignment, AssetReturnReceipt receipt) {
+    final originallySent = {
+      for (final line in assignment.lines) line.id: line,
+    };
+    final entries = receipt.lines.where((line) =>
+      line.accessoriesReturned.trim().isNotEmpty ||
+      (originallySent[line.assignmentLineId]
+        ?.accessories.trim().isNotEmpty ?? false)).toList();
+    if (entries.isEmpty) return [];
+    return [
+      pw.SizedBox(height: 10),
+      pw.Text('CATATAN ITEM PENYERTA (OPSIONAL)', style: bold(9)),
+      pw.SizedBox(height: 5),
+      for (final line in entries)
+        pw.Padding(
+          padding: const pw.EdgeInsets.only(bottom: 5),
+          child: pw.Text(
+            line.assetCode + ' - ' +
+            (line.hasLegacyAccessories
+              ? 'Kelengkapan arsip (belum diklasifikasikan). '
+              : 'Item Penyerta Non-Aset. ') +
+            'Saat diserahkan: ' +
+            (originallySent[line.assignmentLineId]
+                ?.accessories.trim().isNotEmpty == true
+              ? originallySent[line.assignmentLineId]!.accessories.trim()
+              : 'Tidak dicatat') +
+            '; saat pengembalian: ' +
+            (line.accessoriesReturned.trim().isEmpty
+              ? 'Tidak dicatat' : line.accessoriesReturned.trim()),
+            style: regular(8.5)),
+        ),
+    ];
+  }
+
   static pw.Widget footer(pw.Context ctx) => pw.Column(children: [
     pw.Divider(color: PdfColors.blueGrey200),
     pw.Text('Nama pihak berasal dari catatan transaksi. '
@@ -361,9 +419,7 @@ class AssetBastPdf {
         item('Jenis Penugasan', record.kind),
         item('Batas Pengembalian', record.kind == 'Sementara'
           ? text(record.dueDate) : 'Tidak ditentukan'),
-        pw.SizedBox(height: 12),
-        pw.Text('PARA PIHAK', style: bold(10)),
-        pw.SizedBox(height: 10),
+        pw.SizedBox(height: 13),
         pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
             pw.Expanded(child: party('Penyerah', [
@@ -400,10 +456,10 @@ class AssetBastPdf {
               record.lines[i].assetName,
               text(record.lines[i].serial),
               text(record.lines[i].handoverCondition),
-              text(record.lines[i].accessories),
             ],
         ], ['No', 'Kode Aset', 'Nama Aset', 'No. Seri',
-            'Kondisi', 'Kelengkapan'], compact: true),
+            'Kondisi'], compact: true),
+        ...handoverIncludedItems(record.lines),
         // Group declaration and both signature blocks as one indivisible
         // unit: neither the heading nor the signers may be orphaned.
         pw.Inseparable(canSpan: false, child: pw.Column(
@@ -418,7 +474,7 @@ class AssetBastPdf {
             pw.Text(
               'Para pihak menyatakan bahwa serah terima aset sebagaimana '
               'tercantum dalam dokumen ini telah dilaksanakan sesuai '
-              'dengan rincian, kondisi, dan kelengkapan yang dicatat. '
+              'dengan rincian dan kondisi aset yang dicatat. '
               'Sejak serah terima dilaksanakan, Penerima bertanggung jawab '
               'menggunakan, menjaga, dan memelihara aset sesuai ketentuan '
               'perusahaan, serta mengembalikannya apabila diminta atau '
@@ -479,11 +535,11 @@ class AssetBastPdf {
               receipt.lines[i].assetName,
               receipt.lines[i].handoverCondition,
               receipt.lines[i].returnCondition,
-              text(receipt.lines[i].accessoriesReturned),
               text(receipt.lines[i].notes),
             ],
         ], ['No', 'Kode', 'Nama Aset', 'Kondisi Awal',
-            'Kondisi Kembali', 'Kelengkapan', 'Catatan']),
+            'Kondisi Kembali', 'Catatan']),
+        ...returnedIncludedItems(original, receipt),
         pw.SizedBox(height: 13),
         item('Catatan umum', text(receipt.notes)),
         item('Jumlah dikembalikan', receipt.lines.length.toString() +
@@ -493,8 +549,8 @@ class AssetBastPdf {
         pw.SizedBox(height: 5),
         pw.Text(
           'Pihak yang mengembalikan dan pihak yang menerima wajib '
-          'mengecek jumlah, identitas, kondisi fisik serta kelengkapan '
-          'aset. Selisih, kerusakan atau kehilangan yang ditemukan '
+          'mengecek jumlah, identitas, kondisi fisik aset serta '
+          'catatan penyertanya jika ada. Selisih, kerusakan atau kehilangan yang ditemukan '
           'ditindaklanjuti sesuai prosedur perusahaan. '
           'Pengembalian sebagian tidak menutup tanggung jawab '
           'atas aset lainnya yang belum dikembalikan.',
