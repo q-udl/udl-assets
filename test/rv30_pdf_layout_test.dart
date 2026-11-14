@@ -72,10 +72,29 @@ void main() {
       batch, receipt, store: store);
     expect(utf8.decode(returned.take(5).toList()), '%PDF-');
 
+    final single = (await store.registerUnits(
+      quantity: 1, name: 'Printer Operasional',
+      category: 'Furnitur', subcategory: 'Kursi',
+      assetType: 'Kursi Kerja', brand: 'Lokal', model: '',
+      serial: 'PR-UNIT-01', location: 'Gudang Pusat', holder: '',
+      status: 'Tersedia', condition: 'Baik', cost: null,
+      acquisitionDate: '')).single;
+    final one = await store.createAssignment(
+      employeeId: employee.id, kind: 'Berkelanjutan',
+      assetIds: [single.id], accessories: {});
+    await store.confirmAssignment(one, true, '',
+      handedOverByName: 'Petugas GA',
+      handoverLocation: 'Gudang Pusat',
+      bastNumber: 'BAST-PDF-QA-002',
+      proofPhotos: {single.id: proof(99)});
+    final singleBast = await AssetBastPdf.handover(one, store: store);
+    expect(utf8.decode(singleBast.take(5).toList()), '%PDF-');
+
     // Persist fixtures for CI's independent pdfinfo/pdftoppm visual checks.
     final directory = Directory('build/rv030-pdf-qa');
     await directory.create(recursive: true);
     await File('${directory.path}/BAST-multi-photo.pdf').writeAsBytes(bast);
+    await File('${directory.path}/BAST-single-photo.pdf').writeAsBytes(singleBast);
     await File('${directory.path}/BA-Pengembalian-parsial.pdf')
       .writeAsBytes(returned);
   });
