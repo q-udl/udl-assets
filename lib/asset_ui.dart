@@ -3,6 +3,12 @@ part of 'main.dart';
 // UDL Assets local preview — UI layer. Data model and persistence remain in main.dart.
 class _AssetScreenState extends State<AssetScreen> {
   final GlobalKey<ScaffoldState> _shellKey = GlobalKey<ScaffoldState>();
+  final GlobalKey<_V4RegistrationPageState> _registrationKey =
+    GlobalKey<_V4RegistrationPageState>();
+  final GlobalKey<_V5AssignmentFormState> _assignmentKey =
+    GlobalKey<_V5AssignmentFormState>();
+  final GlobalKey<_V5ReturnFormState> _returnKey =
+    GlobalKey<_V5ReturnFormState>();
   final TextEditingController _assetSearchController = TextEditingController();
   final TextEditingController _historySearchController = TextEditingController();
   final TextEditingController _taxonomySearchController = TextEditingController();
@@ -1671,6 +1677,7 @@ class _AssetScreenState extends State<AssetScreen> {
                               else if (page == 7) v5AssignedAssets()
                               else if (page == 8) v5Employees()
                               else if (page == 9) V5AssignmentForm(
+                                key: _assignmentKey,
                                 store: store,
                                 onDirty: markFormChanged,
                                 onCreated: (batch) {
@@ -1685,6 +1692,7 @@ class _AssetScreenState extends State<AssetScreen> {
                               )
                               else if (page == 10 && selectedAssignment != null)
                                 V5ReturnForm(
+                                  key: _returnKey,
                                   store: store,
                                   assignment: selectedAssignment!,
                                   onDirty: markFormChanged,
@@ -1695,6 +1703,7 @@ class _AssetScreenState extends State<AssetScreen> {
                                   },
                                 )
                               else if (page == 6) V4RegistrationPage(
+                                key: _registrationKey,
                                 store: store,
                                 onDirty: markFormChanged,
                                 onCompleted: (created) {
