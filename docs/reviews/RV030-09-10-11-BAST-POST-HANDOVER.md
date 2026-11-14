@@ -32,10 +32,10 @@
 - **Tanggal Serah Terima:** timestamp **konfirmasi fisik** (`acceptedAt`), bukan tanggal pembuatan penugasan.
 - **Lokasi Serah Terima:** input aktual petugas pada saat konfirmasi.
 - Jenis Penugasan, Batas Pengembalian, dan Catatan jika relevan.
-- **Para Pihak:** Penyerah (nama, jabatan/unit bila diketahui) dan Penerima (nama, jabatan, unit/departemen, lokasi kerja).
+- **Penyerah** (nama, jabatan/unit bila diketahui) dan **Penerima** (nama, jabatan, unit/departemen, lokasi kerja) ditampilkan berdampingan, tanpa judul bagian `PARA PIHAK` (revisi RV030-12).
 
 ### Rincian dan pernyataan
-- Daftar unit aset: nomor, kode aset, nama, nomor seri, kondisi, kelengkapan.
+- Daftar unit aset: nomor, kode aset, nama, nomor seri, dan kondisi. Kolom `Kelengkapan` dihapus berdasarkan RV030-12; Item Penyerta Non-Aset (jika dicatat) tampil sebagai catatan terpisah di bawah tabel, sementara data kelengkapan historis tidak diubah klasifikasinya.
 - Narasi faktual bahwa aset telah diserahterimakan menurut konfirmasi operator.
 - Tanggung jawab penerima untuk penggunaan, penjagaan, pemeliharaan, dan pengembalian aset sesuai ketentuan perusahaan.
 - Dokumen disediakan agar ditandatangani Penyerah dan Penerima secara terpisah; sistem **tidak** mengesahkan tanda tangan.
