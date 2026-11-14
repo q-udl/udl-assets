@@ -35,7 +35,7 @@ extension AssetEmployeeOperations on AssetStore {
     returnReceipts.where((r) => r.assignmentId == id).toList();
 
   bool canAssignAsset(AssetRecord a) =>
-    a.status == 'Tersedia' &&
+    a.status == 'Tersedia' && a.lifecycle == 'Aktif' &&
     a.holder.trim().isEmpty &&
     a.assignedEmployeeId.isEmpty &&
     heldLinesFor(a.id).isEmpty &&
