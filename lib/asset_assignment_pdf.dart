@@ -403,7 +403,7 @@ class AssetBastPdf {
             'Kondisi', 'Kelengkapan'], compact: true),
         // Group declaration and both signature blocks as one indivisible
         // unit: neither the heading nor the signers may be orphaned.
-        pw.Container(child: pw.Column(
+        pw.Inseparable(canSpan: false, child: pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
             pw.SizedBox(height: 10),
