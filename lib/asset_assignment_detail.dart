@@ -21,7 +21,7 @@ extension _AssignedAssetsDetail on _AssetScreenState {
           ])),
           Text(batch.status, style: TextStyle(
             color: batch.isOverdue ? danger :
-              batch.status == 'Aktif' ? green : amber,
+              batch.status == 'Aktif' ? _AssetScreenState.green : amber,
             fontWeight: FontWeight.w800)),
         ]),
         const SizedBox(height: 14),
@@ -137,16 +137,18 @@ extension _AssignedAssetsDetail on _AssetScreenState {
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min, children: [
               Text(line.state, style: TextStyle(
-                color: line.state == 'Aktif' ? green : muted,
+                color: line.state == 'Aktif' ? _AssetScreenState.green : muted,
                 fontSize: 11, fontWeight: FontWeight.w700)),
               const Icon(Icons.chevron_right_rounded, color: muted),
             ]),
             onTap: () {
               final asset = store.assignmentAsset(line.assetId);
-              if (asset != null) v4Change(() {
-                selected = asset;
-                page = 1;
-              });
+              if (asset != null) {
+                v4Change(() {
+                  selected = asset;
+                  page = 1;
+                });
+              }
             },
           ),
       ])),
