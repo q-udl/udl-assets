@@ -129,12 +129,20 @@ extension AssetAssignmentOperations on AssetStore {
     required AssetAssignment record,
     required Map<String, AssetReturnInput> inspections,
     required String receivingLocation,
+    AssetPlacement? receivingPlacement,
     String receivedByName = '',
     String notes = '',
   }) async {
     if (record.status != 'Aktif' ||
       inspections.isEmpty || !locations.contains(receivingLocation)) {
       throw const FormatException('Penugasan atau lokasi penerimaan tidak valid.');
+    }
+    final receivingSite = siteByName(receivingLocation);
+    final destination = receivingPlacement ??
+      AssetPlacement(receivingSite?.id ?? '');
+    if (receivingSite == null || !validPlacement(destination) ||
+        destination.siteId != receivingSite.id) {
+      throw const FormatException('Penempatan pengembalian tidak valid.');
     }
     final validConditions = {'Baru', 'Baik', 'Cukup', 'Kurang Baik', 'Rusak'};
     final selected = <AssignedAssetLine>[];
@@ -159,6 +167,9 @@ extension AssetAssignmentOperations on AssetStore {
       employeeSnapshot: Map<String, dynamic>.from(record.employeeSnapshot),
       createdAt: now,
       receivingLocation: receivingLocation,
+      receivingLocationPath: placementPath(destination),
+      receivingAreaId: destination.areaId,
+      receivingSpotId: destination.spotId,
       receivedByName: receivedByName.trim(),
       notes: notes.trim(),
       lines: [
@@ -193,11 +204,7 @@ extension AssetAssignmentOperations on AssetStore {
       line.returnedAt = now;
       asset.assignedEmployeeId = '';
       asset.holder = '';
-      final receivingSite = siteByName(receivingLocation);
-      if (receivingSite == null) {
-        throw const FormatException('Lokasi pengembalian tidak ditemukan.');
-      }
-      applyPlacement(asset, AssetPlacement(receivingSite.id));
+      applyPlacement(asset, destination);
       asset.condition = inspection.condition;
       asset.status = ['Rusak','Kurang Baik'].contains(inspection.condition)
         ? 'Dalam Perbaikan' : 'Tersedia';
@@ -206,7 +213,7 @@ extension AssetAssignmentOperations on AssetStore {
         reason: inspection.notes, changes: {
           'Kondisi': {'from': oldCondition, 'to': inspection.condition},
           'Status': {'from': oldStatus, 'to': asset.status},
-          'Lokasi': {'from': oldLocation, 'to': receivingLocation},
+          'Lokasi': {'from': oldLocation, 'to': placementPath(destination)},
           'PIC': {
             'from': record.employeeSnapshot['name']?.toString() ?? '',
             'to': '',
