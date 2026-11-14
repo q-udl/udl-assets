@@ -56,6 +56,14 @@ class AssetEmployee {
   );
 }
 
+/// Assignment statuses are distinct from transfer statuses. Older backups
+/// used receiver-oriented terminology; map it only within custody records.
+String normalizeAssignmentStatus(String value) => switch (value) {
+  'Menunggu Penerimaan' => 'Menunggu Serah Terima',
+  'Ditolak' => 'Dibatalkan',
+  _ => value,
+};
+
 class AssignedAssetLine {
   final String id, assetId, assetCode, assetName, serial, handoverCondition;
   String accessories, state, returnReceiptId, returnedAt;
@@ -70,7 +78,7 @@ class AssignedAssetLine {
     required this.serial,
     required this.handoverCondition,
     this.accessories = '',
-    this.state = 'Menunggu Penerimaan',
+    this.state = 'Menunggu Serah Terima',
     this.returnReceiptId = '',
     this.returnedAt = '',
     this.photoIds = const [],
@@ -95,7 +103,8 @@ class AssignedAssetLine {
     serial: x['serial']?.toString() ?? '',
     handoverCondition: x['handoverCondition']?.toString() ?? '',
     accessories: x['accessories']?.toString() ?? '',
-    state: x['state']?.toString() ?? 'Menunggu Penerimaan',
+    state: normalizeAssignmentStatus(
+      x['state']?.toString() ?? 'Menunggu Serah Terima'),
     returnReceiptId: x['returnReceiptId']?.toString() ?? '',
     returnedAt: x['returnedAt']?.toString() ?? '',
     photoIds: (x['photoIds'] as List<dynamic>? ?? [])
@@ -110,7 +119,7 @@ class AssetAssignment {
   final String id, draftReference, employeeId, kind, createdAt;
   final Map<String, dynamic> employeeSnapshot;
   final List<AssignedAssetLine> lines;
-  String dueDate, notes, status, acceptedAt, rejectionReason;
+  String dueDate, notes, status, acceptedAt, cancellationReason, cancelledAt;
   String handedOverByName;
 
   AssetAssignment({
@@ -123,15 +132,16 @@ class AssetAssignment {
     required this.lines,
     this.dueDate = '',
     this.notes = '',
-    this.status = 'Menunggu Penerimaan',
+    this.status = 'Menunggu Serah Terima',
     this.acceptedAt = '',
-    this.rejectionReason = '',
+    this.cancellationReason = '',
+    this.cancelledAt = '',
     this.handedOverByName = '',
   });
 
   int get activeCount => lines.where((l) => l.state == 'Aktif').length;
   int get returnedCount => lines.where((l) => l.state == 'Dikembalikan').length;
-  bool get isPending => status == 'Menunggu Penerimaan';
+  bool get isPending => status == 'Menunggu Serah Terima';
   bool get isOverdue {
     if (dueDate.isEmpty || activeCount == 0) return false;
     final due = DateTime.tryParse(dueDate);
@@ -147,7 +157,8 @@ class AssetAssignment {
     'employeeSnapshot': employeeSnapshotWithoutCode(employeeSnapshot), 'kind': kind,
     'createdAt': createdAt, 'dueDate': dueDate, 'notes': notes,
     'status': status, 'acceptedAt': acceptedAt,
-    'rejectionReason': rejectionReason,
+    'cancellationReason': cancellationReason,
+    'cancelledAt': cancelledAt,
     'handedOverByName': handedOverByName,
     'lines': lines.map((l) => l.toJson()).toList(),
   };
@@ -164,9 +175,12 @@ class AssetAssignment {
         Map<String, dynamic>.from(v as Map))).toList(),
     dueDate: x['dueDate']?.toString() ?? '',
     notes: x['notes']?.toString() ?? '',
-    status: x['status']?.toString() ?? 'Menunggu Penerimaan',
+    status: normalizeAssignmentStatus(
+      x['status']?.toString() ?? 'Menunggu Serah Terima'),
     acceptedAt: x['acceptedAt']?.toString() ?? '',
-    rejectionReason: x['rejectionReason']?.toString() ?? '',
+    cancellationReason: x['cancellationReason']?.toString() ??
+      x['rejectionReason']?.toString() ?? '',
+    cancelledAt: x['cancelledAt']?.toString() ?? '',
     handedOverByName: x['handedOverByName']?.toString() ?? '',
   );
 }
