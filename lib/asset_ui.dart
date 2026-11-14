@@ -341,12 +341,12 @@ class _AssetScreenState extends State<AssetScreen> {
             Expanded(child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: const [
-                Text('UD. LUTHFI', maxLines: 1,
+                Text('Manajemen Aset', maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(fontWeight: FontWeight.w900,
                     fontSize: 14, color: ink)),
                 SizedBox(height: 3),
-                Text('UDL Assets', style: TextStyle(
+                Text('UD. LUTHFI', style: TextStyle(
                   fontSize: 12, color: muted)),
               ],
             )),
