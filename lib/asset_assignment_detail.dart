@@ -79,6 +79,10 @@ extension _AssignedAssetsDetail on _AssetScreenState {
             batch.employeeSnapshot['workLocation']?.toString() ?? ''),
           if (batch.handedOverByName.isNotEmpty)
             detailValue('Penyerah', batch.handedOverByName),
+          if (batch.handedOverByJobTitle.isNotEmpty)
+            detailValue('Jabatan Penyerah', batch.handedOverByJobTitle),
+          if (batch.handedOverByUnit.isNotEmpty)
+            detailValue('Unit Penyerah', batch.handedOverByUnit),
           TextButton.icon(
             onPressed: () {
               final record = store.employeeById(batch.employeeId);
@@ -248,13 +252,16 @@ extension _AssignedAssetsDetail on _AssetScreenState {
       AssetAssignment batch, bool accepted) async {
     final reason = TextEditingController();
     final handedBy = TextEditingController();
+    final handedByJob = TextEditingController();
+    final handedByUnit = TextEditingController();
     final handoverAt = TextEditingController();
     final bastNumber = TextEditingController();
     final proofPhotos = <String, SelectedAssetPhoto>{};
     var error = '';
     Future<dynamic>? modalFullyClosed;
     bool hasChanges() => reason.text.isNotEmpty ||
-      handedBy.text.isNotEmpty || handoverAt.text.isNotEmpty ||
+      handedBy.text.isNotEmpty || handedByJob.text.isNotEmpty ||
+      handedByUnit.text.isNotEmpty || handoverAt.text.isNotEmpty ||
       bastNumber.text.isNotEmpty || proofPhotos.isNotEmpty;
     final approved = await v4ShowModal<bool>(
       title: accepted ? 'Konfirmasi Serah Terima' :
@@ -281,6 +288,13 @@ extension _AssignedAssetsDetail on _AssetScreenState {
           const SizedBox(height: 12),
           TextField(controller: handedBy,
             decoration: v4ModalDecoration('Penyerah (nama petugas) *')),
+          const SizedBox(height: 10),
+          v4ModalPair(
+            TextField(controller: handedByJob,
+              decoration: v4ModalDecoration('Jabatan Penyerah (opsional)')),
+            TextField(controller: handedByUnit,
+              decoration: v4ModalDecoration('Unit Penyerah (opsional)')),
+          ),
           const SizedBox(height: 10),
           TextField(controller: handoverAt,
             decoration: v4ModalDecoration('Lokasi serah terima aktual *')),
@@ -369,6 +383,8 @@ extension _AssignedAssetsDetail on _AssetScreenState {
           await store.confirmAssignment(batch, true, reason.text,
             proofPhotos: proofPhotos,
             handedOverByName: handedBy.text,
+            handedOverByJobTitle: handedByJob.text,
+            handedOverByUnit: handedByUnit.text,
             handoverLocation: handoverAt.text,
             bastNumber: bastNumber.text);
         } else {
@@ -385,6 +401,8 @@ extension _AssignedAssetsDetail on _AssetScreenState {
     if (modalFullyClosed != null) await modalFullyClosed;
     reason.dispose();
     handedBy.dispose();
+    handedByJob.dispose();
+    handedByUnit.dispose();
     handoverAt.dispose();
     bastNumber.dispose();
   }
