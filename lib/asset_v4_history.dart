@@ -23,17 +23,46 @@ extension _AssetV4History on _AssetScreenState {
       sectionHeader('Riwayat Aktivitas',
         subtitle:items.length.toString()+' peristiwa · pelaku belum terverifikasi (lokal)'),
       const SizedBox(height:12),
-      TextField(decoration:const InputDecoration(
-        prefixIcon:Icon(Icons.search),
-        hintText:'Cari nama, kode aset, atau aktivitas...'),
-        onChanged:(v)=>v4Change(() {v4HistoryQuery=v;v4HistoryPage=0;})),
-      const SizedBox(height:10),
-      Wrap(spacing:10,runSpacing:10,children:[
-        filterDropdown(v4HistoryType,['Semua aktivitas',...types],
-          (v)=>v4Change(() {v4HistoryType=v;v4HistoryPage=0;}),width:210),
-        filterDropdown(v4HistoryPeriod,['Semua periode','7 hari','30 hari'],
-          (v)=>v4Change(() {v4HistoryPeriod=v;v4HistoryPage=0;}),width:165),
-      ]),
+      LayoutBuilder(builder: (ctx, available) {
+        final search = TextField(
+          controller: _historySearchController,
+          decoration: const InputDecoration(
+            prefixIcon: Icon(Icons.search),
+            hintText: 'Cari nama, kode aset, atau aktivitas...',
+          ),
+          onChanged: (value) => v4Change(() {
+            v4HistoryQuery = value; v4HistoryPage = 0;
+          }),
+        );
+        final activity = filterDropdown(
+          v4HistoryType, ['Semua aktivitas', ...types],
+          (value) => v4Change(() {
+            v4HistoryType = value; v4HistoryPage = 0;
+          }), width: 210);
+        final period = filterDropdown(
+          v4HistoryPeriod, ['Semua periode', '7 hari', '30 hari'],
+          (value) => v4Change(() {
+            v4HistoryPeriod = value; v4HistoryPage = 0;
+          }), width: 165);
+        if (available.maxWidth >= 1050) {
+          return Row(children: [
+            Expanded(child: search),
+            const SizedBox(width: 10),
+            activity,
+            const SizedBox(width: 10),
+            period,
+          ]);
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            search,
+            const SizedBox(height: 10),
+            Wrap(spacing: 10, runSpacing: 10,
+              children: [activity, period]),
+          ],
+        );
+      }),
       const SizedBox(height:14),
       LayoutBuilder(builder:(ctx,box) {
         if(box.maxWidth<750) { return Column(children:[
@@ -44,33 +73,7 @@ extension _AssetV4History on _AssetScreenState {
             subtitle:Text(e.detail,maxLines:2,overflow:TextOverflow.ellipsis),
             trailing:const Icon(Icons.chevron_right)),
         ]); }
-        return SingleChildScrollView(scrollDirection:Axis.horizontal,
-          child:DataTable(columnSpacing:18,
-            columns:const [
-              DataColumn(label:Text('TANGGAL & JAM')),
-              DataColumn(label:Text('AKTIVITAS')),
-              DataColumn(label:Text('ASET')),
-              DataColumn(label:Text('RINGKASAN')),
-              DataColumn(label:Text('RINCIAN')),
-            ],
-            rows:[for(final e in rows) DataRow(cells:[
-              DataCell(Text(dateText(e.timestamp))),
-              DataCell(Row(children:[
-                Icon(v4EventIcon(e.type),size:17,color:blue),
-                const SizedBox(width:6),Text(e.type)])),
-              DataCell(SizedBox(width:185,child:Column(
-                mainAxisAlignment:MainAxisAlignment.center,
-                crossAxisAlignment:CrossAxisAlignment.start,children:[
-                  Text(assetFor(e.assetId)?.name ?? 'Master Data',
-                    maxLines:1,overflow:TextOverflow.ellipsis),
-                  Text(assetFor(e.assetId)?.code ?? '',
-                    style:const TextStyle(fontSize:11,color:muted)),
-              ]))),
-              DataCell(SizedBox(width:250,child:Text(e.detail,
-                maxLines:2,overflow:TextOverflow.ellipsis))),
-              DataCell(IconButton(tooltip:'Lihat rincian',icon:const Icon(Icons.open_in_new),
-                onPressed:()=>v4EventDetail(e))),
-            ])]));
+        return _v4HistoryTable(rows, box.maxWidth);
       }),
       const Divider(height:22),
       Row(children:[
