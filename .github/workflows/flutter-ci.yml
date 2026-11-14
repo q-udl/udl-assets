@@ -33,6 +33,12 @@ jobs:
             pages=$(pdfinfo "$file" | awk '/^Pages:/ {print $2}')
             echo "$file -> $pages pages"
             test "$pages" -ge 2
+            if [[ "$(basename "$file")" == "BAST-single-photo.pdf" ]]; then
+              test "$pages" -eq 2
+              pdftotext -f 1 -l 1 "$file" - | grep -qi 'PERNYATAAN SERAH TERIMA'
+              pdftotext -f 1 -l 1 "$file" - | grep -qi 'Penyerah'
+              pdftotext -f 1 -l 1 "$file" - | grep -qi 'Penerima'
+            fi
             if pdftotext -f 1 -l 1 "$file" - | grep -qi 'LAMPIRAN FOTO BUKTI'; then
               echo "Appendix heading incorrectly displayed on page 1: $file"
               exit 1
