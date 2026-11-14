@@ -1,7 +1,7 @@
 part of 'main.dart';
 
-/// All PDF output is explicitly a LOCAL DRAFT. No digital signatures,
-/// identity verification or official document registration are implied.
+/// Transaction PDF output uses recorded names, not electronic signatures.
+/// BAST numbering is supplied from the external DMS by an operator.
 class AssetBastPdf {
   static pw.TextStyle regular(double size) =>
     pw.TextStyle(fontSize: size, color: PdfColors.blueGrey900);
@@ -60,6 +60,42 @@ class AssetBastPdf {
       ],
     );
 
+  static pw.Widget bastHeader(AssetAssignment record) => pw.Column(
+    crossAxisAlignment: pw.CrossAxisAlignment.start,
+    children: [
+      pw.Text('UD. LUTHFI', style: bold(12)),
+      pw.SizedBox(height: 6),
+      pw.Text('BERITA ACARA SERAH TERIMA ASET', style: bold(15)),
+      pw.SizedBox(height: 9),
+      item('Nomor BAST', text(record.bastNumber)),
+      item('Referensi Penugasan', record.assignmentReference),
+      pw.SizedBox(height: 9),
+      pw.Divider(color: PdfColors.blueGrey200),
+      pw.SizedBox(height: 12),
+    ],
+  );
+
+  static pw.Widget bastFooter(pw.Context ctx) => pw.Column(children: [
+    pw.Divider(color: PdfColors.blueGrey200),
+    pw.SizedBox(height: 4),
+    pw.Align(alignment: pw.Alignment.centerRight,
+      child: pw.Text('Halaman ' + ctx.pageNumber.toString() +
+        ' dari ' + ctx.pagesCount.toString(),
+        style: pw.TextStyle(fontSize: 8, color: PdfColors.grey700))),
+  ]);
+
+  static pw.Widget party(String role, List<String> lines) => pw.Column(
+    crossAxisAlignment: pw.CrossAxisAlignment.start,
+    children: [
+      pw.Text(role, style: bold(10)),
+      pw.SizedBox(height: 8),
+      for (final line in lines) ...[
+        pw.Text(line, style: regular(9)),
+        pw.SizedBox(height: 5),
+      ],
+    ],
+  );
+
   static pw.Widget footer(pw.Context ctx) => pw.Column(children: [
     pw.Divider(color: PdfColors.blueGrey200),
     pw.Text('Nama pihak berasal dari catatan transaksi. '
@@ -73,7 +109,7 @@ class AssetBastPdf {
   ]);
 
   static pw.Widget signing(String left, String right,
-      String leftName, String rightName) => pw.Padding(
+      String leftName, String rightName, {bool showGuide = true}) => pw.Padding(
     padding: const pw.EdgeInsets.only(top: 20),
     child: pw.Row(
       children: [
@@ -81,7 +117,9 @@ class AssetBastPdf {
           pw.Text(left, style: bold(9)),
           pw.SizedBox(height: 60),
           pw.Text(leftName, style: bold(9)),
-          pw.Text('Tanda tangan: __________________', style: regular(8)),
+          if (showGuide)
+            if (showGuide)
+            pw.Text('Tanda tangan: __________________', style: regular(8)),
         ])),
         pw.SizedBox(width: 20),
         pw.Expanded(child: pw.Column(children: [
@@ -250,6 +288,7 @@ class AssetBastPdf {
   static void addEvidencePages(
     pw.Document document, AssetStore? store, String transactionType,
     String transactionId, Map<String, String> assetCodes, String heading,
+    {bool forBast = false}
   ) {
     if (store == null || !assetCodes.keys.any((id) =>
         store.evidenceFor(transactionType, transactionId, id).isNotEmpty)) {
@@ -258,7 +297,7 @@ class AssetBastPdf {
     document.addPage(pw.MultiPage(
       pageFormat: PdfPageFormat.a4,
       margin: const pw.EdgeInsets.fromLTRB(42, 45, 42, 46),
-      footer: footer,
+      footer: forBast ? bastFooter : footer,
       build: (ctx) => evidenceAppendix(
         store, transactionType, transactionId, assetCodes, heading,
         completed: true),
@@ -284,33 +323,55 @@ class AssetBastPdf {
     );
   }
 
-  static Future<Uint8List> handover(AssetAssignment record, {AssetStore? store}) async {
+  static Future<Uint8List> handover(
+      AssetAssignment record, {AssetStore? store}) async {
+    if (!record.canPrintBast) {
+      throw const FormatException(
+        'BAST hanya dapat dicetak setelah serah terima terkonfirmasi '
+        'dan nomor BAST, lokasi, serta Penyerah telah dicatat.');
+    }
     final doc = pw.Document(
-      title: 'DRAF BAST ' + record.draftReference,
-      author: 'UDL Assets');
+      title: 'BAST ' + record.bastNumber,
+      author: 'UD. LUTHFI');
     doc.addPage(pw.MultiPage(
       pageFormat: PdfPageFormat.a4,
       margin: const pw.EdgeInsets.fromLTRB(42, 45, 42, 46),
-      footer: footer,
+      footer: bastFooter,
       build: (ctx) => [
-        header('Berita Acara Serah Terima Aset', record.draftReference),
-        item('Dibuat pada', date(record.createdAt)),
-        item('Jenis penugasan', record.kind),
-        item('Tanggal kembali', record.kind == 'Sementara'
+        bastHeader(record),
+        item('Tanggal Serah Terima', date(record.acceptedAt)),
+        item('Lokasi Serah Terima', text(record.handoverLocation)),
+        item('Jenis Penugasan', record.kind),
+        item('Batas Pengembalian', record.kind == 'Sementara'
           ? text(record.dueDate) : 'Tidak ditentukan'),
+        pw.SizedBox(height: 15),
+        pw.Text('PARA PIHAK', style: bold(10)),
         pw.SizedBox(height: 10),
-        pw.Text('PIHAK YANG MENERIMA', style: bold(10)),
+        pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Expanded(child: party('Penyerah', [
+              'Nama: ' + text(record.handedOverByName),
+              'Unit: UD. LUTHFI',
+            ])),
+            pw.SizedBox(width: 24),
+            pw.Expanded(child: party('Penerima', [
+              'Nama: ' + text(record.employeeSnapshot['name']),
+              'Jabatan: ' + text(record.employeeSnapshot['jobTitle']),
+              'Unit / Departemen: ' +
+                text(record.employeeSnapshot['unit']) + ' / ' +
+                text(record.employeeSnapshot['department']),
+              'Lokasi Kerja: ' +
+                text(record.employeeSnapshot['workLocation']),
+            ])),
+          ],
+        ),
+        pw.SizedBox(height: 15),
+        pw.Text('RINCIAN ASET', style: bold(10)),
         pw.SizedBox(height: 7),
-        item('Nama', text(record.employeeSnapshot['name'])),
-        item('Yang Menyerahkan', text(record.handedOverByName)),
-        item('Jabatan', text(record.employeeSnapshot['jobTitle'])),
-        item('Unit / Departemen',
-          text(record.employeeSnapshot['unit']) + ' / ' +
-          text(record.employeeSnapshot['department'])),
-        item('Lokasi kerja', text(record.employeeSnapshot['workLocation'])),
-        pw.SizedBox(height: 12),
-        pw.Text('DAFTAR ASET DAN KONDISI PENYERAHAN', style: bold(10)),
-        pw.SizedBox(height: 8),
+        pw.Text('Dengan ini, Penyerah telah menyerahkan dan Penerima '
+          'telah menerima aset milik UD. LUTHFI dengan rincian:',
+          style: regular(9)),
+        pw.SizedBox(height: 9),
         assetTable([
           for (var i = 0; i < record.lines.length; i++)
             [
@@ -321,32 +382,35 @@ class AssetBastPdf {
               text(record.lines[i].handoverCondition),
               text(record.lines[i].accessories),
             ],
-        ], ['No', 'Kode', 'Nama Aset', 'No Seri',
+        ], ['No', 'Kode Aset', 'Nama Aset', 'No. Seri',
             'Kondisi', 'Kelengkapan']),
-        pw.SizedBox(height: 13),
-        item('Catatan', text(record.notes)),
-        item('Status sistem', record.status +
-          ' (pencatatan, bukan tanda tangan terverifikasi)'),
-        pw.SizedBox(height: 12),
-        pw.Text('PERNYATAAN', style: bold(10)),
-        pw.SizedBox(height: 5),
+        pw.SizedBox(height: 11),
+        item('Catatan', record.notes.trim().isEmpty
+          ? 'Tidak ada catatan tambahan' : record.notes.trim()),
+        pw.SizedBox(height: 14),
+        pw.Text('PERNYATAAN SERAH TERIMA', style: bold(10)),
+        pw.SizedBox(height: 7),
         pw.Text(
-          'Pihak yang menyerahkan dan pihak penerima wajib memeriksa '
-          'kesesuaian identitas aset, kelengkapan, serta kondisi fisik '
-          'yang tercantum sebelum menandatangani dokumen ini. '
-          'Penerima bertanggung jawab menjaga dan mengembalikan aset '
-          'sesuai ketentuan perusahaan. Dokumen ini menjadi bukti '
-          'serah terima hanya setelah proses perusahaan dilaksanakan '
-          'dan para pihak menandatangani sesuai kewenangannya.',
+          'Para pihak menyatakan bahwa serah terima aset sebagaimana '
+          'tercantum dalam dokumen ini telah dilaksanakan sesuai '
+          'dengan rincian, kondisi, dan kelengkapan yang dicatat. '
+          'Sejak serah terima dilaksanakan, Penerima bertanggung jawab '
+          'menggunakan, menjaga, dan memelihara aset sesuai ketentuan '
+          'perusahaan, serta mengembalikannya apabila diminta atau '
+          'ketika penugasan berakhir. Berita Acara ini dibuat sebagai '
+          'dokumentasi serah terima aset dan untuk ditandatangani '
+          'oleh para pihak sebagai bukti pengesahan.',
           style: regular(9),
         ),
-        signing('Yang Menyerahkan', 'Yang Menerima',
-          text(record.handedOverByName), text(record.employeeSnapshot['name'])),
+        signing('Penyerah', 'Penerima',
+          text(record.handedOverByName),
+          text(record.employeeSnapshot['name']), showGuide: false),
       ],
     ));
     addEvidencePages(doc, store, 'assignment_handover', record.id, {
-      for (final line in record.lines) line.assetId: line.assetCode,
-    }, 'LAMPIRAN FOTO BUKTI SERAH TERIMA');
+      for (final line in record.lines)
+        line.assetId: line.assetName + ' / ' + line.assetCode,
+    }, 'LAMPIRAN FOTO BUKTI SERAH TERIMA', forBast: true);
     return doc.save();
   }
 
@@ -364,7 +428,7 @@ class AssetBastPdf {
       build: (ctx) => [
         header('Berita Acara Pengembalian Aset', receipt.draftReference),
         item('Dibuat pada', date(receipt.createdAt)),
-        item('Referensi penyerahan', original.draftReference),
+        item('Referensi penyerahan', original.assignmentReference),
         item('Lokasi penerimaan',
           receipt.receivingLocationPath.isEmpty
             ? receipt.receivingLocation : receipt.receivingLocationPath),
@@ -421,7 +485,7 @@ class AssetBastPdf {
   static Future<void> printHandover(AssetAssignment batch, {AssetStore? store}) async {
     final content = await handover(batch, store: store);
     await Printing.layoutPdf(
-      name: batch.draftReference + '.pdf',
+      name: 'BAST-' + batch.bastNumber.replaceAll('/', '-') + '.pdf',
       onLayout: (format) async => content);
   }
 
