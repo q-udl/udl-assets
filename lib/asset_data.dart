@@ -68,7 +68,7 @@ class EventRecord {
   final Map<String, dynamic> changes;
   final String reason, actor;
   EventRecord(this.assetId, this.type, this.detail, this.timestamp,
-    {Map<String, dynamic>? changes, this.reason = '', this.actor = 'Simulasi Lokal'})
+    {Map<String, dynamic>? changes, this.reason = '', this.actor = 'Sistem'})
       : changes = changes ?? {};
   Map<String, dynamic> toJson() => {
     'assetId': assetId, 'type': type, 'detail': detail, 'timestamp': timestamp,
@@ -191,7 +191,6 @@ class AssetStore extends ChangeNotifier {
   List<AssetEmployee> employees = [];
   List<AssetAssignment> assignments = [];
   List<AssetReturnReceipt> returnReceipts = [];
-  int nextEmployeeNumber = 1;
   int nextAssignmentNumber = 1;
   int nextReturnNumber = 1;
   List<String> locations = ['Kantor Pusat', 'Gudang Pusat', 'Outlet Jepara'];
@@ -224,24 +223,24 @@ class AssetStore extends ChangeNotifier {
   void seed() {
     categories = defaultTaxonomy();
     assets = [
-      AssetRecord(uuid.v4(), 'UDL-AST-000001', 'Laptop Lenovo ThinkPad T14',
-        'Teknologi Informasi & Komunikasi', 'Lenovo', 'DEMO-001', 'Kantor Pusat',
+      AssetRecord(uuid.v4(), 'UDL-AST-00000001', 'Laptop Lenovo ThinkPad T14',
+        'Teknologi Informasi & Komunikasi', 'Lenovo', 'SN-LT-240418', 'Kantor Pusat',
         'Staf Finance', 'Baik', 'Digunakan', 12500000,
         subcategory: 'Komputer', assetType: 'Laptop'),
-      AssetRecord(uuid.v4(), 'UDL-AST-000002', 'Printer Brother',
-        'Teknologi Informasi & Komunikasi', 'Brother', 'DEMO-002',
+      AssetRecord(uuid.v4(), 'UDL-AST-00000002', 'Printer Brother',
+        'Teknologi Informasi & Komunikasi', 'Brother', 'SN-PR-240122',
         'Outlet Jepara', '', 'Baik', 'Tersedia', 3400000,
         subcategory: 'Periferal Komputer', assetType: 'Printer Dokumen'),
-      AssetRecord(uuid.v4(), 'UDL-AST-000003', 'AC Daikin 2 PK',
-        'Peralatan Fasilitas & Utilitas', 'Daikin', 'DEMO-003', 'Gudang Pusat',
+      AssetRecord(uuid.v4(), 'UDL-AST-00000003', 'AC Daikin 2 PK',
+        'Peralatan Fasilitas & Utilitas', 'Daikin', 'SN-AC-230915', 'Gudang Pusat',
         '', 'Cukup', 'Dalam Perbaikan', 8500000,
         subcategory: 'Pendingin Ruangan', assetType: 'AC'),
-      AssetRecord(uuid.v4(), 'UDL-AST-000004', 'Forklift Toyota',
-        'Peralatan Gudang & Logistik', 'Toyota', 'DEMO-004', 'Gudang Pusat',
+      AssetRecord(uuid.v4(), 'UDL-AST-00000004', 'Forklift Toyota',
+        'Peralatan Gudang & Logistik', 'Toyota', 'SN-FK-231109', 'Gudang Pusat',
         'Petugas Gudang', 'Baik', 'Digunakan', 180000000,
         subcategory: 'Penanganan Material', assetType: 'Forklift'),
-      AssetRecord(uuid.v4(), 'UDL-AST-000005', 'Meja Kerja Supervisor',
-        'Furnitur', 'Lokal', 'DEMO-005', 'Outlet Jepara', 'Supervisor Outlet',
+      AssetRecord(uuid.v4(), 'UDL-AST-00000005', 'Meja Kerja Supervisor',
+        'Furnitur', 'Lokal', 'SN-FN-250108', 'Outlet Jepara', 'Supervisor Outlet',
         'Baik', 'Digunakan', 1700000,
         subcategory: 'Meja', assetType: 'Meja Kerja'),
     ];
@@ -256,25 +255,25 @@ class AssetStore extends ChangeNotifier {
       a.typeId = sub.typeId(a.assetType);
     }
     events = [for (final a in assets)
-      EventRecord(a.id, 'Registrasi', 'Registrasi data simulasi',
+      EventRecord(a.id, 'Registrasi', 'Registrasi awal inventaris',
         DateTime.now().toIso8601String())];
     photos = []; evidencePhotos = [];
     transfers = []; nextNumber = 6;
     final now = DateTime.now().toIso8601String();
     employees = [
-      AssetEmployee(id: uuid.v4(), code: 'SIM-001',
-        name: 'Karyawan Demo A', unit: 'Outlet',
+      AssetEmployee(id: uuid.v4(),
+        name: 'Anisa Putri', unit: 'Outlet',
         department: 'Penjualan', jobTitle: 'Supervisor Outlet',
         workLocation: 'Outlet Jepara',
         createdAt: now, updatedAt: now),
-      AssetEmployee(id: uuid.v4(), code: 'SIM-002',
-        name: 'Karyawan Demo B', unit: 'Distribusi',
+      AssetEmployee(id: uuid.v4(),
+        name: 'Rafi Pratama', unit: 'Distribusi',
         department: 'Operasional', jobTitle: 'Staf Gudang',
         workLocation: 'Gudang Pusat',
         createdAt: now, updatedAt: now),
     ];
     assignments = []; returnReceipts = [];
-    nextEmployeeNumber = 1; nextAssignmentNumber = 1; nextReturnNumber = 1;
+    nextAssignmentNumber = 1; nextReturnNumber = 1;
     migrateLocationMaster(const {});
     loadError = null; notifyListeners();
   }
@@ -415,9 +414,6 @@ class AssetStore extends ChangeNotifier {
     employees = restoredEmployees;
     assignments = restoredAssignments;
     returnReceipts = restoredReturns;
-    nextEmployeeNumber = _safeNextCounter(value['nextEmployeeNumber'],
-      employees.where((e) => e.code.startsWith('KRY-'))
-        .map((e) => int.tryParse(e.code.split('-').last) ?? 0));
     nextAssignmentNumber = _safeNextCounter(value['nextAssignmentNumber'],
       assignments.map((e) => int.tryParse(
         e.draftReference.split('-').last) ?? 0));
@@ -463,7 +459,6 @@ class AssetStore extends ChangeNotifier {
     'version': 5, 'nextNumber': nextNumber,
     'locationSites': locationSites.map((s) => s.toJson()).toList(),
     'nextLocationNumber': nextLocationNumber,
-    'nextEmployeeNumber': nextEmployeeNumber,
     'nextAssignmentNumber': nextAssignmentNumber,
     'nextReturnNumber': nextReturnNumber,
     'employees': employees.map((e) => e.toJson()).toList(),
@@ -501,7 +496,7 @@ class AssetStore extends ChangeNotifier {
     if (!s.types.contains(t) || !c.active || !s.active || !s.typeIsActive(t)) {
       throw const FormatException('Jenis aset tidak tersedia/aktif.');
     }
-    final code = 'UDL-AST-' + nextNumber.toString().padLeft(6, '0');
+    final code = 'UDL-AST-' + nextNumber.toString().padLeft(8, '0');
     final a = AssetRecord(uuid.v4(), code, name.trim(), c.name, brand.trim(), serial.trim(),
       location.trim(), holder.trim(), 'Baik',
       holder.trim().isEmpty ? 'Tersedia' : 'Digunakan', cost,
