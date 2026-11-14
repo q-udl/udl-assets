@@ -392,8 +392,9 @@ class _V5ReturnFormState extends State<V5ReturnForm> {
             Text('Jumlah aset: ' + selected.length.toString()),
             const Divider(height: 25),
             for (final line in widget.assignment.lines)
-              if (selected.contains(line.id)) Padding(
-                padding: const EdgeInsets.only(bottom: 7),
+              if (selected.contains(line.id)) ...[
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 7),
                 child: Text('• ' + line.assetName + ' · ' + line.assetCode +
                   ' · ' + (condition[line.id] ?? line.handoverCondition),
                   style: const TextStyle(fontSize: 12))),
@@ -405,6 +406,7 @@ class _V5ReturnFormState extends State<V5ReturnForm> {
                       : 'Penyerta non-aset kembali: ') +
                     accessories[line.id]!.trim(),
                     style: const TextStyle(fontSize: 11, color: muted))),
+              ],
             const SizedBox(height: 8),
             const Text('Pastikan pemeriksaan dan bukti foto sudah sesuai '
               'sebelum menyimpan pengembalian.',
