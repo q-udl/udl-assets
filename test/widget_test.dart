@@ -23,16 +23,27 @@ void main() {
     expect(find.text('Manajemen Aset'), findsOneWidget);
     expect(find.text('UD. LUTHFI'), findsOneWidget);
     expect(find.text('UDL Assets'), findsNothing);
+    final logo = find.byKey(const ValueKey('udl-assets-logo'));
+    expect(logo, findsOneWidget);
+    final logoImage = tester.widget<Image>(logo).image;
+    expect(logoImage, isA<AssetImage>());
+    expect(
+      (logoImage as AssetImage).assetName,
+      'assets/branding/udl_assets_icon.png',
+    );
 
     await tester.tap(find.byTooltip('Minimalkan Sidebar'));
     await tester.pumpAndSettle();
     expect(find.text('Manajemen Aset'), findsNothing);
     expect(find.text('UD. LUTHFI'), findsNothing);
+    expect(logo, findsOneWidget);
+    expect(find.text('L'), findsNothing);
 
     await tester.tap(find.byTooltip('Perluas Sidebar'));
     await tester.pumpAndSettle();
     expect(find.text('Manajemen Aset'), findsOneWidget);
     expect(find.text('UD. LUTHFI'), findsOneWidget);
+    expect(logo, findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
