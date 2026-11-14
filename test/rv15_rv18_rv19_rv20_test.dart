@@ -262,7 +262,7 @@ void main() {
     await tester.tap(find.byTooltip('Kembali').first);
     await tester.pumpAndSettle();
     expect(find.text('Tinggalkan formulir?'), findsOneWidget);
-    await tester.tap(find.text('Tinggalkan'));
+    await tester.tap(find.text('Tinggalkan Tanpa Menyimpan'));
     await tester.pumpAndSettle();
     expect(find.text('Daftar Aset'), findsWidgets);
     expect(tester.takeException(), isNull);
