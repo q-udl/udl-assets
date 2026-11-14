@@ -34,8 +34,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Laptop Lenovo ThinkPad T14').first);
     await tester.pumpAndSettle();
-    expect(find.text('Dokumentasi foto aset'), findsOneWidget);
-    expect(find.text('Belum ada foto aset'), findsOneWidget);
+    expect(find.text('Dokumentasi Foto'), findsOneWidget);
+    expect(find.text('Belum ada foto aktual'), findsOneWidget);
   });
 
   testWidgets('Halaman awal adalah Daftar Aset', (tester) async {
