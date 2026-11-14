@@ -305,9 +305,12 @@ class _AssetScreenState extends State<AssetScreen> {
     );
   }
 
-  Widget _sideItem(int index, {bool inDrawer = false}) {
+  Widget _sideItem(int index, {
+    bool inDrawer = false,
+    bool? condensedOverride,
+  }) {
     final active = page == index;
-    final condensed = _sidebarCollapsed && !inDrawer;
+    final condensed = condensedOverride ?? (_sidebarCollapsed && !inDrawer);
     final item = Padding(
       padding: EdgeInsets.symmetric(vertical: 3,
         horizontal: condensed ? 9 : 12),
@@ -418,8 +421,11 @@ class _AssetScreenState extends State<AssetScreen> {
   }
 
   Widget sidebar({bool inDrawer = false}) {
-    final condensed = _sidebarCollapsed && !inDrawer;
-    return Container(
+    return LayoutBuilder(builder: (context, available) {
+      // During width animation, keep icon-only content until there is
+      // enough physical room for the expanded labels.
+      final condensed = !inDrawer && available.maxWidth < 208;
+      return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(right: BorderSide(color: border)),
@@ -435,26 +441,27 @@ class _AssetScreenState extends State<AssetScreen> {
               children: [
                 _sidebarSectionLabel('MENU UTAMA',
                   condensed: condensed),
-                _sideItem(1, inDrawer: inDrawer),
-                _sideItem(3, inDrawer: inDrawer),
+                _sideItem(1, inDrawer: inDrawer, condensedOverride: condensed),
+                _sideItem(3, inDrawer: inDrawer, condensedOverride: condensed),
                 const SizedBox(height: 7),
                 _sidebarSectionLabel('MASTER DATA',
                   condensed: condensed),
-                _sideItem(2, inDrawer: inDrawer),
-                _sideItem(5, inDrawer: inDrawer),
+                _sideItem(2, inDrawer: inDrawer, condensedOverride: condensed),
+                _sideItem(5, inDrawer: inDrawer, condensedOverride: condensed),
                 Padding(
                   padding: EdgeInsets.symmetric(
                     horizontal: condensed ? 15 : 18, vertical: 10),
                   child: const Divider(height: 1, color: border),
                 ),
-                _sideItem(4, inDrawer: inDrawer),
+                _sideItem(4, inDrawer: inDrawer, condensedOverride: condensed),
               ],
             )),
             _accountFooter(condensed: condensed),
           ],
         ),
       ),
-    );
+      );
+    });
   }
 
   Widget titleArea() {
