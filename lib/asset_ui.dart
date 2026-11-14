@@ -666,10 +666,11 @@ class _AssetScreenState extends State<AssetScreen> with WidgetsBindingObserver {
   }
 
   Widget metricCard(String label, String value, String note, IconData icon,
-      Color accent, double width) {
+      Color accent, double width, {VoidCallback? onTap}) {
     return SizedBox(
       width: width,
-      child: surface(padding: const EdgeInsets.all(20), child: Column(
+      child: surface(padding: const EdgeInsets.all(20),
+        child: InkWell(onTap: onTap, child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(children: [
@@ -689,12 +690,13 @@ class _AssetScreenState extends State<AssetScreen> with WidgetsBindingObserver {
           const SizedBox(height: 6),
           Text(note, style: const TextStyle(fontSize: 11.5, color: muted)),
         ],
-      )),
+      ))),
     );
   }
 
   Widget metrics() {
-    final active = store.assets.where((a) => a.status != 'Dihapuskan').toList();
+    final active = store.assets.where((a) =>
+      a.lifecycle == 'Aktif' && a.status != 'Dihapuskan').toList();
     final inUse = active.where((a) => a.status == 'Digunakan').length;
     final concern = active.where(needsAttention).length;
     final knownValues = active.where((a) => a.acquisitionCost != null).toList();
@@ -704,11 +706,23 @@ class _AssetScreenState extends State<AssetScreen> with WidgetsBindingObserver {
       final width = (box.maxWidth - (n - 1) * 14) / n;
       return Wrap(spacing: 14, runSpacing: 14, children: [
         metricCard('Total aset aktif', active.length.toString(), 'Tercatat di seluruh lokasi',
-          Icons.inventory_2_outlined, blue, width),
+          Icons.inventory_2_outlined, blue, width,
+          onTap: () => v4Change(() {
+            selected = null; page = 1; statusFilter = 'Semua status';
+            v4Attention = false; v4CatalogPage = 0;
+          })),
         metricCard('Sedang digunakan', inUse.toString(), 'Aset dalam penguasaan unit',
-          Icons.assignment_ind_outlined, green, width),
+          Icons.assignment_ind_outlined, green, width,
+          onTap: () => v4Change(() {
+            selected = null; page = 1; statusFilter = 'Digunakan';
+            v4Attention = false; v4CatalogPage = 0;
+          })),
         metricCard('Perlu perhatian', concern.toString(), 'Hilang, rusak, atau diperbaiki',
-          Icons.report_problem_outlined, amber, width),
+          Icons.report_problem_outlined, amber, width,
+          onTap: () => v4Change(() {
+            selected = null; page = 1; statusFilter = 'Semua status';
+            v4Attention = true; v4CatalogPage = 0;
+          })),
         metricCard('Nilai perolehan diketahui',
           knownValues.isEmpty ? '—' : compactMoney(cost),
           knownValues.isEmpty ? 'Nilai perolehan belum tercatat' :
