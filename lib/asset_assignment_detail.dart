@@ -389,6 +389,94 @@ extension _AssignedAssetsDetail on _AssetScreenState {
     bastNumber.dispose();
   }
 
+  Future<void> v5CompleteBastMetadata(AssetAssignment batch) async {
+    if (!batch.isHandoverConfirmed || batch.canPrintBast) return;
+    final number = TextEditingController(text: batch.bastNumber);
+    final location = TextEditingController(text: batch.handoverLocation);
+    final penyerah = TextEditingController(text: batch.handedOverByName);
+    Future<dynamic>? fullyClosed;
+    var error = '';
+    final approved = await v4ShowModal<bool>(
+      title: 'Lengkapi Data BAST Historis',
+      subtitle: batch.assignmentReference,
+      maxWidth: 590,
+      isDirty: () => number.text != batch.bastNumber ||
+        location.text != batch.handoverLocation ||
+        penyerah.text != batch.handedOverByName,
+      body: (ctx, update) {
+        fullyClosed ??= ModalRoute.of(ctx)?.completed;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Isi hanya berdasarkan dokumen serah terima yang dapat '
+              'dipertanggungjawabkan. Tanggal konfirmasi historis '
+              'tidak akan diubah.',
+              style: TextStyle(color: muted, fontSize: 12)),
+            const SizedBox(height: 12),
+            v4ReadonlyField('Waktu Serah Terima',
+              dateText(batch.acceptedAt)),
+            const SizedBox(height: 12),
+            TextField(
+              controller: number,
+              readOnly: batch.bastNumber.isNotEmpty,
+              decoration: v4ModalDecoration('Nomor BAST dari DMS *')),
+            const SizedBox(height: 12),
+            TextField(
+              controller: location,
+              readOnly: batch.handoverLocation.isNotEmpty,
+              decoration: v4ModalDecoration('Lokasi serah terima aktual *')),
+            const SizedBox(height: 12),
+            TextField(
+              controller: penyerah,
+              readOnly: batch.handedOverByName.isNotEmpty,
+              decoration: v4ModalDecoration('Penyerah (nama petugas) *')),
+            if (error.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              v4ModalError(error),
+            ],
+          ],
+        );
+      },
+      actions: (ctx, update) => [
+        OutlinedButton(
+          onPressed: () => assetRequestModalClose(ctx,
+            isDirty: () => number.text != batch.bastNumber ||
+              location.text != batch.handoverLocation ||
+              penyerah.text != batch.handedOverByName),
+          child: const Text('Batal')),
+        FilledButton.icon(
+          icon: const Icon(Icons.save_outlined, size: 17),
+          label: const Text('Simpan Data BAST'),
+          onPressed: () {
+            if (number.text.trim().isEmpty ||
+                location.text.trim().isEmpty ||
+                penyerah.text.trim().isEmpty) {
+              update(() => error = 'Lengkapi nomor, lokasi dan Penyerah.');
+              return;
+            }
+            Navigator.pop(ctx, true);
+          }),
+      ],
+    );
+    if (approved == true) {
+      try {
+        await store.completeBastMetadata(batch,
+          bastNumber: number.text,
+          handoverLocation: location.text,
+          handedOverByName: penyerah.text);
+        repaint();
+        notify('Data BAST lengkap; dokumen dapat dilihat dan dicetak.');
+      } catch (e) {
+        notify('Data BAST gagal disimpan: ' + e.toString());
+      }
+    }
+    if (fullyClosed != null) await fullyClosed;
+    number.dispose();
+    location.dispose();
+    penyerah.dispose();
+  }
+
   Widget v5CustodyForAsset(AssetRecord asset) {
     final history = store.assignments.where((a) =>
       a.lines.any((l) => l.assetId == asset.id)).toList();
