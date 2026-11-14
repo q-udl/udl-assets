@@ -109,9 +109,19 @@ extension AssetEmployeeOperations on AssetStore {
     required String jobTitle, required String workLocation,
     String startDate = '',
   }) async {
-    final employeeCode = code.trim().isEmpty
-      ? 'KRY-' + nextEmployeeNumber.toString().padLeft(6, '0')
-      : code.trim();
+    var employeeCode = code.trim();
+    if (employeeCode.isEmpty) {
+      do {
+        employeeCode = 'KRY-' +
+          nextEmployeeNumber.toString().padLeft(6, '0');
+        if (employees.any((e) => e.code.toLowerCase() ==
+            employeeCode.toLowerCase())) {
+          nextEmployeeNumber++;
+          continue;
+        }
+        break;
+      } while (true);
+    }
     if (employeeCode.length < 3 || name.trim().length < 3 ||
         unit.trim().isEmpty || department.trim().isEmpty ||
         jobTitle.trim().isEmpty || !locations.contains(workLocation) ||
@@ -128,7 +138,14 @@ extension AssetEmployeeOperations on AssetStore {
       workLocation: workLocation, startDate: startDate,
       createdAt: now, updatedAt: now);
     employees.insert(0, record);
-    if (code.trim().isEmpty) nextEmployeeNumber++;
+    if (code.trim().isEmpty) {
+      nextEmployeeNumber++;
+    } else if (employeeCode.startsWith('KRY-')) {
+      final serial = int.tryParse(employeeCode.substring(4));
+      if (serial != null && serial >= nextEmployeeNumber) {
+        nextEmployeeNumber = serial + 1;
+      }
+    }
     events.insert(0, EventRecord('', 'Master Karyawan',
       'Karyawan ' + record.name + ' (' + record.code + ') ditambahkan', now));
     await persist();
