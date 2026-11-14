@@ -395,7 +395,7 @@ class AssetStore extends ChangeNotifier {
       changes: changes, reason: reason));
   Future<void> change(AssetRecord a, String location, String holder, String status,
       String condition, String reason) async {
-    if (a.status == 'Dihapuskan') throw const FormatException('Aset sudah dihapuskan.');
+    if (!canOperate(a)) throw const FormatException('Aset tidak aktif/dilepas.');
     if (a.assignedEmployeeId.isNotEmpty) {
       throw const FormatException(
         'Aset masih ditugaskan kepada karyawan; selesaikan pengembalian lebih dulu.');
