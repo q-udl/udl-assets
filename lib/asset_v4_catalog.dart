@@ -79,10 +79,10 @@ extension _AssetV4Catalog on _AssetScreenState {
             icon: Icon(v4SortAscending ? Icons.arrow_upward : Icons.arrow_downward)),
         ]),
         LayoutBuilder(builder: (context, box) {
-          if (box.maxWidth < 800) return Column(children: [
+          if (box.maxWidth < 800) { return Column(children: [
             for (final a in slice) Padding(padding: const EdgeInsets.only(bottom: 10),
               child: assetMiniCard(a)),
-          ]);
+          ]); }
           return SingleChildScrollView(scrollDirection: Axis.horizontal,
             child: DataTable(
               columnSpacing: 19, dataRowMinHeight: 65, dataRowMaxHeight: 73,
