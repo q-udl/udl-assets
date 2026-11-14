@@ -5,7 +5,7 @@ extension AssetBulkImportOperations on AssetStore {
   /// No existing asset, employee, assignment or photo is overwritten.
   Future<int> confirmBulkImport(BulkImportPreview preview) async {
     if (loadError != null) {
-      throw const StateError(
+      throw StateError(
         'Penyimpanan lokal bermasalah; jangan impor sebelum dipulihkan.');
     }
     final refreshed = BulkImportService.inspect(
@@ -18,7 +18,7 @@ extension AssetBulkImportOperations on AssetStore {
             jsonEncode(old.values) != jsonEncode(fresh.values) ||
             jsonEncode(old.errors) != jsonEncode(fresh.errors);
         })) {
-      throw const StateError(
+      throw StateError(
         'Master Data berubah sejak pratinjau. Unggah ulang untuk validasi.');
     }
     final valid = refreshed.rows.where((row) => row.valid).toList();
@@ -132,7 +132,6 @@ extension AssetBulkImportOperations on AssetStore {
       events = oldEvents;
       nextNumber = oldNextAsset;
       nextEmployeeNumber = oldNextEmployee;
-      notifyListeners();
       rethrow;
     }
   }
