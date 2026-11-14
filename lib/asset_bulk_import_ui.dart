@@ -270,7 +270,15 @@ class _BulkImportDialogState extends State<BulkImportDialog> {
                   onPressed: busy ? null : requestClose,
                   icon: const Icon(Icons.close_rounded)),
               ]),
-              const SizedBox(height: 14),
+              Expanded(
+                child: SingleChildScrollView(
+                  key: const ValueKey('rv28-import-scroll'),
+                  keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const SizedBox(height: 14),
               if (size.width >= 600)
                 Row(children: [
                   _stepTile(Icons.download_rounded,
@@ -314,7 +322,10 @@ class _BulkImportDialogState extends State<BulkImportDialog> {
                 child: Text(error!, style: const TextStyle(
                   color: danger, fontSize: 12))),
               const SizedBox(height: 10),
-              Expanded(child: Container(
+              SizedBox(
+                height: (mobile ? height * .35 : height * .49)
+                  .clamp(140.0, 340.0),
+                child: Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: border)),
@@ -360,6 +371,11 @@ class _BulkImportDialogState extends State<BulkImportDialog> {
               const Text('Hanya baris valid yang akan disimpan. Data lama '
                 'tidak ditimpa. Penyimpanan masih lokal di browser.',
                 style: TextStyle(color: muted, fontSize: 11.5)),
+              const SizedBox(height: 10),
+                    ],
+                  ),
+                ),
+              ),
               const SizedBox(height: 10),
               if (mobile) ...[
                 SizedBox(width: double.infinity, height: 48,
