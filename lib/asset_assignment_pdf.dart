@@ -118,7 +118,6 @@ class AssetBastPdf {
           pw.SizedBox(height: 60),
           pw.Text(leftName, style: bold(9)),
           if (showGuide)
-            if (showGuide)
             pw.Text('Tanda tangan: __________________', style: regular(8)),
         ])),
         pw.SizedBox(width: 20),
@@ -126,7 +125,8 @@ class AssetBastPdf {
           pw.Text(right, style: bold(9)),
           pw.SizedBox(height: 60),
           pw.Text(rightName, style: bold(9)),
-          pw.Text('Tanda tangan: __________________', style: regular(8)),
+          if (showGuide)
+            pw.Text('Tanda tangan: __________________', style: regular(8)),
         ])),
       ],
     ),
