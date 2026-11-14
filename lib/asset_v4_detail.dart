@@ -151,7 +151,9 @@ extension _AssetV4Detail on _AssetScreenState {
             child:Image.memory(p.bytes,fit:BoxFit.cover)))),
     ]),
     const SizedBox(height:10),
-    outlineButton('Tambah Foto',Icons.add_a_photo_outlined,()=>v4UploadPhoto(a)),
+    Builder(builder:(photoAnchor)=>outlineButton('Tambah Foto',
+       Icons.add_a_photo_outlined,
+       ()=>v4UploadPhoto(a, anchorContext:photoAnchor))),
     if(store.archivedPhotosFor(a.id).isNotEmpty)TextButton(
       onPressed:()=>v4ArchivedPhotos(a),
       child:Text('Lihat Foto Diarsipkan ('+
