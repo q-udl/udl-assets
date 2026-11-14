@@ -49,10 +49,10 @@ void main() {
     final batch = await store.createAssignment(
       employeeId: employee.id, kind: 'Berkelanjutan',
       assetIds: units.map((u) => u.id).toList(), accessories: {});
-    expect(batch.status, 'Menunggu Penerimaan');
+    expect(batch.status, 'Menunggu Serah Terima');
     await expectLater(
       store.confirmAssignment(batch, true, ''), throwsFormatException);
-    expect(batch.status, 'Menunggu Penerimaan');
+    expect(batch.status, 'Menunggu Serah Terima');
     expect(store.evidencePhotos, isEmpty);
     await expectLater(
       store.confirmAssignment(batch, true, '', proofPhotos: {
