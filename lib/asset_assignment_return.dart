@@ -38,6 +38,29 @@ class _V5ReturnFormState extends State<V5ReturnForm> {
     super.dispose();
   }
 
+  Future<void> uploadReturnPhoto(AssignedAssetLine line) async {
+    final asset = widget.store.assignmentAsset(line.assetId);
+    if (asset == null) return;
+    try {
+      final chosen = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 960, maxHeight: 960, imageQuality: 65);
+      if (chosen == null) return;
+      final bytes = await chosen.readAsBytes();
+      await widget.store.addPhoto(
+        asset, bytes, chosen.name, 'Dokumentasi Kondisi',
+        note: 'Dokumentasi saat pengembalian: ' +
+          widget.assignment.draftReference);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Foto kondisi ditambahkan ke dokumentasi aset.')));
+      }
+    } catch (e) {
+      if (mounted) setState(() =>
+        error = 'Gagal menambah foto kondisi: ' + e.toString());
+    }
+  }
+
   Future<void> save() async {
     if (saving) return;
     if (selected.isEmpty) {
@@ -168,6 +191,13 @@ class _V5ReturnFormState extends State<V5ReturnForm> {
                           hintText: 'Catat selisih atau kerusakan'),
                         onChanged: (value) => notesByLine[line.id] = value,
                       ),
+                      const SizedBox(height: 8),
+                      OutlinedButton.icon(
+                        onPressed: () => uploadReturnPhoto(line),
+                        icon: const Icon(Icons.add_a_photo_outlined, size: 17),
+                        label: const Text('Tambah Foto Kondisi Kembali'),
+                      ),
+                      const SizedBox(height: 6),
                       if (['Rusak','Kurang Baik'].contains(condition[line.id]))
                         const Padding(
                           padding: EdgeInsets.only(top: 7),
