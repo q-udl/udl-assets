@@ -1,5 +1,14 @@
 part of 'main.dart';
 
+/// Strip retired employee codes from imported historical snapshots without
+/// changing employee UUIDs, names, positions or transaction identities.
+Map<String, dynamic> employeeSnapshotWithoutCode(dynamic source) {
+  final values = source is Map
+    ? Map<String, dynamic>.from(source) : <String, dynamic>{};
+  values.remove('code');
+  return values;
+}
+
 /// Employee records contain only the fields needed for physical asset custody.
 /// This is a local prototype, not an HR employee system.
 class AssetEmployee {
@@ -135,7 +144,7 @@ class AssetAssignment {
   Map<String, dynamic> toJson() => {
     'id': id, 'draftReference': draftReference,
     'employeeId': employeeId,
-    'employeeSnapshot': employeeSnapshot, 'kind': kind,
+    'employeeSnapshot': employeeSnapshotWithoutCode(employeeSnapshot), 'kind': kind,
     'createdAt': createdAt, 'dueDate': dueDate, 'notes': notes,
     'status': status, 'acceptedAt': acceptedAt,
     'rejectionReason': rejectionReason,
@@ -147,9 +156,7 @@ class AssetAssignment {
     id: x['id']?.toString() ?? '',
     draftReference: x['draftReference']?.toString() ?? '',
     employeeId: x['employeeId']?.toString() ?? '',
-    employeeSnapshot: x['employeeSnapshot'] is Map
-      ? Map<String, dynamic>.from(x['employeeSnapshot'] as Map)
-      : {},
+    employeeSnapshot: employeeSnapshotWithoutCode(x['employeeSnapshot']),
     kind: x['kind']?.toString() ?? 'Berkelanjutan',
     createdAt: x['createdAt']?.toString() ?? '',
     lines: (x['lines'] as List<dynamic>? ?? [])
@@ -225,7 +232,7 @@ class AssetReturnReceipt {
   Map<String, dynamic> toJson() => {
     'id': id, 'draftReference': draftReference,
     'assignmentId': assignmentId,
-    'employeeSnapshot': employeeSnapshot,
+    'employeeSnapshot': employeeSnapshotWithoutCode(employeeSnapshot),
     'createdAt': createdAt, 'notes': notes,
     'receivingLocation': receivingLocation, 'receivedByName': receivedByName,
     'receivingLocationPath': receivingLocationPath,
@@ -238,9 +245,7 @@ class AssetReturnReceipt {
       id: x['id']?.toString() ?? '',
       draftReference: x['draftReference']?.toString() ?? '',
       assignmentId: x['assignmentId']?.toString() ?? '',
-      employeeSnapshot: x['employeeSnapshot'] is Map
-        ? Map<String, dynamic>.from(x['employeeSnapshot'] as Map)
-        : {},
+      employeeSnapshot: employeeSnapshotWithoutCode(x['employeeSnapshot']),
       createdAt: x['createdAt']?.toString() ?? '',
       lines: (x['lines'] as List<dynamic>? ?? [])
         .map((v) => AssetReturnLine.fromJson(
