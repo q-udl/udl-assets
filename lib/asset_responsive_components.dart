@@ -74,8 +74,8 @@ Widget compactCustodyAssetRow({
   final mobile = bounds.maxWidth < 540;
   final tone = switch (status) {
     'Aktif' || 'Dikembalikan' => const Color(0xFF168366),
-    'Ditolak' => danger,
-    'Menunggu Penerimaan' => amber,
+    'Dibatalkan' => danger,
+    'Menunggu Serah Terima' => amber,
     _ => muted,
   };
   final badge = Container(
