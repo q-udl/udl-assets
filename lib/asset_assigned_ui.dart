@@ -7,7 +7,8 @@ extension _AssignedAssetsScreens on _AssetScreenState {
       final snapshot = a.employeeSnapshot;
       final haystack = [
         a.draftReference, snapshot['name']?.toString() ?? '',
-        snapshot['code']?.toString() ?? '',
+        snapshot['jobTitle']?.toString() ?? '',
+        snapshot['unit']?.toString() ?? '',
         ...a.lines.map((l) => l.assetCode + ' ' + l.assetName),
       ].join(' ').toLowerCase();
       return haystack.contains(queryText) &&
@@ -53,8 +54,8 @@ extension _AssignedAssetsScreens on _AssetScreenState {
               children: [search, const SizedBox(height: 10), status]);
           }),
           const SizedBox(height: 10),
-          const Text('Penerimaan dan BA di pratinjau lokal adalah '
-            'SIMULASI tanpa autentikasi atau tanda tangan digital.',
+          const Text('Pencatatan serah terima belum terhubung ke autentikasi '
+            'atau verifikasi tanda tangan digital.',
             style: TextStyle(fontSize: 11, color: muted)),
         ],
       )),
@@ -132,7 +133,8 @@ extension _AssignedAssetsScreens on _AssetScreenState {
                         children: [
                           Text(batch.employeeSnapshot['name']?.toString() ?? '-',
                             style: const TextStyle(fontWeight: FontWeight.w700)),
-                          Text(batch.employeeSnapshot['code']?.toString() ?? '',
+                          Text((batch.employeeSnapshot['jobTitle']?.toString() ?? '') +
+                             ' · ' + (batch.employeeSnapshot['unit']?.toString() ?? ''),
                             style: const TextStyle(fontSize: 11, color: muted)),
                         ]), batch: batch),
                       _v5AssignedCell(Text(batch.activeCount.toString() +
@@ -141,9 +143,8 @@ extension _AssignedAssetsScreens on _AssetScreenState {
                       _v5AssignedCell(Text(batch.kind +
                         (batch.dueDate.isEmpty ? '' : ' · ' + batch.dueDate)),
                         batch: batch),
-                      _v5AssignedCell(Text(batch.status,
-                        style: TextStyle(
-                          color: batch.isOverdue ? danger : ink)),
+                      _v5AssignedCell(statusChip(batch.status,
+                        compact: true, toneColor: batch.isOverdue ? danger : null),
                         batch: batch),
                       _v5AssignedCell(const Icon(
                         Icons.chevron_right_rounded, color: muted),
