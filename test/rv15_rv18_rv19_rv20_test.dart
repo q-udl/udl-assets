@@ -107,6 +107,7 @@ void main() {
       assetIds: [asset.id], accessories: {});
     await store.confirmAssignment(batch, true, '',
       handedOverByName: 'Petugas GA',
+      handoverLocation: 'Gudang Pusat', bastNumber: 'BAST-RV18-001',
       proofPhotos: {asset.id: uatProof()});
     final site = store.siteByName('Gudang Pusat')!;
     final area = await store.addArea(site, 'Ruang Terima Barang');
