@@ -305,6 +305,7 @@ class AssetPhotoPicker {
     final size = MediaQuery.sizeOf(context);
     return showDialog<int>(
       context: context,
+      barrierDismissible: false,
       builder: (ctx) => Dialog(
         backgroundColor: Colors.white,
         insetPadding: const EdgeInsets.all(12),
@@ -336,25 +337,45 @@ class AssetPhotoPicker {
                   ' KB · batas penyimpanan 500 KB',
                   style: const TextStyle(color: muted, fontSize: 12)),
                 const SizedBox(height: 14),
-                Wrap(
-                  spacing: 8, runSpacing: 8,
-                  alignment: WrapAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(ctx, 0),
-                      child: const Text('Batal')),
-                    OutlinedButton.icon(
-                      key: const ValueKey('rv25-pick-again'),
-                      onPressed: () => Navigator.pop(ctx, 2),
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Pilih Ulang')),
-                    FilledButton.icon(
+                if (size.width < 650) ...[
+                  SizedBox(width: double.infinity, height: 48,
+                    child: FilledButton.icon(
                       key: const ValueKey('rv25-use-photo'),
                       onPressed: () => Navigator.pop(ctx, 1),
                       icon: const Icon(Icons.check),
-                      label: const Text('Gunakan Foto')),
-                  ],
-                ),
+                      label: const Text('Gunakan Foto'))),
+                  const SizedBox(height: 8),
+                  SizedBox(width: double.infinity, height: 48,
+                    child: OutlinedButton.icon(
+                      key: const ValueKey('rv25-pick-again'),
+                      onPressed: () => Navigator.pop(ctx, 2),
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Pilih Ulang'))),
+                  const SizedBox(height: 8),
+                  SizedBox(width: double.infinity, height: 48,
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(ctx, 0),
+                      child: const Text('Batal'))),
+                ] else
+                  Wrap(
+                    spacing: 8, runSpacing: 8,
+                    alignment: WrapAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, 0),
+                        child: const Text('Batal')),
+                      OutlinedButton.icon(
+                        key: const ValueKey('rv25-pick-again'),
+                        onPressed: () => Navigator.pop(ctx, 2),
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Pilih Ulang')),
+                      FilledButton.icon(
+                        key: const ValueKey('rv25-use-photo'),
+                        onPressed: () => Navigator.pop(ctx, 1),
+                        icon: const Icon(Icons.check),
+                        label: const Text('Gunakan Foto')),
+                    ],
+                  ),
               ],
             ),
           ),
