@@ -68,8 +68,9 @@ class _V4RegistrationPageState extends State<V4RegistrationPage> {
     return Row(children:[Expanded(child:a),const SizedBox(width:12),Expanded(child:b)]);
   }
 
-  Future<void> selectPhoto() async {
-    final selected = await AssetPhotoPicker.choose(context);
+  Future<void> selectPhoto([BuildContext? anchor]) async {
+    final selected = await AssetPhotoPicker.choose(context,
+      anchorContext: anchor);
     if (selected == null || !mounted) return;
     widget.onDirty?.call();
     setState(() { pendingPhoto = selected.bytes; pendingName = selected.fileName; });
@@ -303,8 +304,10 @@ class _V4RegistrationPageState extends State<V4RegistrationPage> {
             icon:const Icon(Icons.delete_outline),
             label:const Text('Hapus Foto Pilihan')),
           const SizedBox(height:10),
-          OutlinedButton.icon(onPressed:selectPhoto,icon:const Icon(Icons.add_a_photo_outlined),
-            label:Text(pendingPhoto==null?'Pilih Foto Aktual':'Ganti Foto')),
+          Builder(builder:(photoAnchor)=>OutlinedButton.icon(
+             onPressed:()=>selectPhoto(photoAnchor),
+             icon:const Icon(Icons.add_a_photo_outlined),
+             label:Text(pendingPhoto==null?'Pilih Foto Aktual':'Ganti Foto'))),
         ]))),
       const SizedBox(height:14),
       if (mobile)
