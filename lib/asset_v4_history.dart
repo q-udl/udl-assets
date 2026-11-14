@@ -1,6 +1,6 @@
 part of 'main.dart';
 
-extension AssetV4History on _AssetScreenState {
+extension _AssetV4History on _AssetScreenState {
   Widget v4History() {
     final types = store.events.map((e)=>e.type).toSet().toList()..sort();
     final queryText = v4HistoryQuery.trim().toLowerCase();
@@ -26,13 +26,13 @@ extension AssetV4History on _AssetScreenState {
       TextField(decoration:const InputDecoration(
         prefixIcon:Icon(Icons.search),
         hintText:'Cari nama, kode aset, atau aktivitas...'),
-        onChanged:(v)=>setState(() {v4HistoryQuery=v;v4HistoryPage=0;})),
+        onChanged:(v)=>v4Change(() {v4HistoryQuery=v;v4HistoryPage=0;})),
       const SizedBox(height:10),
       Wrap(spacing:10,runSpacing:10,children:[
         filterDropdown(v4HistoryType,['Semua aktivitas',...types],
-          (v)=>setState(() {v4HistoryType=v;v4HistoryPage=0;}),width:210),
+          (v)=>v4Change(() {v4HistoryType=v;v4HistoryPage=0;}),width:210),
         filterDropdown(v4HistoryPeriod,['Semua periode','7 hari','30 hari'],
-          (v)=>setState(() {v4HistoryPeriod=v;v4HistoryPage=0;}),width:165),
+          (v)=>v4Change(() {v4HistoryPeriod=v;v4HistoryPage=0;}),width:165),
       ]),
       const SizedBox(height:14),
       LayoutBuilder(builder:(ctx,box) {
@@ -78,11 +78,11 @@ extension AssetV4History on _AssetScreenState {
         const Spacer(),
         DropdownButton<int>(value:v4HistoryPerPage,items:[20,40,80].map((n)=>
           DropdownMenuItem(value:n,child:Text(n.toString()))).toList(),
-          onChanged:(v)=>setState(() {v4HistoryPerPage=v ?? 20;v4HistoryPage=0;})),
+          onChanged:(v)=>v4Change(() {v4HistoryPerPage=v ?? 20;v4HistoryPage=0;})),
         IconButton(onPressed:v4HistoryPage==0?null:
-          ()=>setState(()=>v4HistoryPage--),icon:const Icon(Icons.chevron_left)),
+          ()=>v4Change(()=>v4HistoryPage--),icon:const Icon(Icons.chevron_left)),
         IconButton(onPressed:v4HistoryPage>=pages-1?null:
-          ()=>setState(()=>v4HistoryPage++),icon:const Icon(Icons.chevron_right)),
+          ()=>v4Change(()=>v4HistoryPage++),icon:const Icon(Icons.chevron_right)),
       ]),
     ]));
   }
@@ -129,7 +129,7 @@ extension AssetV4History on _AssetScreenState {
       actions:[
         TextButton(onPressed:()=>Navigator.pop(ctx),child:const Text('Tutup')),
         if(a!=null)TextButton(onPressed:(){
-          Navigator.pop(ctx);setState(() {page=1;selected=a;});
+          Navigator.pop(ctx);v4Change(() {page=1;selected=a;});
         },child:const Text('Lihat Detail Aset')),
       ]));
   }
