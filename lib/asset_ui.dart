@@ -366,8 +366,10 @@ class _AssetScreenState extends State<AssetScreen> {
   }
 
   Widget _sidebarSectionLabel(String label, {bool condensed = false}) {
-    if (condensed) return const Divider(
-      height: 24, indent: 17, endIndent: 17, color: border);
+    if (condensed) {
+      return const Divider(
+        height: 24, indent: 17, endIndent: 17, color: border);
+    }
     return Padding(
       padding: const EdgeInsets.fromLTRB(23, 17, 12, 8),
       child: Text(label, style: const TextStyle(
