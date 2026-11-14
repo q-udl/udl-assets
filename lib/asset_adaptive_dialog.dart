@@ -146,3 +146,73 @@ Future<void> assetRequestModalClose(
     context, isDirty: isDirty?.call() ?? false);
   if (allowed && context.mounted) Navigator.of(context).pop();
 }
+
+
+/// One-action feedback dialog for errors and notices (not destructive).
+Future<void> assetNoticeDialog(BuildContext context, {
+  required String title,
+  required String message,
+  bool isError = false,
+}) async {
+  await showDialog<void>(
+    context: context,
+    barrierDismissible: false,
+    builder: (dialogContext) {
+      final width = MediaQuery.sizeOf(dialogContext).width;
+      final mobile = width < 650;
+      return Dialog(
+        key: const ValueKey('rv28-notice-dialog'),
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        insetPadding: EdgeInsets.symmetric(
+          horizontal: mobile ? 16 : 24, vertical: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+          side: const BorderSide(color: border)),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: 430,
+            maxHeight: MediaQuery.sizeOf(dialogContext).height * .85),
+          child: SingleChildScrollView(
+            padding: EdgeInsets.all(mobile ? 18 : 22),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: isError ? const Color(0xFFFFF3F0) :
+                        const Color(0xFFEDF4FC),
+                      borderRadius: BorderRadius.circular(10)),
+                    child: Icon(isError ? Icons.error_outline_rounded :
+                      Icons.info_outline_rounded,
+                      color: isError ? danger : blue, size: 23)),
+                  const SizedBox(width: 11),
+                  Expanded(child: Text(title, style: const TextStyle(
+                    color: ink, fontSize: 18,
+                    fontWeight: FontWeight.w800))),
+                ]),
+                const SizedBox(height: 13),
+                Text(message, style: const TextStyle(
+                  color: ink, fontSize: 13, height: 1.5)),
+                const SizedBox(height: 20),
+                Align(
+                  alignment: mobile
+                    ? Alignment.center : Alignment.centerRight,
+                  child: SizedBox(
+                    width: mobile ? double.infinity : null,
+                    height: 48,
+                    child: FilledButton(
+                      onPressed: () => Navigator.pop(dialogContext),
+                      child: const Text('Tutup'))),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    },
+  );
+}
