@@ -1,6 +1,10 @@
 import 'dart:convert';
 import 'package:excel/excel.dart' as xls;
 import 'package:file_picker/file_picker.dart';
+import 'package:camera/camera.dart' as cam;
+import 'asset_camera_probe_stub.dart'
+    if (dart.library.js_interop) 'asset_camera_probe_web.dart'
+    as camera_probe;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -38,6 +42,7 @@ part 'asset_v4_catalog.dart';
 part 'asset_v4_master.dart';
 part 'asset_v4_history.dart';
 part 'asset_photo_picker.dart';
+part 'asset_camera_dialog.dart';
 part 'asset_responsive_components.dart';
 part 'asset_v4_registration.dart';
 part 'asset_v4_detail.dart';
