@@ -460,7 +460,7 @@ class _AssetScreenState extends State<AssetScreen> {
                     style: TextStyle(fontWeight: FontWeight.w700,
                       fontSize: 12, color: ink)),
                   SizedBox(height: 3),
-                  Text('UDL Assets · v0.4.0',
+                  Text('UDL Assets · v0.5.0',
                     style: TextStyle(fontSize: 11, color: muted)),
                 ],
               )),
