@@ -93,6 +93,66 @@ class AssetBastPdf {
     ),
   );
 
+  static List<pw.Widget> photoAppendix(
+    AssetStore? store, Map<String, List<String>> references, String heading,
+  ) {
+    if (store == null) return [];
+    final items = <pw.Widget>[];
+    for (final entry in references.entries) {
+      for (final photoId in entry.value) {
+        final matching = store.photos.where((p) => p.id == photoId);
+        if (matching.isEmpty) continue;
+        final photo = matching.first;
+        if (!(photo.mimeType.contains('jpeg') ||
+            photo.mimeType.contains('png'))) {
+          continue;
+        }
+        try {
+          final picture = pw.MemoryImage(photo.bytes);
+          items.add(pw.Container(
+            margin: const pw.EdgeInsets.only(right: 10, bottom: 12),
+            width: 205,
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Container(
+                  decoration: pw.BoxDecoration(
+                    border: pw.Border.all(
+                      color: PdfColors.blueGrey200)),
+                  padding: const pw.EdgeInsets.all(5),
+                  child: pw.Image(picture, width: 190,
+                    height: 122, fit: pw.BoxFit.contain)),
+                pw.SizedBox(height: 5),
+                pw.Text(entry.key + ' / ' + photo.kind,
+                  style: bold(8)),
+                pw.Text(date(photo.timestamp),
+                  style: regular(7.5)),
+              ],
+            ),
+          ));
+        } catch (_) {
+          // Unsupported or damaged photos remain in storage but are skipped
+          // in the printable PDF rather than breaking document generation.
+        }
+      }
+    }
+    if (items.isEmpty) {
+      return [
+        pw.SizedBox(height: 14),
+        pw.Text(heading, style: bold(10)),
+        pw.SizedBox(height: 6),
+        pw.Text('Tidak ada foto JPG/PNG tersimpan untuk tahap ini.',
+          style: regular(8.5)),
+      ];
+    }
+    return [
+      pw.SizedBox(height: 17),
+      pw.Text(heading, style: bold(10)),
+      pw.SizedBox(height: 8),
+      pw.Wrap(spacing: 12, runSpacing: 10, children: items),
+    ];
+  }
+
   static pw.Widget assetTable(
       List<List<String>> rows, List<String> columnHeaders) {
     return pw.Table.fromTextArray(
@@ -112,7 +172,7 @@ class AssetBastPdf {
     );
   }
 
-  static Future<Uint8List> handover(AssetAssignment record) async {
+  static Future<Uint8List> handover(AssetAssignment record, {AssetStore? store}) async {
     final doc = pw.Document(
       title: 'DRAF BAST ' + record.draftReference,
       author: 'UDL Assets - Simulasi Lokal');
@@ -169,6 +229,10 @@ class AssetBastPdf {
           style: regular(9),
         ),
         signing('Yang Menyerahkan (GA)', 'Yang Menerima (Karyawan)'),
+        ...photoAppendix(store, {
+          for (final line in record.lines)
+            line.assetCode: line.photoIds,
+        }, 'LAMPIRAN FOTO SAAT PENYERAHAN'),
       ],
     ));
     return doc.save();
@@ -176,6 +240,7 @@ class AssetBastPdf {
 
   static Future<Uint8List> assetReturn(
     AssetAssignment original, AssetReturnReceipt receipt,
+    {AssetStore? store}
   ) async {
     final doc = pw.Document(
       title: 'DRAF Pengembalian ' + receipt.draftReference,
@@ -231,21 +296,26 @@ class AssetBastPdf {
           style: regular(9),
         ),
         signing('Yang Mengembalikan', 'Yang Menerima (GA)'),
+        ...photoAppendix(store, {
+          for (final line in receipt.lines)
+            line.assetCode: line.photoIds,
+        }, 'LAMPIRAN FOTO SAAT PENGEMBALIAN'),
       ],
     ));
     return doc.save();
   }
 
-  static Future<void> printHandover(AssetAssignment batch) async {
-    final content = await handover(batch);
+  static Future<void> printHandover(AssetAssignment batch, {AssetStore? store}) async {
+    final content = await handover(batch, store: store);
     await Printing.layoutPdf(
       name: batch.draftReference + '.pdf',
       onLayout: (format) async => content);
   }
 
   static Future<void> printReturn(
-      AssetAssignment batch, AssetReturnReceipt receipt) async {
-    final content = await assetReturn(batch, receipt);
+      AssetAssignment batch, AssetReturnReceipt receipt,
+      {AssetStore? store}) async {
+    final content = await assetReturn(batch, receipt, store: store);
     await Printing.layoutPdf(
       name: receipt.draftReference + '.pdf',
       onLayout: (format) async => content);
