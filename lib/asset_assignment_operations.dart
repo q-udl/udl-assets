@@ -320,6 +320,7 @@ extension AssetAssignmentOperations on AssetStore {
             handoverCondition: line.handoverCondition,
             returnCondition: inspections[line.id]!.condition,
             accessoriesReturned: inspections[line.id]!.accessories.trim(),
+            accessoriesClassification: line.accessoriesClassification,
             notes: inspections[line.id]!.notes.trim(),
             proofPhotoIds: [
               for (final p in preparedProof)
