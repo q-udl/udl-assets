@@ -123,8 +123,53 @@ class _AssetScreenState extends State<AssetScreen> {
       a.status == 'Dalam Perbaikan' || a.status == 'Hilang' ||
       a.condition == 'Rusak' || a.condition == 'Kurang Baik';
 
+  void _clearAssetFilterValues() {
+    query = '';
+    _assetSearchController.clear();
+    statusFilter = 'Semua status';
+    categoryFilter = 'Semua kategori';
+    v4LocationFilter = 'Semua lokasi';
+    v4ConditionFilter = 'Semua kondisi';
+    v4NoPic = false;
+    v4NoPhoto = false;
+    v4Attention = false;
+    v4NeedsClassification = false;
+    v4CatalogPage = 0;
+  }
+
+  void resetAssetFilters() {
+    setState(_clearAssetFilterValues);
+  }
+
+  bool get hasAssetFilters =>
+    query.trim().isNotEmpty ||
+    statusFilter != 'Semua status' ||
+    categoryFilter != 'Semua kategori' ||
+    v4LocationFilter != 'Semua lokasi' ||
+    v4ConditionFilter != 'Semua kondisi' ||
+    v4NoPic || v4NoPhoto || v4Attention || v4NeedsClassification;
+
+  void openAssetListFromMaster({
+    String? category,
+    String? location,
+    String? type,
+  }) {
+    setState(() {
+      _clearAssetFilterValues();
+      page = 1;
+      selected = null;
+      categoryFilter = category ?? 'Semua kategori';
+      v4LocationFilter = location ?? 'Semua lokasi';
+      query = type ?? '';
+      _assetSearchController.text = query;
+    });
+  }
+
   void navigate(int index) {
     setState(() {
+      if (index == 1 && page != 1) {
+        _clearAssetFilterValues();
+      }
       page = index;
       selected = null;
       viewedPhotoId = null;
@@ -652,6 +697,7 @@ class _AssetScreenState extends State<AssetScreen> {
 
   Widget searchBox() {
     return SizedBox(height: 44, child: TextField(
+      controller: _assetSearchController,
       decoration: InputDecoration(
         hintText: 'Cari nama, kode, lokasi, nomor seri...',
         hintStyle: const TextStyle(fontSize: 12.5, color: muted),
