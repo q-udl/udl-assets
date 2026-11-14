@@ -31,7 +31,7 @@ jobs:
           if-no-files-found: error
           retention-days: 5
 
-      - name: Capture dashboard preview (if browser available)
+      - name: Capture responsive previews (if browser available)
         run: |
           CHROME_BIN="$(command -v google-chrome || command -v chromium || true)"
           if [ -z "$CHROME_BIN" ]; then
@@ -41,10 +41,13 @@ jobs:
           python3 -m http.server 8765 --directory build/web --bind 127.0.0.1 >/tmp/udl-assets-local-web.log 2>&1 &
           sleep 2
           "$CHROME_BIN" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --hide-scrollbars --window-size=1440,900 --virtual-time-budget=10000 --screenshot=dashboard-smoke.png http://127.0.0.1:8765/ || true
+          "$CHROME_BIN" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --hide-scrollbars --window-size=390,844 --force-device-scale-factor=1 --virtual-time-budget=10000 --screenshot=mobile-width-smoke.png http://127.0.0.1:8765/ || true
       - name: Upload dashboard screenshot
         uses: actions/upload-artifact@v4
         with:
           name: udl-assets-dashboard-screenshot
-          path: dashboard-smoke.png
+          path: |
+            dashboard-smoke.png
+            mobile-width-smoke.png
           if-no-files-found: warn
           retention-days: 5
