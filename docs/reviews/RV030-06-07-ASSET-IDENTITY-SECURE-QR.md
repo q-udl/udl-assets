@@ -57,6 +57,34 @@
 - Token **bukan enkripsi** dan bukan bukti keaslian stiker fisik. QR statis yang valid tetap dapat difotokopi/diduplikasi.
 - QR tidak boleh membuka data karyawan, pemegang aset, lokasi internal sensitif, atau data lain tanpa autentikasi dan otorisasi.
 
+### Ketersediaan tombol "Scan QR Code" — keputusan final 14 November 2026
+
+**Tombol/menu/aksi "Scan QR Code" hanya ditampilkan bila perangkat memiliki kamera yang terdeteksi dan lingkungan aplikasi mendukung pemindaian kamera. Aturan berlaku sama untuk desktop, laptop, tablet, dan mobile.**
+
+| Perangkat / keadaan | Perilaku |
+|---|---|
+| Desktop/laptop tanpa kamera | **Scan QR Code tidak ditampilkan sama sekali**, bukan tombol disabled |
+| Desktop/laptop dengan webcam yang terdeteksi dan didukung | Scan QR Code ditampilkan |
+| HP/tablet dengan kamera yang terdeteksi dan didukung | Scan QR Code ditampilkan |
+| HP/tablet tanpa kamera atau fungsi kamera tidak tersedia | Scan QR Code disembunyikan |
+| Pendeteksian masih berlangsung | Jangan tampilkan tombol sebelum kemampuan perangkat dipastikan |
+| Kamera terdeteksi tetapi akses ditolak pengguna | Tampilkan penjelasan izin/kegagalan saat scan dimulai; jangan menyimpulkan perangkat tidak memiliki kamera |
+
+**Ketentuan implementasi yang wajib diingat:**
+
+1. Deteksi kemampuan aktual perangkat, **bukan hanya** user-agent, lebar layar, atau asumsi "mobile pasti ada kamera".
+2. Pada Flutter Web, cek dukungan API kamera dan keberadaan input video (misalnya `navigator.mediaDevices.enumerateDevices()` dan perangkat `videoinput`), dengan penanganan bila browser menutupi informasi akibat kebijakan izin/privasi. Jangan menganggap deteksi yang tidak pasti otomatis berarti ada kamera.
+3. **Tidak boleh meminta izin atau mengaktifkan kamera saat halaman baru dibuka.** Permission dan stream kamera hanya diminta setelah pengguna menekan aksi scan yang tersedia.
+4. Jika terdeteksi tidak ada kamera, hilangkan aksi scan dari menu, toolbar, atau lokasi lain tanpa menyisakan ruang kosong. Pengaturan ini juga berlaku saat kamera dilepas/disambungkan atau halaman dibuka ulang; lakukan pemeriksaan ulang yang sesuai.
+5. Saat pemindaian dimulai, tampilkan preview kamera, petunjuk arahkan kamera ke QR, dan kontrol tutup/batal yang jelas; berhenti dan lepas stream kamera setelah selesai, dibatalkan, atau halaman ditinggalkan.
+6. Jika izin kamera ditolak, perangkat sedang digunakan aplikasi lain, atau kamera gagal saat scan, tampilkan pesan yang jelas dan opsi mencoba lagi tanpa merusak navigasi.
+7. **Bedakan "Scan QR Code" dari "Lihat/Cetak QR Code"**: melihat/mencetak label QR tidak memerlukan kamera dan tetap dapat tersedia di desktop tanpa webcam.
+8. Jangan otomatis mengganti "Scan QR Code" dengan unggah gambar QR pada perangkat tanpa kamera. Kebijakan pemilihan foto katalog/bukti yang sudah ada pada RV027–RV029 adalah fitur terpisah, jangan diubah oleh keputusan ini.
+
+**Tes wajib:** desktop dengan webcam, desktop tanpa webcam, webcam dilepas/ditambahkan, Android Chrome, iPhone Safari, mobile tanpa kamera/emulator, izin belum diminta/ditolak, browser tanpa dukungan API, kondisi deteksi tidak pasti, serta pembersihan stream ketika dialog ditutup. Verifikasi tombol benar-benar **tidak dirender** pada perangkat tanpa kamera, bukan hanya dalam kondisi disabled.
+
+---
+
 ### Tahap A — UAT lokal (implementasi hanya setelah GAS RV030)
 
 Tujuan: memverifikasi alur UI/data dan hubungan token–aset, **bukan** mengklaim keamanan verifikasi lintas perangkat.
